@@ -12,7 +12,7 @@ export default function LoginLayout({
 }>) {
   return (
     <>
-    {/* <Sidebar /> */}
+    <Sidebar />
     <section>{children}</section> 
     </>
   );
