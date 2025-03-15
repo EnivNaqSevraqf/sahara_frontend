@@ -4,7 +4,7 @@ import ForgotPassword from '@/components/ForgotPassword';
 import { TextField, Card as MuiCard, Box, FormControl, InputLabel, FormLabel, Button, Link, Typography } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import { styled } from '@mui/material/styles';
-
+import { redirect } from 'next/navigation';
 import * as React from "react";
 import Sidebar from '@/components/Sidebar';
 
@@ -30,8 +30,28 @@ const Card = styled(MuiCard)(({ theme }) => ({
 
 function MaterialLoginBox(){
   const [open, setOpen] = React.useState(false);
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      redirect('/main');
+    }
+  }, []);
+
   const handleClickOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+
+  const handleSignIn = () => {
+    // handle sign in
+    console.log("Signed in");
+    console.log("Email: ", email);
+    console.log("Password: ", password);
+    localStorage.setItem('token', email);
+    redirect('/main');
+    console.log("Should be redirected now");
+  }
 
   return (
     // <AppTheme>
@@ -57,6 +77,7 @@ function MaterialLoginBox(){
                 required
                 fullWidth
                 variant="outlined"
+                onChange={(e) => setEmail(e.target.value)}
               />
         </FormControl>
         <FormControl>
@@ -71,10 +92,11 @@ function MaterialLoginBox(){
                 required
                 fullWidth
                 variant="outlined"
+                onChange={(e) => setPassword(e.target.value)}
               />
         </FormControl>
         <ForgotPassword open={open} handleClose={handleClose}/>
-        <Button>Sign In</Button>
+        <Button onClick={handleSignIn}>Sign In</Button>
         <Link
               component="button"
               type="button"
