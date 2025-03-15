@@ -7,13 +7,13 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import NextLink from 'next/link';
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import AnalyticsRoundedIcon from '@mui/icons-material/AnalyticsRounded';
-import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
+// import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
+// import AnalyticsRoundedIcon from '@mui/icons-material/AnalyticsRounded';
+// import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
-import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
-import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
+// import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
+// import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
 import { text } from 'stream/consumers';
 import { ViewQuilt } from '@mui/icons-material';
 import { forwardRef } from 'react';
@@ -31,12 +31,12 @@ const decodeToken = (token: string | null) => {
     return token; 
 }
 
-const mainListItems = [
-    { text: 'Home', icon: <HomeRoundedIcon /> },
-    { text: 'Analytics', icon: <AnalyticsRoundedIcon /> },
-    { text: 'Clients', icon: <PeopleRoundedIcon /> },
-    { text: 'Tasks', icon: <AssignmentRoundedIcon /> },
-  ];
+// const mainListItems = [
+//     { text: 'Home', icon: <HomeRoundedIcon /> },
+//     { text: 'Analytics', icon: <AnalyticsRoundedIcon /> },
+//     { text: 'Clients', icon: <PeopleRoundedIcon /> },
+//     { text: 'Tasks', icon: <AssignmentRoundedIcon /> },
+//   ];
   
   const adminListItems = [
     { text: 'Dashboard', icon: <ViewQuilt />, href: '/dashboard' },
@@ -127,7 +127,7 @@ const constructItemsList = (role: string) => {
   }
 
   MenuContent.defaultProps = {
-    _mainListItems: mainListItems,
+    _mainListItems: studentListItems,
     _secondaryListItems: secondaryListItems,
     };
   

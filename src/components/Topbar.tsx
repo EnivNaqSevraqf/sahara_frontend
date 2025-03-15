@@ -25,9 +25,9 @@ const Toolbar = styled(MuiToolbar)({
 export default function TopBar(){
     return (
         <AppBar
-        position="fixed"
+        // position="fixed"
         sx={{
-          display: { xs: 'auto', md: 'none' },
+          display: { xs: 'auto', md: 'flex' },
           boxShadow: 0,
           bgcolor: 'background.paper',
           backgroundImage: 'none',
@@ -53,13 +53,16 @@ export default function TopBar(){
             >
               {/* <CustomIcon /> */}
               <Typography variant="h1" component="h1" sx={{ color: 'text.primary'}} >
-                Dashboard
+                Test
+              </Typography>
+              <Typography variant="h1" component="h1" sx={{ color: 'text.primary' }} >
+                Tool
               </Typography>
             </Stack>
             {/* <ColorModeIconDropdown /> */}
-            {/* <MenuButton aria-label="menu" onClick={toggleDrawer(true)}>
-              <MenuRoundedIcon />
-            </MenuButton> */}
+            {/* <MenuButton aria-label="menu" onClick={toggleDrawer(true)}> */}
+              {/* <MenuRoundedIcon /> */}
+            {/* </MenuButton> */}
             {/* <SideMenuMobile open={open} toggleDrawer={toggleDrawer} /> */}
           </Stack>
         </Toolbar>

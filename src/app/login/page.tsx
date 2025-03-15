@@ -7,6 +7,7 @@ import { styled } from '@mui/material/styles';
 import { redirect } from 'next/navigation';
 import * as React from "react";
 import Sidebar from '@/components/Sidebar';
+import { useRouter } from 'next/navigation';
 
 const Card = styled(MuiCard)(({ theme }) => ({  
   display: 'flex',
@@ -29,6 +30,7 @@ const Card = styled(MuiCard)(({ theme }) => ({
 }));
 
 function MaterialLoginBox(){
+  const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
@@ -49,7 +51,8 @@ function MaterialLoginBox(){
     console.log("Email: ", email);
     console.log("Password: ", password);
     localStorage.setItem('token', email);
-    redirect('/main');
+    // redirect('/main');
+    router.push('/main');
     console.log("Should be redirected now");
   }
 

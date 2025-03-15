@@ -11,6 +11,8 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 // import SelectContent from './SelectContent';
 import MenuContent from './MenuContent';
+import Image from 'next/image';
+import { Button } from '@mui/material';
 // import CardAlert from './CardAlert';
 // import OptionsMenu from './OptionsMenu';
 
@@ -28,23 +30,53 @@ const Drawer = styled(MuiDrawer)({
 });
 
 export default function SideMenu() {
+    const [open, setOpen] = React.useState(true);
+    const toggleDrawer = () => {
+        setOpen(!open);
+    };
   return (
     <Drawer
-      variant="permanent"
+      variant="persistent"
       sx={{
-        display: { xs: 'none', md: 'block' },
+        display: { xs: 'none', md: 'flex' },
         [`& .${drawerClasses.paper}`]: {
           backgroundColor: 'background.paper',
         },
       }}
+      anchor='left'
+      open={true}
     >
       <Box
         sx={{
           display: 'flex',
           mt: 'calc(var(--template-frame-height, 0px) + 4px)',
           p: 1.5,
+          alignContent: 'center',
+          justifyContent: 'center',
         }}
       >
+                <Image
+                    src="/logo_blue_no_bg.svg"
+                    alt="Picture of the author"
+                    width={drawerWidth}
+                    height={drawerWidth}
+                    style={{ margin: 'auto' }}
+                    />
+              {/* <Box
+                  component="img"
+                  sx = {{
+                    width: '100%',
+                    margin: 'auto',
+                  }}
+                //   sx={{
+                //       height: 233,
+                //       width: 350,
+                //     //   maxHeight: { xs: 233, md: 167 },
+                //     //   maxWidth: { xs: 350, md: 250 },
+                //   }}
+                //   alt="The house from the offer."
+                src = "logo_blue_no_bg.svg"
+              />  */}
         {/* <SelectContent /> */}
       </Box>
       <Divider />
@@ -83,6 +115,9 @@ export default function SideMenu() {
             riley@email.com
           </Typography>
         </Box>
+        <Button variant="contained" size="small" onClick={toggleDrawer}>
+          Toggle Menu
+        </Button>
         {/* <OptionsMenu /> */}
       </Stack>
     </Drawer>
