@@ -13,6 +13,22 @@ interface QuizViewerProps {
 }
 
 export default function QuizViewer({ params }: QuizViewerProps) {
+  const otherSurveyJson = {
+    title: "Customer Satisfaction Survey",
+    elements: [
+      {
+        name: "satisfaction",
+        type: "radiogroup",
+        title: "How satisfied are you with our service?",
+        choices: ["Very satisfied", "Satisfied", "Neutral", "Unsatisfied", "Very unsatisfied"]
+      },
+      {
+        name: "feedback",
+        type: "comment",
+        title: "What can we improve?"
+      }
+    ]
+  };
   const surveyJson = {
     title: "Sample Quiz",
     showProgressBar: "bottom",
@@ -78,11 +94,39 @@ export default function QuizViewer({ params }: QuizViewerProps) {
   };
 
   const survey = new Model(surveyJson);
+  survey.mode = "display";
+  survey.data = { "question1": "Option 1", "question2": "Choice 2"};
+  // survey.data = { satisfaction: "Satisfied", feedback: "Great service!" };
+  // survey.data = JSON.parse('{ satisfaction: "Satisfied", feedback: "Great service!" }');
 
   // Handle survey completion
-  survey.onComplete.add((sender) => {
-    console.log("Survey results:", sender.data);
-    console.log("Correct answers:", sender.correctAnswersCount);
+  survey.onComplete.add((survey, options) => {
+    options.showSaveInProgress();
+    const surveyServiceUrl = "http://localhost:8000";
+    const dataObj = { userId: "1", postId: "1", surveyResult: JSON.stringify(survey.data)};
+    const dataStr = JSON.stringify(dataObj);
+    const headers = new Headers({ "Content-Type": "application/json; charset=utf-8" });
+    survey.mode = "display";
+    // survey.data = survey.data;
+    // console.log(survey.data);
+    fetch(surveyServiceUrl + "/storeResult", {
+      method: "POST",
+      body: dataStr,
+      headers: headers
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error("Could not post the survey results");
+      }
+      // Display the "Success" message (pass a string value to display a custom message)
+      options.showSaveSuccess();
+      // Alternatively, you can clear all messages:
+      // options.clearSaveMessages();
+    }).catch(error => {
+      // Display the "Error" message (pass a string value to display a custom message)
+      options.showSaveError();
+      console.log(error);
+      console.log(error.detail);
+    });
   });
 
   return (
