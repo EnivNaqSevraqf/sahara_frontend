@@ -1,10 +1,14 @@
 'use client';
 import React from "react";
+import axios from 'axios';
 import { Model } from "survey-core";
 import { Survey } from "survey-react-ui";
 import { Box } from "@mui/material";
 import Sidebar from "@/components/Sidebar";
 import "survey-core/survey-core.css";
+import { LayeredDarkPanelless } from "survey-core/themes";
+import { ContrastLight } from "survey-core/themes";
+
 
 interface QuizViewerProps {
   params: {
@@ -13,91 +17,31 @@ interface QuizViewerProps {
 }
 
 export default function QuizViewer({ params }: QuizViewerProps) {
-  const otherSurveyJson = {
-    title: "Customer Satisfaction Survey",
-    elements: [
-      {
-        name: "satisfaction",
-        type: "radiogroup",
-        title: "How satisfied are you with our service?",
-        choices: ["Very satisfied", "Satisfied", "Neutral", "Unsatisfied", "Very unsatisfied"]
-      },
-      {
-        name: "feedback",
-        type: "comment",
-        title: "What can we improve?"
-      }
-    ]
-  };
-  const surveyJson = {
-    title: "Sample Quiz",
-    showProgressBar: "bottom",
-    showTimerPanel: "top",
-    maxTimeToFinish: 300,
-    firstPageIsStarted: true,
-    startSurveyText: "Start Quiz",
-    pages: [
-      {
-        elements: [
-          {
-            type: "html",
-            html: "You are about to start the quiz.<br>You will have 5 minutes to complete all questions.<br>Click <b>Start Quiz</b> to begin."
-          }
-        ]
-      },
-      {
-        elements: [
-          {
-            type: "radiogroup",
-            name: "question1",
-            title: "Sample Question 1",
-            isRequired: true,
-            choices: [
-              "Option 1",
-              "Option 2",
-              "Option 3",
-              "Option 4"
-            ],
-            correctAnswer: "Option 1"
-          }
-        ]
-      },
-      {
-        elements: [
-          {
-            type: "radiogroup",
-            name: "question2",
-            title: "Sample Question 2",
-            isRequired: true,
-            choices: [
-              "Choice 1",
-              "Choice 2",
-              "Choice 3",
-              "Choice 4"
-            ],
-            correctAnswer: "Choice 2"
-          }
-        ]
-      }
-    ],
-    completedHtml: "<h4>You got {correctAnswers} out of {questionCount} questions correct.</h4>",
-    completedHtmlOnCondition: [
-      {
-        expression: "{correctAnswers} == 0",
-        html: "<h4>Unfortunately, none of your answers are correct. Please try again.</h4>"
-      },
-      {
-        expression: "{correctAnswers} == {questionCount}",
-        html: "<h4>Congratulations! You answered all the questions correctly!</h4>"
-      }
-    ]
-  };
+  const { id } = params;
 
+  const [surveyJson, setSurveyJson] = React.useState(null);
+
+  React.useEffect(() => {
+    const fetchSurveyJson = async () => {
+      try {
+        console.log("Fetching the survey JSON");
+        const response = await axios.get(`http://localhost:8000/api/forms/${id}`);
+        setSurveyJson(response.data);
+      } catch (error) {
+        console.error('Error fetching survey JSON:', error);
+      }
+    };
+
+    fetchSurveyJson();
+  }, [params.id]);
+
+  if (!surveyJson) {
+    return <div>Loading...</div>;
+  }
   const survey = new Model(surveyJson);
-  survey.mode = "display";
-  survey.data = { "question1": "Option 1", "question2": "Choice 2"};
-  // survey.data = { satisfaction: "Satisfied", feedback: "Great service!" };
-  // survey.data = JSON.parse('{ satisfaction: "Satisfied", feedback: "Great service!" }');
+  survey.applyTheme(ContrastLight);
+  // survey.mode = "display";
+  // survey.data = { "question1": "Option 1", "question2": "Choice 2"};
 
   // Handle survey completion
   survey.onComplete.add((survey, options) => {
@@ -146,4 +90,4 @@ export default function QuizViewer({ params }: QuizViewerProps) {
       </Box>
     </Box>
   );
-} 
+}
