@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v15-appRouter';
 import Sidebar from "@/components/Sidebar";
-
+import { NextAppProvider } from '@toolpad/core/nextjs';
 import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 // import theme from "@/theme";
@@ -34,6 +34,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <NextAppProvider>
         <AppRouterCacheProvider>
         <MyThemeProvider>
           {/* <CssBaseline/> */}
@@ -41,6 +42,7 @@ export default function RootLayout({
         {children}
         </MyThemeProvider>
         </AppRouterCacheProvider>
+        </NextAppProvider>
       </body>
     </html>
   );

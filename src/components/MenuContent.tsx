@@ -7,62 +7,49 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Stack from '@mui/material/Stack';
 import NextLink from 'next/link';
-// import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-// import AnalyticsRoundedIcon from '@mui/icons-material/AnalyticsRounded';
-// import PeopleRoundedIcon from '@mui/icons-material/PeopleRounded';
 import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
-// import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
-// import HelpRoundedIcon from '@mui/icons-material/HelpRounded';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import AnnouncementIcon from '@mui/icons-material/Announcement';
+import PeopleIcon from '@mui/icons-material/People';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import ForumIcon from '@mui/icons-material/Forum';
+import QuizIcon from '@mui/icons-material/Quiz';
+import SchoolIcon from '@mui/icons-material/School';
 import { text } from 'stream/consumers';
 import { ViewQuilt } from '@mui/icons-material';
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import Link from '@mui/material/Link';
-// const LinkBehaviour = forwardRef(function LinkBehaviour(props, ref) {
-//     return <NextLink ref={ref} {...props} />;
-// });
+import { getUserRole, normalizeRole, type UserRole } from '@/utils/roles';
 
-
-// TODO: Decode token to get user role
-const decodeToken = (token: string | null) => {
-    if( token === null) {
-        return 'student';
-    }
-    return token; 
-}
-
-// const mainListItems = [
-//     { text: 'Home', icon: <HomeRoundedIcon /> },
-//     { text: 'Analytics', icon: <AnalyticsRoundedIcon /> },
-//     { text: 'Clients', icon: <PeopleRoundedIcon /> },
-//     { text: 'Tasks', icon: <AssignmentRoundedIcon /> },
-//   ];
-  
   const adminListItems = [
-    { text: 'Dashboard', icon: <ViewQuilt />, href: '/dashboard' },
-    { text: 'Announcements', icon: <ViewQuilt />, href: '/announcements' },
-    { text: 'Gradeables', icon: <ViewQuilt />, href: '/gradeables' },
+    { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard_test' },
+    { text: 'Announcements', icon: <AnnouncementIcon />, href: '/announcements' },
+    { text: 'Gradeables', icon: <AssignmentRoundedIcon />, href: '/gradeables' },
     { text: 'Form Management', icon: <ViewQuilt />, href: '/forms' },
-    { text: 'People', icon: <ViewQuilt />, href: '/people' },
-    { text: 'Discussions', icon: <ViewQuilt />, href: '/discussions'},
-    { text: 'Calendar', icon: <ViewQuilt />, href: '/calendar'},
+    { text: 'People', icon: <PeopleIcon />, href: '/people' },
+    { text: 'Discussions', icon: <ForumIcon />, href: '/discussions'},
+    { text: 'Calendar', icon: <CalendarMonthIcon />, href: '/calendar'},
 
   ];
+  
   const studentListItems = [
-    { text: 'Dashboard', icon: <ViewQuilt />, href: '/dashboard' },
-    { text: 'Announcements', icon: <ViewQuilt />, href: '/gradeables' },
-    { text: 'Project', icon: <ViewQuilt />, href: '/project' },
-    { text: 'Quizzes', icon: <ViewQuilt />, href: '/quizzes' }, // TODO: Should quizzes be seperate?
-    { text: 'Discussions', icon: <ViewQuilt />, href: '/discussions'}, // TODO: Should this be discussions?
-    { text: 'Calendar', icon: <ViewQuilt />, href: '/calendar'},
-    { text: 'Forms', icon: <ViewQuilt />, href: '/forms'}, // TODO: Should this be forms?
+    { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard_test' },
+    { text: 'Announcements', icon: <AnnouncementIcon />, href: '/announcements' },
+    { text: 'Project', icon: <SchoolIcon />, href: '/project' },
+    { text: 'Quizzes', icon: <QuizIcon />, href: '/quizzes' },
+    { text: 'Discussions', icon: <ForumIcon />, href: '/discussions'},
+    { text: 'Calendar', icon: <CalendarMonthIcon />, href: '/calendar'},
+    { text: 'Forms', icon: <ViewQuilt />, href: '/forms'},
   ];
+  
   const taListItems = [
-    { text: 'Dashboard', icon: <ViewQuilt />, href: '/dashboard' },
-    { text: 'Gradeables', icon: <ViewQuilt />, href: '/gradeables' },
-    { text: 'Courses', icon: <ViewQuilt />, href: '/courses' },
-    { text: 'Users', icon: <ViewQuilt />, href: '/users' },
-    { text: 'Settings', icon: <ViewQuilt />, href: '/settings'},
+    { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard_test' },
+    { text: 'Gradeables', icon: <AssignmentRoundedIcon />, href: '/gradeables' },
+    { text: 'Courses', icon: <SchoolIcon />, href: '/courses' },
+    { text: 'Users', icon: <PeopleIcon />, href: '/users' },
+    { text: 'Calendar', icon: <CalendarMonthIcon />, href: '/calendar'},
+    { text: 'Settings', icon: <SettingsRoundedIcon />, href: '/settings'},
   ];
   
   const secondaryListItems = [
@@ -70,15 +57,13 @@ const decodeToken = (token: string | null) => {
   ];
 
 const constructItemsList = (role: string) => {
-    if (role === 'admin') {
+    const normalizedRole = normalizeRole(role as UserRole);
+    
+    if (normalizedRole === 'admin') {
         return adminListItems;
-    } else if (role === 'student') {
-        return studentListItems;
-    }
-    else if (role === 'ta') {
+    } else if (normalizedRole === 'ta') {
         return taListItems;
-    }
-    else{
+    } else {
         return studentListItems;
     }
 }
@@ -94,12 +79,16 @@ const constructItemsList = (role: string) => {
   };
   
   export default function MenuContent({ _mainListItems, _secondaryListItems }: MenuContentProps) {
-    // const token = localStorage.getItem('token');
-    // TODO: Fix the above
-    const token = "admin";
-    const role = decodeToken(token);
-    const itemsList = constructItemsList(role);
-    console.log("The role I had is role:" + role);
+    const [role, setRole] = useState<string>('student');
+    const [itemsList, setItemsList] = useState<ListItem[]>(studentListItems);
+    
+    // Use useEffect to handle localStorage access (client-side only)
+    useEffect(() => {
+      const userRole = getUserRole();
+      setRole(userRole);
+      setItemsList(constructItemsList(userRole));
+    }, []);
+
     return (
       <Stack sx={{ flexGrow: 1, p: 1, justifyContent: 'space-between' }}>
         <List dense>
@@ -115,7 +104,7 @@ const constructItemsList = (role: string) => {
         <List dense>
           {secondaryListItems.map((item, index) => (
             <ListItem key={index} disablePadding sx={{ display: 'block' }}> 
-              <ListItemButton component={NextLink} href="/">
+              <ListItemButton component={NextLink} href={item.href}>
                 <ListItemIcon>{item.icon}</ListItemIcon>
                 <ListItemText primary={item.text} />
               </ListItemButton>
@@ -130,4 +119,3 @@ const constructItemsList = (role: string) => {
     _mainListItems: studentListItems,
     _secondaryListItems: secondaryListItems,
     };
-  
