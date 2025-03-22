@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aldabil/react-scheduler": "^3.0.5",
+    "@editorjs/editorjs": "^2.30.8",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -16,6 +18,7 @@
     "@mui/material": "^6.4.7",
     "@mui/material-nextjs": "^6.4.3",
     "@toolpad/core": "^0.13.0",
+    "axios": "^1.8.4",
     "next": "15.2.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
