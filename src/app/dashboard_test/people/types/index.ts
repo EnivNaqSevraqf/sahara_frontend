@@ -2,7 +2,7 @@ export interface Team {
   number: number;
   name: string;
   details: string;
-  techStacks?: string;
+  // techStacks?: string;
 }
 
 export interface Student {

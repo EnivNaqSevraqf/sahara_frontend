@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Table,
@@ -15,14 +15,23 @@ import {
 import Header from './components/Header';
 import { buttonStyles, tableStyles } from './constants/theme';
 import type { Student } from './types';
+import axios from 'axios';
 
 // Sample student data
-const students: Student[] = [
-  { id: 1, name: 'Aarav Oswal', email: 'aarav@iitk.ac.in', role: 'Student' },
-  { id: 2, name: 'Achyuth Warrier', email: 'achyuth@iitk.ac.in', role: 'TA' },
-];
+// +
 
 const PeopleTable = () => {
+  const [students, setStudents] = useState<Student[]>([]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      const response = await axios.get("http://localhost:8000/people/");
+      // console.log(response.data);
+      setStudents(response.data);
+    };
+    fetchStudents();
+  }, []);
+  
   return (
     <Box sx={{ p: 3 }}>
       <Header title="PEOPLE" />

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -20,31 +20,39 @@ import {
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
+import axios from 'axios';
+import { Team } from './types';
 
 // Sample data for formed teams
-const formedTeams = [
-  { number: 1, name: 'Ravi and Friends', details: '...', techStacks: '...' },
-  { number: 2, name: 'Ravioli', details: '...', techStacks: '...' },
-];
+// const formedTeams: Team[] = [
+//   { number: 1, name: 'Ravi and Friends', details: '...' },
+//   { number: 2, name: 'Ravioli', details: '...' },
+// ];
 
 // Sample data for beta test pairs
 const betaTestPairs = [
   { 
     pairNumber: '1-2', 
-    teamNames: 'Ravi and Friends - Ravioli', 
-    commonTechStacks: '...' 
+    teamNames: 'Ravi and Friends - Ravioli'
   },
 ];
 
-// Sample data for unpaired students
-const unpairedStudents = [
-  { rollNo: '231031', name: 'Spandan' },
-  { rollNo: '231032', name: 'Sparsh' },
-];
+  
+
 
 const TeamsDetails = () => {
-  const [isComplete] = useState(true); // Toggle this to show different states
-  const [betaPairsCreated] = useState(true); // Toggle this to show different beta pairs states
+  const [formedTeams, setFormedTeams] = useState<Team[]>([]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      const response = await axios.get("http://localhost:8000/teams/");
+      // console.log(response.data);
+      setFormedTeams(response.data);
+    };
+    fetchStudents();
+  }, []);
+  const [isComplete] = useState(true);
+  const [betaPairsCreated] = useState(true);
 
   return (
     <Box sx={{ p: 3 }}>
@@ -121,7 +129,6 @@ const TeamsDetails = () => {
                   <TableCell>Team Number</TableCell>
                   <TableCell>Team Name</TableCell>
                   <TableCell>Member, Project Details</TableCell>
-                  {isComplete && <TableCell>Tech Stacks</TableCell>}
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -130,7 +137,6 @@ const TeamsDetails = () => {
                     <TableCell>{team.number}</TableCell>
                     <TableCell>{team.name}</TableCell>
                     <TableCell>{team.details}</TableCell>
-                    {isComplete && <TableCell>{team.techStacks}</TableCell>}
                   </TableRow>
                 ))}
                 {[...Array(2)].map((_, index) => (
@@ -138,7 +144,6 @@ const TeamsDetails = () => {
                     <TableCell>...</TableCell>
                     <TableCell>...</TableCell>
                     <TableCell>...</TableCell>
-                    {isComplete && <TableCell>...</TableCell>}
                   </TableRow>
                 ))}
               </TableBody>
@@ -155,8 +160,7 @@ const TeamsDetails = () => {
 
         {/* Right Side Content - Changes based on state */}
         <Box sx={{ flex: 1 }}>
-          {!isComplete ? (
-            // Show unpaired students table when in progress
+          {betaPairsCreated ? (
             <>
               <Box sx={{ mb: 2 }}>
                 <TextField
@@ -173,7 +177,7 @@ const TeamsDetails = () => {
                   sx={{ mb: 2 }}
                 />
                 <Typography variant="h6" color="primary">
-                  Students not in Teams
+                  Beta-Test Pairs
                 </Typography>
               </Box>
 
@@ -181,19 +185,19 @@ const TeamsDetails = () => {
                 <Table>
                   <TableHead>
                     <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                      <TableCell>Student Roll No</TableCell>
-                      <TableCell>Student Name</TableCell>
+                      <TableCell>Team Number Pairs</TableCell>
+                      <TableCell>Team Names</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {unpairedStudents.map((student) => (
-                      <TableRow key={student.rollNo}>
-                        <TableCell>{student.rollNo}</TableCell>
-                        <TableCell>{student.name}</TableCell>
+                    {betaTestPairs.map((pair) => (
+                      <TableRow key={pair.pairNumber}>
+                        <TableCell>{pair.pairNumber}</TableCell>
+                        <TableCell>{pair.teamNames}</TableCell>
                       </TableRow>
                     ))}
                     {[...Array(2)].map((_, index) => (
-                      <TableRow key={`empty-unpaired-${index}`}>
+                      <TableRow key={`empty-pairs-${index}`}>
                         <TableCell>...</TableCell>
                         <TableCell>...</TableCell>
                       </TableRow>
@@ -202,110 +206,29 @@ const TeamsDetails = () => {
                 </Table>
               </TableContainer>
 
-              <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  sx={{
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    textTransform: 'none',
-                  }}
-                >
-                  Allot unpaired students into existing teams
-                </Button>
-                <Button
-                  variant="contained"
-                  sx={{
-                    backgroundColor: '#1976d2',
-                    color: 'white',
-                    textTransform: 'none',
-                  }}
-                >
-                  Finalize teams
-                </Button>
-              </Box>
+              <Button
+                startIcon={<FileDownloadIcon />}
+                sx={{ mt: 2, color: 'primary.main', textTransform: 'none' }}
+              >
+                Download as Excel File
+              </Button>
             </>
           ) : (
-            // Show Beta-Test Pairs section when complete
-            <>
-              <Box sx={{ mb: 2 }}>
-                {!betaPairsCreated ? (
-                  <>
-                    <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
-                      Beta-Test Pairs: Not Created
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      sx={{
-                        backgroundColor: '#1976d2',
-                        color: 'white',
-                        textTransform: 'none',
-                      }}
-                    >
-                      Create Beta-Test Pairs
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <TextField
-                      placeholder="Search Name, Roll No"
-                      size="small"
-                      fullWidth
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <SearchIcon />
-                          </InputAdornment>
-                        ),
-                      }}
-                      sx={{ mb: 2 }}
-                    />
-                    <Typography variant="h6" color="primary">
-                      Beta-Test Pairs
-                    </Typography>
-                  </>
-                )}
-              </Box>
-
-              {betaPairsCreated && (
-                <>
-                  <TableContainer component={Paper}>
-                    <Table>
-                      <TableHead>
-                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-                          <TableCell>Team Number Pairs</TableCell>
-                          <TableCell>Team Names</TableCell>
-                          <TableCell>Common Tech Stacks</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {betaTestPairs.map((pair) => (
-                          <TableRow key={pair.pairNumber}>
-                            <TableCell>{pair.pairNumber}</TableCell>
-                            <TableCell>{pair.teamNames}</TableCell>
-                            <TableCell>{pair.commonTechStacks}</TableCell>
-                          </TableRow>
-                        ))}
-                        {[...Array(2)].map((_, index) => (
-                          <TableRow key={`empty-pairs-${index}`}>
-                            <TableCell>...</TableCell>
-                            <TableCell>...</TableCell>
-                            <TableCell>...</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-
-                  <Button
-                    startIcon={<FileDownloadIcon />}
-                    sx={{ mt: 2, color: 'primary.main', textTransform: 'none' }}
-                  >
-                    Download as Excel File
-                  </Button>
-                </>
-              )}
-            </>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
+                Beta-Test Pairs: Not Created
+              </Typography>
+              <Button
+                variant="contained"
+                sx={{
+                  backgroundColor: '#1976d2',
+                  color: 'white',
+                  textTransform: 'none',
+                }}
+              >
+                Create Beta-Test Pairs
+              </Button>
+            </Box>
           )}
         </Box>
       </Box>
