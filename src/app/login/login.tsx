@@ -39,7 +39,7 @@ const LoginComponent = () => {
       if (response.ok) {
         const data = await response.json();
         //backend returns access token and role
-        Auth.doLogIn(credentials.username, data.access_token, data.role);
+        Auth.doLogIn(credentials.username, data.access_token);
         router.push("/dashboard");
       } else {
         const errorData = await response.json();
@@ -53,10 +53,19 @@ const LoginComponent = () => {
     setLoading(false);
   };
 
+  const validateEmail = (email: string): boolean => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
+  }; 
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!credentials.username || !credentials.password) {
       setError("Please fill in all fields");
+      return;
+    }
+    if (!validateEmail(credentials.username)) {
+      setError("Please enter a valid email address");
       return;
     }
     handleLogin();
@@ -76,7 +85,7 @@ const LoginComponent = () => {
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          width: "450px",
+          width: "600px",
           padding: "40px",
           borderRadius: "30px",
           backgroundColor: "white",
@@ -90,11 +99,9 @@ const LoginComponent = () => {
           <Image 
             src="/sahara_logo.svg" 
             alt="SAHARA" 
-            layout="intrinsic"
             width={300} 
             height={100} 
-            
-            //priority
+            priority
           />
         </Box>
   
@@ -193,7 +200,7 @@ const LoginComponent = () => {
         <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
         <Button
           variant="outlined"
-          onClick={() => setForgotPasswordOpen(true)} // ✅ Proper state update
+          onClick={() => setForgotPasswordOpen(true)} // Proper state update
           sx={{
             color: '#000080',
             borderColor: '#E0E0E0',
@@ -207,8 +214,9 @@ const LoginComponent = () => {
          Forgot password?
 </Button>
         </Box>
+        </Box>
         <ForgotPassword open={forgotPasswordOpen} handleClose={() => setForgotPasswordOpen(false)} />
-      </Box>
+      
     </Box>
   );
 }
