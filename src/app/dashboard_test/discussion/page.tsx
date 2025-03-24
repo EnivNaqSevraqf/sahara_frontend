@@ -187,8 +187,8 @@ export default function DiscussionPage({ initialTitle }: DiscussionPageProps) {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ height: '100vh', display: 'flex', flexDirection: 'column', py: 2 }}>
-      <Paper elevation={1} sx={{ p: 2, mb: 3, bgcolor: '#f8f9fa' }}>
+    <Container maxWidth="lg" sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Paper elevation={1} sx={{ p: 2, bgcolor: '#f8f9fa', position: 'sticky', top: 0, zIndex: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h5" sx={{ color: '#1976d2', fontWeight: 500 }}>
             Discussions
@@ -237,7 +237,7 @@ export default function DiscussionPage({ initialTitle }: DiscussionPageProps) {
         </Box>
       </Paper>
 
-      <Paper elevation={1} sx={{ mb: 3, overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <Paper elevation={1} sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', mt: 2 }}>
         <Box sx={{ p: 2, bgcolor: '#fff', borderBottom: '1px solid #e0e0e0' }}>
           <Typography variant="h6" sx={{ color: '#1976d2' }}>
             {initialTitle}
@@ -248,11 +248,11 @@ export default function DiscussionPage({ initialTitle }: DiscussionPageProps) {
           ref={messageContainerRef}
           sx={{ 
             p: 2, 
-            bgcolor: '#f8f9fa', 
             flex: 1,
             overflowY: 'auto',
             display: 'flex',
             flexDirection: 'column',
+            gap: 2,
             '&::-webkit-scrollbar': {
               width: '8px',
             },
@@ -268,89 +268,58 @@ export default function DiscussionPage({ initialTitle }: DiscussionPageProps) {
             },
           }}
         >
-          <List>
-            {messages.map((message) => (
-              <ListItem
-                key={message.id}
-                sx={{
-                  display: 'flex',
-                  gap: 2,
-                  mb: 2,
-                  alignItems: 'flex-start',
-                  '&:hover': {
-                    bgcolor: 'rgba(0, 0, 0, 0.02)',
-                  },
-                }}
-              >
-                <Avatar src={message.user.avatar} />
-                <Box sx={{ flex: 1 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {message.user.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {message.timestamp}
-                    </Typography>
-                  </Box>
-                  <Typography variant="body1">
-                    {message.text}
-                  </Typography>
-                </Box>
-              </ListItem>
-            ))}
-          </List>
+          {messages.map((message) => (
+            <Box key={message.id} sx={{ display: 'flex', gap: 2 }}>
+              <Avatar src={message.user.avatar} alt={message.user.name} />
+              <Box>
+                <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
+                  {message.user.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {message.text}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {message.timestamp}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
         </Box>
-      </Paper>
 
-      <Paper
-        component="form"
-        sx={{
-          p: 2,
-          bgcolor: '#fff',
-          borderTop: '1px solid #e0e0e0',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1,
-        }}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!newMessage.trim()) return;
-          
-          const newMsg: Message = {
-            id: String(messages.length + 1),
-            text: newMessage,
-            user: {
-              id: 'user1',
-              name: 'User 1',
-              avatar: '/avatar1.jpg',
-            },
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          };
-          
-          setMessages([...messages, newMsg]);
-          setNewMessage('');
-        }}
-      >
-        <InputBase
-          fullWidth
-          placeholder="Type something here...."
-          value={newMessage}
-          onChange={handleMessageChange}
-          sx={{ ml: 1 }}
-        />
-        <IconButton 
-          type="submit"
-          color="primary"
-          sx={{ 
-            bgcolor: '#1976d2',
-            color: '#fff',
-            '&:hover': { 
-              bgcolor: '#1565c0'
-            }
-          }}
-        >
-          <SendIcon />
-        </IconButton>
+        <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0', bgcolor: '#fff' }}>
+          <Paper
+            component="form"
+            sx={{ p: '2px 4px', display: 'flex', alignItems: 'center' }}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!newMessage.trim()) return;
+              
+              const newMsg: Message = {
+                id: String(messages.length + 1),
+                text: newMessage,
+                user: {
+                  id: 'user1',
+                  name: 'User 1',
+                  avatar: '/avatar1.jpg',
+                },
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              };
+              
+              setMessages([...messages, newMsg]);
+              setNewMessage('');
+            }}
+          >
+            <InputBase
+              sx={{ ml: 1, flex: 1 }}
+              placeholder="Type your message..."
+              value={newMessage}
+              onChange={handleMessageChange}
+            />
+            <IconButton type="submit" sx={{ p: '10px' }} aria-label="send">
+              <SendIcon />
+            </IconButton>
+          </Paper>
+        </Box>
       </Paper>
     </Container>
   );
