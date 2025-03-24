@@ -31,13 +31,14 @@ const LoginComponent = () => {
   const router = useRouter();
 
   const checkExistingToken = () => {
-    // Retrieve the access token from local storage using the Auth utility
-    const existingToken = localStorage.getItem('accessToken');
+    const existingToken = localStorage.getItem('token');
     // If token exists, redirect to dashboard
-    if (existingToken) {
+    if (existingToken && Auth.isTokenValid()) {
+      console.log("Token exists, redirecting to dashboard");
       router.push("/dashboard_test");
       return true;
     }  
+    console.log("No token found");
     return false;
   };
 
