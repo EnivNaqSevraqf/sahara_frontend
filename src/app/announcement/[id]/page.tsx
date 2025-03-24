@@ -1,29 +1,40 @@
 'use client';
-import React, { useEffect, useState, use } from "react";
-import { Box, Typography, Button, Paper, CircularProgress } from "@mui/material";
-import { useRouter } from "next/navigation";
-import Sidebar from "@/components/Sidebar";
+import React, { useState, useEffect, use } from 'react';
+import { Box, Typography, Button, Paper, CircularProgress } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import axios from 'axios';
+
+interface ApiAttachment {
+  url: string;
+  type: string;
+}
+
+interface ContentDetails {
+  date?: string;
+  time?: string;
+  venue?: string;
+}
+
+interface AnnouncementContent {
+  tags: string[];
+  details?: ContentDetails;
+  attachments: ApiAttachment[];
+  description: string;
+}
 
 interface Announcement {
   id: number;
+  creator_id: number;
+  created_at: string;
   title: string;
-  description: {
-    content: string;
-    author: string;
-    priority: string;
-    created_at: string;
-    attachments?: Array<{
-      name: string;
-      url: string;
-      type: string;
-    }>;
-  }
+  content: AnnouncementContent;
+  url_name?: string;
 }
 
 export default function AnnouncementDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -36,91 +47,35 @@ export default function AnnouncementDetailPage({ params }: { params: Promise<{ i
   useEffect(() => {
     const fetchAnnouncement = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/get_announcement/${resolvedParams.id}`);
-        
-        if (response.ok) {
-          const data = await response.json();
-          setAnnouncement(data);
-        } else {
-          // If server is not available, use mock data
-          const mockAnnouncement = {
-            id: parseInt(resolvedParams.id),
-            title: "Test Announcement",
-            description: {
-              content: "This is a detailed test announcement with full content that was not truncated in the list view. It contains more information and details about the announcement that users can read when they click the 'Read More' button.",
-              author: "Test User",
-              priority: "high",
-              created_at: new Date().toISOString(),
-              attachments: [
-                {
-                  name: "document.pdf",
-                  url: "https://example.com/document.pdf",
-                  type: "application/pdf"
-                },
-                {
-                  name: "image.jpg",
-                  url: "https://example.com/image.jpg",
-                  type: "image/jpeg"
-                },
-                {
-                  name: "spreadsheet.xlsx",
-                  url: "https://example.com/spreadsheet.xlsx",
-                  type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                }
-              ]
-            }
-          };
-          setAnnouncement(mockAnnouncement);
-        }
+        setLoading(true);
+        const response = await axios.get(`http://localhost:8000/announcements/${resolvedParams.id}`);
+        setAnnouncement(response.data);
       } catch (error) {
         console.error('Error fetching announcement:', error);
-        // If fetch fails, use mock data
+        // If server is not available, use mock data
         const mockAnnouncement = {
           id: parseInt(resolvedParams.id),
+          creator_id: 1,
+          created_at: new Date().toISOString(),
           title: "Test Announcement",
-          description: {
-            content: "This is a detailed test announcement with full content that was not truncated in the list view. It contains more information and details about the announcement that users can read when they click the 'Read More' button.",
-            author: "Test User",
-            priority: "high",
-            created_at: new Date().toISOString(),
+          content: {
+            tags: ["general", "important"],
+            details: {
+              date: "2024-03-25",
+              time: "14:00",
+              venue: "Main Hall"
+            },
             attachments: [
               {
-                name: "document.pdf",
                 url: "https://example.com/document.pdf",
-                type: "application/pdf"
+                type: "document"
               },
               {
-                name: "image.jpg",
-                url: "http://example.com/image.jpg",
-                type: "image/jpeg"
-              },
-              {
-                name: "favicon.ico",
-                url: "../../favicon.ico",
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              },
-              {
-                name: "spreadsheet.xlsx",
-                url: "http://example.com/spreadsheet.xlsx",
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              },
-              {
-                name: "spreadsheet.xlsx",
-                url: "http://example.com/spreadsheet.xlsx",
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              },
-              {
-                name: "spreadsheet.xlsx",
-                url: "http://example.com/spreadsheet.xlsx",
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              },
-              {
-                name: "spreadsheet.xlsx",
-                url: "http://example.com/spreadsheet.xlsx",
-                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                url: "https://example.com/image.jpg",
+                type: "image"
               }
-
-            ]
+            ],
+            description: "This is a detailed test announcement with full content that was not truncated in the list view. It contains more information and details about the announcement that users can read when they click the 'Read More' button."
           }
         };
         setAnnouncement(mockAnnouncement);
@@ -131,19 +86,6 @@ export default function AnnouncementDetailPage({ params }: { params: Promise<{ i
 
     fetchAnnouncement();
   }, [resolvedParams.id]);
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return 'error';
-      case 'medium':
-        return 'warning';
-      case 'low':
-        return 'success';
-      default:
-        return 'primary';
-    }
-  };
 
   if (loading) {
     return (
@@ -194,44 +136,72 @@ export default function AnnouncementDetailPage({ params }: { params: Promise<{ i
       </Button>
 
       <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          {announcement.title}
-        </Typography>
-
-        <Box display="flex" alignItems="center" gap={2} mb={2}>
-          <Typography 
-            variant="body2" 
-            color={getPriorityColor(announcement.description.priority)}
-            sx={{ 
-              px: 2, 
-              py: 1, 
-              borderRadius: 1, 
-              bgcolor: `${getPriorityColor(announcement.description.priority)}.light`,
-              color: `${getPriorityColor(announcement.description.priority)}.dark`
-            }}
-          >
-            {announcement.description.priority.toUpperCase()}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4">
+            {announcement.title}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            By {announcement.description.author}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              Posted by {announcement.creator_id}
+            </Typography>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DateTimePicker
+                label="Posted On"
+                value={dayjs(announcement.created_at)}
+                readOnly
+                sx={{ width: 200 }}
+              />
+            </LocalizationProvider>
+          </Box>
         </Box>
 
-        <LocalizationProvider dateAdapter={AdapterDayjs}>
-          <DateTimePicker
-            label="Posted On"
-            value={dayjs(announcement.description.created_at)}
-            readOnly
-            sx={{ mb: 3 }}
-          />
-        </LocalizationProvider>
+        <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {announcement.content.tags.map((tag, index) => (
+            <Typography
+              key={index}
+              variant="body2"
+              sx={{
+                px: 2,
+                py: 1,
+                borderRadius: 2,
+                bgcolor: 'primary.light',
+                color: 'primary.dark'
+              }}
+            >
+              {tag.toUpperCase()}
+            </Typography>
+          ))}
+        </Box>
+
+        {announcement.content.details && (
+          <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+            <Typography variant="h6" gutterBottom>
+              Event Details
+            </Typography>
+            {announcement.content.details.date && (
+              <Typography variant="body1">
+                Date: {announcement.content.details.date}
+              </Typography>
+            )}
+            {announcement.content.details.time && (
+              <Typography variant="body1">
+                Time: {announcement.content.details.time}
+              </Typography>
+            )}
+            {announcement.content.details.venue && (
+              <Typography variant="body1">
+                Venue: {announcement.content.details.venue}
+              </Typography>
+            )}
+          </Box>
+        )}
 
         <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
-          {announcement.description.content}
+          {announcement.content.description}
         </Typography>
 
         {/* Attachments Section */}
-        {announcement.description.attachments && announcement.description.attachments.length > 0 && (
+        {announcement.content.attachments.length > 0 && (
           <Box sx={{ mt: 3, borderTop: 1, borderColor: 'divider', pt: 2 }}>
             <Typography variant="h6" gutterBottom>
               Attachments
@@ -244,7 +214,7 @@ export default function AnnouncementDetailPage({ params }: { params: Promise<{ i
                 mt: 1
               }}
             >
-              {announcement.description.attachments.map((attachment, index) => (
+              {announcement.content.attachments.map((attachment, index) => (
                 <Box 
                   key={index}
                   display="flex" 
@@ -272,7 +242,7 @@ export default function AnnouncementDetailPage({ params }: { params: Promise<{ i
                       flexGrow: 1
                     }}
                   >
-                    {attachment.name}
+                    {attachment.url.split('/').pop()}
                   </Typography>
                 </Box>
               ))}

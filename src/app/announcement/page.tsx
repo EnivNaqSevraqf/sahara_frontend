@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Grid, Card, CardContent, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar, Alert, Paper, CircularProgress } from "@mui/material";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -11,61 +11,97 @@ import AnnouncementIcon from '@mui/icons-material/Announcement';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import axios from 'axios';
+
+interface FormAttachment {
+  file: File;
+  name: string;
+}
+
+interface ApiAttachment {
+  url: string;
+  type: string;
+}
+
+interface ContentDetails {
+  date?: string;
+  time?: string;
+  venue?: string;
+}
+
+interface AnnouncementContent {
+  tags: string[];
+  details?: ContentDetails;
+  attachments: ApiAttachment[];
+  description: string;
+}
+
+interface Announcement {
+  id: number;
+  creator_id: number;
+  created_at: string;
+  title: string;
+  content: AnnouncementContent;
+  url_name?: string;
+}
 
 // Mock data for testing
-const mockAnnouncements = [
+const mockAnnouncements: Announcement[] = [
   {
     id: 1,
+    creator_id: 1,
+    created_at: "2024-03-21 10:00:00",
     title: "Test Announcement 1",
-    description: {
-      content: "This is a test announcement with some content that will be truncated in the list view.",
-      author: "Test User 1",
-      priority: "high",
-      created_at: "2024-03-21T10:00:00Z",
+    content: {
+      tags: ["general", "important"],
+      details: {
+        date: "2024-03-25",
+        time: "14:00",
+        venue: "Main Hall"
+      },
       attachments: [
         {
-          name: "documentqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.pdf",
           url: "http://example.com/document.pdf",
-          type: "application/pdf"
+          type: "document"
         },
         {
-          name: "image.jpg",
           url: "http://example.com/image.jpg",
-          type: "image/jpeg"
-        },
-        {
-          name: "spreadsheet.xlsx",
-          url: "http://example.com/spreadsheet.xlsx",
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          type: "image"
         }
-      ]
+      ],
+      description: "This is a test announcement with some content that will be truncated in the list view."
     }
   },
   {
     id: 2,
+    creator_id: 2,
+    created_at: "2024-03-21 11:00:00",
     title: "Test Announcement 2",
-    description: {
-      content: "Another test announcement with different content and priority level.",
-      author: "Test User 2",
-      priority: "medium",
-      created_at: "2024-03-21T11:00:00Z",
+    content: {
+      tags: ["event", "workshop"],
+      details: {
+        date: "2024-03-26",
+        time: "15:00",
+        venue: "Workshop Room"
+      },
       attachments: [
         {
-          name: "presentation.pptx",
           url: "http://example.com/presentation.pptx",
-          type: "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+          type: "presentation"
         }
-      ]
+      ],
+      description: "Another test announcement with different content and priority level."
     }
   },
   {
     id: 3,
+    creator_id: 3,
+    created_at: "2024-03-21 12:00:00",
     title: "Test Announcement 3",
-    description: {
-      content: "A third test announcement with low priority and more content to test the truncation.",
-      author: "Test User 3",
-      priority: "low",
-      created_at: "2024-03-21T12:00:00Z"
+    content: {
+      tags: ["notice"],
+      attachments: [],
+      description: "A third test announcement with more content to test the truncation."
     }
   }
 ];
@@ -73,23 +109,38 @@ const mockAnnouncements = [
 // Mock function to get user role
 const getUserRole = () => {
   // Replace this with your actual role checking logic
-  return 'student';
+  return 'admin';
 };
 
-interface Attachment {
-  file: File;
-  name: string;
-}
+type Priority = 'high' | 'medium' | 'low';
+
+const isPriority = (value: string): value is Priority => {
+  return value === 'high' || value === 'medium' || value === 'low';
+};
 
 export default function AnnouncementPage() {
   const router = useRouter();
-  const [announcements, setAnnouncements] = useState(mockAnnouncements);
+  const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
-  const [newAnnouncement, setNewAnnouncement] = useState({
+  const [newAnnouncement, setNewAnnouncement] = useState<{
+    title: string;
+    content: {
+      tags: string[];
+      details?: {
+        date?: string;
+        time?: string;
+        venue?: string;
+      };
+      attachments: FormAttachment[];
+      description: string;
+    };
+  }>({
     title: '',
-    content: '',
-    priority: 'medium',
-    attachments: [] as Attachment[]
+    content: {
+      tags: [],
+      attachments: [],
+      description: ''
+    }
   });
   const [snackbar, setSnackbar] = useState({
     open: false,
@@ -117,7 +168,10 @@ export default function AnnouncementPage() {
       }));
       setNewAnnouncement(prev => ({
         ...prev,
-        attachments: [...prev.attachments, ...newAttachments]
+        content: {
+          ...prev.content,
+          attachments: [...prev.content.attachments, ...newAttachments]
+        }
       }));
     }
   };
@@ -125,7 +179,10 @@ export default function AnnouncementPage() {
   const handleRemoveFile = (index: number) => {
     setNewAnnouncement(prev => ({
       ...prev,
-      attachments: prev.attachments.filter((_, i) => i !== index)
+      content: {
+        ...prev.content,
+        attachments: prev.content.attachments.filter((_, i) => i !== index)
+      }
     }));
   };
 
@@ -133,113 +190,65 @@ export default function AnnouncementPage() {
     setOpenCreateDialog(false);
     setNewAnnouncement({
       title: '',
-      content: '',
-      priority: 'medium',
-      attachments: []
+      content: {
+        tags: [],
+        attachments: [],
+        description: ''
+      }
     });
   };
 
   const handleSaveAnnouncement = async () => {
-    // Validate inputs
-    if (!newAnnouncement.title.trim()) {
-      setSnackbar({
-        open: true,
-        message: 'Title cannot be empty',
-        severity: 'error'
-      });
-      return;
-    }
-
-    if (!newAnnouncement.content.trim()) {
-      setSnackbar({
-        open: true,
-        message: 'Content cannot be empty',
-        severity: 'error'
-      });
-      return;
-    }
-
     try {
       const formData = new FormData();
       formData.append('title', newAnnouncement.title);
-      formData.append('content', newAnnouncement.content);
-      formData.append('priority', newAnnouncement.priority);
-      
-      // Append each attachment
-      newAnnouncement.attachments.forEach((attachment, index) => {
-        formData.append(`attachments`, attachment.file);
+      formData.append('content', JSON.stringify(newAnnouncement.content));
+      newAnnouncement.content.attachments.forEach((attachment, index) => {
+        formData.append('attachments', attachment.file);
       });
 
-      const response = await fetch('http://localhost:8000/api/create_announcement', {
-        method: 'POST',
-        body: formData,
+      const response = await axios.post('http://localhost:8000/announcements', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       });
 
-      if (response.ok) {
-        const newAnnouncementData = await response.json();
-        setAnnouncements([newAnnouncementData, ...announcements]);
-        handleCloseCreateDialog();
-        setSnackbar({
-          open: true,
-          message: 'Announcement created successfully',
-          severity: 'success'
-        });
-      } else {
-        throw new Error('Failed to create announcement');
+      if (response.status === 200) {
+        setOpenCreateDialog(false);
+        setSnackbar({ open: true, message: 'Announcement created successfully', severity: 'success' });
+        fetchAnnouncements();
       }
     } catch (error) {
       console.error('Error creating announcement:', error);
-      setSnackbar({
-        open: true,
-        message: 'Failed to create announcement. Please check if the backend server is running.',
-        severity: 'error'
-      });
+      setSnackbar({ open: true, message: 'Failed to create announcement', severity: 'error' });
     }
   };
 
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/announcements');
+      setAnnouncements(response.data);
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      // If server is not available, use mock data
+      setAnnouncements(mockAnnouncements);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
   const handleDeleteAnnouncement = async (announcementId: number) => {
     try {
-      // First check if the backend server is running
-      const serverCheck = await fetch('http://localhost:8000/health', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }).catch(() => null);
-
-      if (!serverCheck) {
-        // If server is not running, delete locally
-        setAnnouncements(announcements.filter(announcement => announcement.id !== announcementId));
-        setSnackbar({
-          open: true,
-          message: 'Backend server not available. Deleted announcement in offline mode.',
-          severity: 'warning'
-        });
-        return;
-      }
-
-      // If server is running, proceed with the actual API call
-      const response = await fetch(`http://localhost:8000/api/delete_announcement/${announcementId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setAnnouncements(announcements.filter(announcement => announcement.id !== announcementId));
-        setSnackbar({
-          open: true,
-          message: 'Announcement deleted successfully',
-          severity: 'success'
-        });
-      } else {
-        throw new Error('Failed to delete announcement');
+      const response = await axios.delete(`http://localhost:8000/announcements/${announcementId}`);
+      if (response.status === 200) {
+        setSnackbar({ open: true, message: 'Announcement deleted successfully', severity: 'success' });
+        fetchAnnouncements();
       }
     } catch (error) {
       console.error('Error deleting announcement:', error);
-      setSnackbar({
-        open: true,
-        message: 'Failed to delete announcement. Please check if the backend server is running.',
-        severity: 'error'
-      });
+      setSnackbar({ open: true, message: 'Failed to delete announcement', severity: 'error' });
     }
   };
 
@@ -315,16 +324,16 @@ export default function AnnouncementPage() {
                 <Box display="flex" alignItems="center" gap={2}>
                   <Typography 
                     variant="body2" 
-                    color={getPriorityColor(announcement.description.priority)}
+                    color={getPriorityColor(announcement.content.tags[0])}
                     sx={{ 
                       px: 1, 
                       py: 0.5, 
                       borderRadius: 1, 
-                      bgcolor: `${getPriorityColor(announcement.description.priority)}.light`,
-                      color: `${getPriorityColor(announcement.description.priority)}.dark`
+                      bgcolor: `${getPriorityColor(announcement.content.tags[0])}.light`,
+                      color: `${getPriorityColor(announcement.content.tags[0])}.dark`
                     }}
                   >
-                    {announcement.description.priority.toUpperCase()}
+                    {announcement.content.tags[0].toUpperCase()}
                   </Typography>
                   {isAdmin && (
                     <Button
@@ -340,19 +349,19 @@ export default function AnnouncementPage() {
                 </Box>
               </Box>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                By {announcement.description.author}
+                By {announcement.creator_id}
               </Typography>
               <LocalizationProvider dateAdapter={AdapterDayjs}>
                 <DateTimePicker
                   label="Posted On"
-                  value={dayjs(announcement.description.created_at)}
+                  value={dayjs(announcement.created_at)}
                   readOnly
                 />
               </LocalizationProvider>
               <Typography variant="body1" sx={{ mt: 2, mb: 2 }}>
-                {announcement.description.content.substring(0, 150)}...
+                {announcement.content.description.substring(0, 150)}...
               </Typography>
-              {announcement.description.attachments && (
+              {announcement.content.attachments.length > 0 && (
                 <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                   <AttachFileIcon sx={{ fontSize: 20, color: 'primary.main' }} />
                   <Typography 
@@ -365,9 +374,9 @@ export default function AnnouncementPage() {
                       maxWidth: '200px'
                     }}
                   >
-                    {announcement.description.attachments.length > 1 
-                      ? `${announcement.description.attachments[0].name} + ${announcement.description.attachments.length - 1} more`
-                      : announcement.description.attachments[0].name}
+                    {announcement.content.attachments.length > 1 
+                      ? `${announcement.content.attachments[0].url} + ${announcement.content.attachments.length - 1} more`
+                      : announcement.content.attachments[0].url}
                   </Typography>
                 </Box>
               )}
@@ -395,40 +404,44 @@ export default function AnnouncementPage() {
         <DialogTitle>Create New Announcement</DialogTitle>
         <DialogContent>
           <TextField
-            autoFocus
-            margin="dense"
-            label="Title"
             fullWidth
-            required
-            error={!newAnnouncement.title.trim()}
-            helperText={!newAnnouncement.title.trim() ? "Title is required" : ""}
+            label="Title"
             value={newAnnouncement.title}
             onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+            sx={{ mb: 2 }}
           />
           <TextField
-            margin="dense"
-            label="Content"
             fullWidth
+            label="Tags (comma-separated)"
+            value={newAnnouncement.content.tags.join(', ')}
+            onChange={(e) => {
+              const tags = e.target.value.split(',').map(tag => tag.trim()).filter(tag => tag);
+              setNewAnnouncement({
+                ...newAnnouncement,
+                content: {
+                  ...newAnnouncement.content,
+                  tags
+                }
+              });
+            }}
+            helperText="Enter tags separated by commas (e.g., important, general, event)"
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="Description"
             multiline
             rows={4}
-            required
-            error={!newAnnouncement.content.trim()}
-            helperText={!newAnnouncement.content.trim() ? "Content is required" : ""}
-            value={newAnnouncement.content}
-            onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
+            value={newAnnouncement.content.description}
+            onChange={(e) => setNewAnnouncement({
+              ...newAnnouncement,
+              content: {
+                ...newAnnouncement.content,
+                description: e.target.value
+              }
+            })}
+            sx={{ mb: 2 }}
           />
-          <TextField
-            select
-            margin="dense"
-            label="Priority"
-            fullWidth
-            value={newAnnouncement.priority}
-            onChange={(e) => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value })}
-          >
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </TextField>
           {/* File Attachment Section */}
           <Box sx={{ mt: 2 }}>
             <input
@@ -448,12 +461,12 @@ export default function AnnouncementPage() {
                 Attach Files
               </Button>
             </label>
-            {newAnnouncement.attachments.length > 0 && (
+            {newAnnouncement.content.attachments.length > 0 && (
               <Box sx={{ mt: 2 }}>
                 <Typography variant="subtitle2" gutterBottom>
                   Attached Files:
                 </Typography>
-                {newAnnouncement.attachments.map((attachment, index) => (
+                {newAnnouncement.content.attachments.map((attachment, index) => (
                   <Box 
                     key={index}
                     display="flex" 
@@ -490,7 +503,7 @@ export default function AnnouncementPage() {
             onClick={handleSaveAnnouncement} 
             variant="contained" 
             color="primary"
-            disabled={!newAnnouncement.title.trim() || !newAnnouncement.content.trim()}
+            disabled={!newAnnouncement.title.trim() || !newAnnouncement.content.description.trim()}
           >
             Create
           </Button>
