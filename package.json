@@ -19,9 +19,11 @@
     "@mui/material-nextjs": "^6.4.3",
     "@toolpad/core": "^0.13.0",
     "axios": "^1.8.4",
+    "mui-color-input": "^6.0.0",
     "mui-tiptap": "^1.18.0",
     "next": "15.2.2",
     "react": "^19.0.0",
+    "react-color": "^2.19.3",
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
