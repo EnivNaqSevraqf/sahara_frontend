@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from "react";
-import { Box, Grid, Card, CardContent, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar, Alert } from "@mui/material";
+import { Box, Grid, Card, CardContent, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Snackbar, Alert, Paper, CircularProgress } from "@mui/material";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
@@ -24,7 +24,7 @@ const mockAnnouncements = [
       created_at: "2024-03-21T10:00:00Z",
       attachments: [
         {
-          name: "document.pdf",
+          name: "documentqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq.pdf",
           url: "http://example.com/document.pdf",
           type: "application/pdf"
         },
@@ -97,12 +97,14 @@ export default function AnnouncementPage() {
     severity: 'success' as 'success' | 'error' | 'warning'
   });
   const isAdmin = getUserRole() === 'admin';
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAnnouncementClick = (announcementId: number) => {
     router.push(`/announcement/${announcementId}`);
   };
 
-  const handleCreateAnnouncement = () => {
+  const handleOpenCreateDialog = () => {
     setOpenCreateDialog(true);
   };
 
@@ -258,247 +260,258 @@ export default function AnnouncementPage() {
     setSnackbar({ ...snackbar, open: false });
   };
 
-  return (
-    <Box display="flex">
-      <Sidebar />
-      <Box flexGrow={1} p={3}>
-        <Box 
-          display="flex" 
-          alignItems="center" 
-          justifyContent="space-between"
-          mb={4}
-          sx={{
-            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-            borderRadius: 2,
-            p: 3,
-            boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)',
-          }}
-        >
-          <Box display="flex" alignItems="center">
-            <AnnouncementIcon sx={{ fontSize: 40, mr: 2, color: 'white' }} />
-            <Typography 
-              variant="h4" 
-              component="h1"
-              sx={{
-                color: 'white',
-                fontWeight: 'bold',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.2)',
-              }}
-            >
-              Announcements
-            </Typography>
-          </Box>
-          {isAdmin && (
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={handleCreateAnnouncement}
-              sx={{
-                backgroundColor: 'white',
-                color: '#2196F3',
-                '&:hover': {
-                  backgroundColor: '#f5f5f5',
-                },
-              }}
-            >
-              Create Announcement
-            </Button>
-          )}
-        </Box>
-        
-        <Grid container spacing={3}>
-          {announcements.map((announcement) => (
-            <Grid item xs={12} key={`announcement-${announcement.id}`}>
-              <Card>
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h6">{announcement.title}</Typography>
-                    <Box display="flex" alignItems="center" gap={2}>
-                      <Typography 
-                        variant="body2" 
-                        color={getPriorityColor(announcement.description.priority)}
-                        sx={{ 
-                          px: 1, 
-                          py: 0.5, 
-                          borderRadius: 1, 
-                          bgcolor: `${getPriorityColor(announcement.description.priority)}.light`,
-                          color: `${getPriorityColor(announcement.description.priority)}.dark`
-                        }}
-                      >
-                        {announcement.description.priority.toUpperCase()}
-                      </Typography>
-                      {isAdmin && (
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          size="small"
-                          startIcon={<DeleteIcon />}
-                          onClick={() => handleDeleteAnnouncement(announcement.id)}
-                        >
-                          Delete
-                        </Button>
-                      )}
-                    </Box>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" gutterBottom>
-                    By {announcement.description.author}
-                  </Typography>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <DateTimePicker
-                      label="Posted On"
-                      value={dayjs(announcement.description.created_at)}
-                      readOnly
-                    />
-                  </LocalizationProvider>
-                  <Typography variant="body1" sx={{ mt: 2, mb: 2 }}>
-                    {announcement.description.content.substring(0, 150)}...
-                  </Typography>
-                  {announcement.description.attachments && (
-                    <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <AttachFileIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                      <Typography variant="body2" color="primary">
-                        {announcement.description.attachments.map(attachment => attachment.name).join(', ')}
-                      </Typography>
-                    </Box>
-                  )}
-                  <Box display="flex" justifyContent="flex-end">
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={() => handleAnnouncementClick(announcement.id)}
-                    >
-                      Read More
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-        {/* Create Announcement Dialog */}
-        <Dialog open={openCreateDialog} onClose={handleCloseCreateDialog}>
-          <DialogTitle>Create New Announcement</DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Title"
-              fullWidth
-              required
-              error={!newAnnouncement.title.trim()}
-              helperText={!newAnnouncement.title.trim() ? "Title is required" : ""}
-              value={newAnnouncement.title}
-              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
-            />
-            <TextField
-              margin="dense"
-              label="Content"
-              fullWidth
-              multiline
-              rows={4}
-              required
-              error={!newAnnouncement.content.trim()}
-              helperText={!newAnnouncement.content.trim() ? "Content is required" : ""}
-              value={newAnnouncement.content}
-              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
-            />
-            <TextField
-              select
-              margin="dense"
-              label="Priority"
-              fullWidth
-              value={newAnnouncement.priority}
-              onChange={(e) => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value })}
+  if (error) {
+    return (
+      <Box>
+        <Typography color="error">{error}</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      {/* Admin Controls */}
+      {isAdmin && (
+        <Box sx={{ mb: 3, display: 'flex', gap: 2 }}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenCreateDialog}
+          >
+            Create Announcement
+          </Button>
+        </Box>
+      )}
+
+      {/* Announcements Grid */}
+      <Grid container spacing={3}>
+        {announcements.map((announcement) => (
+          <Grid item xs={12} md={6} key={announcement.id}>
+            <Paper 
+              elevation={2} 
+              sx={{ 
+                p: 3, 
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                position: 'relative',
+                '&:hover': {
+                  boxShadow: 4,
+                  transform: 'translateY(-2px)',
+                  transition: 'all 0.2s ease-in-out'
+                }
+              }}
             >
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </TextField>
-            {/* File Attachment Section */}
-            <Box sx={{ mt: 2 }}>
-              <input
-                accept="*/*"
-                style={{ display: 'none' }}
-                id="attachment-input"
-                type="file"
-                multiple
-                onChange={handleFileChange}
-              />
-              <label htmlFor="attachment-input">
-                <Button
-                  variant="outlined"
-                  component="span"
-                  startIcon={<AttachFileIcon />}
-                >
-                  Attach Files
-                </Button>
-              </label>
-              {newAnnouncement.attachments.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Attached Files:
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h6">{announcement.title}</Typography>
+                <Box display="flex" alignItems="center" gap={2}>
+                  <Typography 
+                    variant="body2" 
+                    color={getPriorityColor(announcement.description.priority)}
+                    sx={{ 
+                      px: 1, 
+                      py: 0.5, 
+                      borderRadius: 1, 
+                      bgcolor: `${getPriorityColor(announcement.description.priority)}.light`,
+                      color: `${getPriorityColor(announcement.description.priority)}.dark`
+                    }}
+                  >
+                    {announcement.description.priority.toUpperCase()}
                   </Typography>
-                  {newAnnouncement.attachments.map((attachment, index) => (
-                    <Box 
-                      key={index}
-                      display="flex" 
-                      alignItems="center" 
-                      gap={1}
-                      sx={{ 
-                        mb: 1,
-                        p: 1,
-                        bgcolor: 'grey.100',
-                        borderRadius: 1
-                      }}
+                  {isAdmin && (
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      startIcon={<DeleteIcon />}
+                      onClick={() => handleDeleteAnnouncement(announcement.id)}
                     >
-                      <AttachFileIcon sx={{ fontSize: 20 }} />
-                      <Typography variant="body2" sx={{ flexGrow: 1 }}>
-                        {attachment.name}
-                      </Typography>
-                      <Button
-                        size="small"
-                        color="error"
-                        onClick={() => handleRemoveFile(index)}
-                        sx={{ minWidth: 'auto', p: 1 }}
-                      >
-                        ×
-                      </Button>
-                    </Box>
-                  ))}
+                      Delete
+                    </Button>
+                  )}
+                </Box>
+              </Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                By {announcement.description.author}
+              </Typography>
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <DateTimePicker
+                  label="Posted On"
+                  value={dayjs(announcement.description.created_at)}
+                  readOnly
+                />
+              </LocalizationProvider>
+              <Typography variant="body1" sx={{ mt: 2, mb: 2 }}>
+                {announcement.description.content.substring(0, 150)}...
+              </Typography>
+              {announcement.description.attachments && (
+                <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <AttachFileIcon sx={{ fontSize: 20, color: 'primary.main' }} />
+                  <Typography 
+                    variant="body2" 
+                    color="primary"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '200px'
+                    }}
+                  >
+                    {announcement.description.attachments.length > 1 
+                      ? `${announcement.description.attachments[0].name} + ${announcement.description.attachments.length - 1} more`
+                      : announcement.description.attachments[0].name}
+                  </Typography>
                 </Box>
               )}
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseCreateDialog}>Cancel</Button>
-            <Button 
-              onClick={handleSaveAnnouncement} 
-              variant="contained" 
-              color="primary"
-              disabled={!newAnnouncement.title.trim() || !newAnnouncement.content.trim()}
-            >
-              Create
-            </Button>
-          </DialogActions>
-        </Dialog>
+              <Box display="flex" justifyContent="flex-end">
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => handleAnnouncementClick(announcement.id)}
+                >
+                  Read More
+                </Button>
+              </Box>
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
 
-        {/* Snackbar for notifications */}
-        <Snackbar 
-          open={snackbar.open} 
-          autoHideDuration={6000} 
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert 
-            onClose={handleCloseSnackbar} 
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
+      {/* Create Announcement Dialog */}
+      <Dialog 
+        open={openCreateDialog} 
+        onClose={handleCloseCreateDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Create New Announcement</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Title"
+            fullWidth
+            required
+            error={!newAnnouncement.title.trim()}
+            helperText={!newAnnouncement.title.trim() ? "Title is required" : ""}
+            value={newAnnouncement.title}
+            onChange={(e) => setNewAnnouncement({ ...newAnnouncement, title: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Content"
+            fullWidth
+            multiline
+            rows={4}
+            required
+            error={!newAnnouncement.content.trim()}
+            helperText={!newAnnouncement.content.trim() ? "Content is required" : ""}
+            value={newAnnouncement.content}
+            onChange={(e) => setNewAnnouncement({ ...newAnnouncement, content: e.target.value })}
+          />
+          <TextField
+            select
+            margin="dense"
+            label="Priority"
+            fullWidth
+            value={newAnnouncement.priority}
+            onChange={(e) => setNewAnnouncement({ ...newAnnouncement, priority: e.target.value })}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Box>
+            <option value="high">High</option>
+            <option value="medium">Medium</option>
+            <option value="low">Low</option>
+          </TextField>
+          {/* File Attachment Section */}
+          <Box sx={{ mt: 2 }}>
+            <input
+              accept="*/*"
+              style={{ display: 'none' }}
+              id="attachment-input"
+              type="file"
+              multiple
+              onChange={handleFileChange}
+            />
+            <label htmlFor="attachment-input">
+              <Button
+                variant="outlined"
+                component="span"
+                startIcon={<AttachFileIcon />}
+              >
+                Attach Files
+              </Button>
+            </label>
+            {newAnnouncement.attachments.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Attached Files:
+                </Typography>
+                {newAnnouncement.attachments.map((attachment, index) => (
+                  <Box 
+                    key={index}
+                    display="flex" 
+                    alignItems="center" 
+                    gap={1}
+                    sx={{ 
+                      mb: 1,
+                      p: 1,
+                      bgcolor: 'grey.100',
+                      borderRadius: 1
+                    }}
+                  >
+                    <AttachFileIcon sx={{ fontSize: 20 }} />
+                    <Typography variant="body2" sx={{ flexGrow: 1 }}>
+                      {attachment.name}
+                    </Typography>
+                    <Button
+                      size="small"
+                      color="error"
+                      onClick={() => handleRemoveFile(index)}
+                      sx={{ minWidth: 'auto', p: 1 }}
+                    >
+                      ×
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCreateDialog}>Cancel</Button>
+          <Button 
+            onClick={handleSaveAnnouncement} 
+            variant="contained" 
+            color="primary"
+            disabled={!newAnnouncement.title.trim() || !newAnnouncement.content.trim()}
+          >
+            Create
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

@@ -147,150 +147,139 @@ export default function AnnouncementDetailPage({ params }: { params: Promise<{ i
 
   if (loading) {
     return (
-      <Box display="flex">
-        <Sidebar />
-        <Box flexGrow={1} display="flex" justifyContent="center" alignItems="center">
-          <CircularProgress />
-        </Box>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress />
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Box display="flex">
-        <Sidebar />
-        <Box flexGrow={1} p={3}>
-          <Typography color="error">{error}</Typography>
-          <Button 
-            startIcon={<ArrowBackIcon />}
-            onClick={() => router.push('/announcement')}
-            sx={{ mt: 2 }}
-          >
-            Back to Announcements
-          </Button>
-        </Box>
+      <Box>
+        <Typography color="error">{error}</Typography>
+        <Button 
+          startIcon={<ArrowBackIcon />}
+          onClick={() => router.push('/announcement')}
+          sx={{ mt: 2 }}
+        >
+          Back to Announcements
+        </Button>
       </Box>
     );
   }
 
   if (!announcement) {
     return (
-      <Box display="flex">
-        <Sidebar />
-        <Box flexGrow={1} p={3}>
-          <Typography>Announcement not found</Typography>
-          <Button 
-            startIcon={<ArrowBackIcon />}
-            onClick={() => router.push('/announcement')}
-            sx={{ mt: 2 }}
-          >
-            Back to Announcements
-          </Button>
-        </Box>
+      <Box>
+        <Typography>Announcement not found</Typography>
+        <Button 
+          startIcon={<ArrowBackIcon />}
+          onClick={() => router.push('/announcement')}
+          sx={{ mt: 2 }}
+        >
+          Back to Announcements
+        </Button>
       </Box>
     );
   }
 
   return (
-    <Box display="flex">
-      <Sidebar />
-      <Box flexGrow={1} p={3}>
-        <Button 
-          startIcon={<ArrowBackIcon />}
-          onClick={() => router.push('/announcement')}
-          sx={{ mb: 3 }}
-        >
-          Back to Announcements
-        </Button>
+    <Box>
+      <Button 
+        startIcon={<ArrowBackIcon />}
+        onClick={() => router.push('/announcement')}
+        sx={{ mb: 3 }}
+      >
+        Back to Announcements
+      </Button>
 
-        <Paper elevation={3} sx={{ p: 4 }}>
-          <Typography variant="h4" gutterBottom>
-            {announcement.title}
+      <Paper elevation={3} sx={{ p: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          {announcement.title}
+        </Typography>
+
+        <Box display="flex" alignItems="center" gap={2} mb={2}>
+          <Typography 
+            variant="body2" 
+            color={getPriorityColor(announcement.description.priority)}
+            sx={{ 
+              px: 2, 
+              py: 1, 
+              borderRadius: 1, 
+              bgcolor: `${getPriorityColor(announcement.description.priority)}.light`,
+              color: `${getPriorityColor(announcement.description.priority)}.dark`
+            }}
+          >
+            {announcement.description.priority.toUpperCase()}
           </Typography>
+          <Typography variant="body2" color="text.secondary">
+            By {announcement.description.author}
+          </Typography>
+        </Box>
 
-          <Box display="flex" alignItems="center" gap={2} mb={2}>
-            <Typography 
-              variant="body2" 
-              color={getPriorityColor(announcement.description.priority)}
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DateTimePicker
+            label="Posted On"
+            value={dayjs(announcement.description.created_at)}
+            readOnly
+            sx={{ mb: 3 }}
+          />
+        </LocalizationProvider>
+
+        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
+          {announcement.description.content}
+        </Typography>
+
+        {/* Attachments Section */}
+        {announcement.description.attachments && announcement.description.attachments.length > 0 && (
+          <Box sx={{ mt: 3, borderTop: 1, borderColor: 'divider', pt: 2 }}>
+            <Typography variant="h6" gutterBottom>
+              Attachments
+            </Typography>
+            <Box 
               sx={{ 
-                px: 2, 
-                py: 1, 
-                borderRadius: 1, 
-                bgcolor: `${getPriorityColor(announcement.description.priority)}.light`,
-                color: `${getPriorityColor(announcement.description.priority)}.dark`
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: 1.5,
+                mt: 1
               }}
             >
-              {announcement.description.priority.toUpperCase()}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              By {announcement.description.author}
-            </Typography>
-          </Box>
-
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DateTimePicker
-              label="Posted On"
-              value={dayjs(announcement.description.created_at)}
-              readOnly
-              sx={{ mb: 3 }}
-            />
-          </LocalizationProvider>
-
-          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
-            {announcement.description.content}
-          </Typography>
-
-          {/* Attachments Section */}
-          {announcement.description.attachments && announcement.description.attachments.length > 0 && (
-            <Box sx={{ mt: 3, borderTop: 1, borderColor: 'divider', pt: 2 }}>
-              <Typography variant="h6" gutterBottom>
-                Attachments
-              </Typography>
-              <Box 
-                sx={{ 
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                  gap: 1.5,
-                  mt: 1
-                }}
-              >
-                {announcement.description.attachments.map((attachment, index) => (
-                  <Box 
-                    key={index}
-                    display="flex" 
-                    alignItems="center" 
-                    gap={1}
-                    sx={{ 
-                      p: 1.5,
-                      bgcolor: 'grey.100',
-                      borderRadius: 1,
-                      '&:hover': {
-                        bgcolor: 'grey.200',
-                        cursor: 'pointer'
-                      }
+              {announcement.description.attachments.map((attachment, index) => (
+                <Box 
+                  key={index}
+                  display="flex" 
+                  alignItems="center" 
+                  gap={1}
+                  sx={{ 
+                    p: 1.5,
+                    bgcolor: 'grey.100',
+                    borderRadius: 1,
+                    '&:hover': {
+                      bgcolor: 'grey.200',
+                      cursor: 'pointer'
+                    }
+                  }}
+                  onClick={() => window.open(attachment.url, '_blank')}
+                >
+                  <AttachFileIcon sx={{ fontSize: 20, color: 'primary.main', flexShrink: 0 }} />
+                  <Typography 
+                    variant="body2" 
+                    color="primary"
+                    sx={{
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      flexGrow: 1
                     }}
-                    onClick={() => window.open(attachment.url, '_blank')}
                   >
-                    <AttachFileIcon sx={{ fontSize: 20, color: 'primary.main' }} />
-                    <Typography 
-                      variant="body2" 
-                      color="primary"
-                      sx={{
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {attachment.name}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
+                    {attachment.name}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
-          )}
-        </Paper>
-      </Box>
+          </Box>
+        )}
+      </Paper>
     </Box>
   );
 } 
