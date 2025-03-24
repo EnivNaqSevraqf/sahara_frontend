@@ -23,6 +23,7 @@ import StorageIcon from '@mui/icons-material/Storage';
 import WebIcon from '@mui/icons-material/Web';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
+import { useRouter } from 'next/navigation';  
 
 // Skill to color and icon mapping
 const skillsMap = {
@@ -76,6 +77,7 @@ const tas = [
 ];
 
 const TATable = () => {
+  const router = useRouter();
   return (
     <Box sx={{ p: 3 }}>
       {/* Header with notifications and profile */}
@@ -174,6 +176,7 @@ const TATable = () => {
         <Stack spacing={2} sx={{ ml: 2, minWidth: '200px' }}>
           <Button
             variant="contained"
+            onClick={() => router.push('/dashboard_test/people/tas/add')}
             sx={{
               backgroundColor: '#f0f0f0',
               color: '#000',
@@ -186,6 +189,7 @@ const TATable = () => {
           </Button>
           <Button
             variant="contained"
+            onClick={() => router.push('/dashboard_test/people/tas/skills')}
             sx={{
               backgroundColor: '#f0f0f0',
               color: '#000',

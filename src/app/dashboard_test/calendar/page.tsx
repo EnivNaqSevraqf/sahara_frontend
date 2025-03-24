@@ -16,6 +16,7 @@ export default function Calendar(){
         const response = await axios.get("http://localhost:3000/api/events");
         setEvents(response.data);
     }; 
+
     const handleUpdate = () => {
         console.log("Sending events to server");
         console.log("Events: ", Events);
@@ -101,8 +102,8 @@ export default function Calendar(){
             view="month"
             events={Events}
         />
-        <Button onClick={handleUpdate}>Update Calendar</Button>
-        <Button onClick={handleRefresh}>Refresh Calendar</Button>
+            <Button onClick={handleUpdate}>Update Calendar</Button>
+            <Button onClick={handleRefresh}>Refresh Calendar</Button>
         </Stack>
     );
 }

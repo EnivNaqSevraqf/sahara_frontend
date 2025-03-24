@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -21,54 +21,21 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 
-//import Team from './types';
-
-import axios from 'axios';
-
-// Update the Team type to include members
-interface Team {
-  number: number;
-  name: string;
-  details: string;
-  members: string[]; // Add members property
-}
-
 // Sample data for formed teams
-// const formedTeams: Team[] = [
-//   { number: 1, name: 'Ravi and Friends', details: '...', members: ['Member1', 'Member2'] },
-//   { number: 2, name: 'Ravioli', details: '...', members: ['Member3', 'Member4'] },
-// ];
+const formedTeams = [
+  { number: 1, name: 'Ravi and Friends', details: '...' },
+  { number: 2, name: 'Ravioli', details: '...' },
+];
 
 // Sample data for beta test pairs
-// const betaTestPairs = [
-//   { 
-//     pairNumber: '1-2', 
-//     teamNames: 'Ravi and Friends - Ravioli'
-//   },
-// ];
+const betaTestPairs = [
+  { 
+    pairNumber: '1-2', 
+    teamNames: 'Ravi and Friends - Ravioli'
+  },
+];
 
 const TeamsDetails = () => {
-  const [formedTeams, setFormedTeams] = useState<Team[]>([]);
-  const [betaTestPairs, setBetaTestPairs] = useState<any[]>([]); // Adjust type as needed
-
-  useEffect(() => {
-    const fetchStudents = async () => {
-      const response = await axios.get("http://localhost:8000/teams/FormedTeams/");
-      // console.log(response.data);
-      setFormedTeams(response.data);
-      //setBetaTestPairs(response.data.betaTestPairs);
-    };
-
-    const fetchBetaTestPairs = async () => {
-      const response = await axios.get("http://localhost:8000/teams/betaTestPairs/");
-      // console.log(response.data);
-      setBetaTestPairs(response.data);
-    };
-
-    fetchStudents();
-    fetchBetaTestPairs();
-  }, []);
-
   const [isComplete] = useState(true);
   const [betaPairsCreated] = useState(true);
 
@@ -146,7 +113,7 @@ const TeamsDetails = () => {
                 <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                   <TableCell>Team Number</TableCell>
                   <TableCell>Team Name</TableCell>
-                  <TableCell>Members</TableCell> {/* Update column header */}
+                  <TableCell>Member, Project Details</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -154,9 +121,7 @@ const TeamsDetails = () => {
                   <TableRow key={team.number}>
                     <TableCell>{team.number}</TableCell>
                     <TableCell>{team.name}</TableCell>
-                    <TableCell>
-                      {team.members.join(', ')} {/* Display members */}
-                    </TableCell>
+                    <TableCell>{team.details}</TableCell>
                   </TableRow>
                 ))}
                 {[...Array(2)].map((_, index) => (
@@ -256,4 +221,4 @@ const TeamsDetails = () => {
   );
 };
 
-export default TeamsDetails;
+export default TeamsDetails; 

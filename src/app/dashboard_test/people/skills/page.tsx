@@ -20,22 +20,36 @@ import {
   Grid,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+
+// Import icons from Material UI
 import {
+  Web as WebIcon,
   Javascript as JavascriptIcon,
   Code as CodeIcon,
   Storage as StorageIcon,
-  Web as WebIcon,
   DataObject as DataObjectIcon,
   IntegrationInstructions as IntegrationInstructionsIcon,
 } from '@mui/icons-material';
 
-// Define the Skill type first
+// Import ColorInput from mui-color-input
+import ColorInput from 'mui-color-input';
+
+// Define the icon type
+type IconType =
+  | 'WebIcon'
+  | 'JavascriptIcon'
+  | 'CodeIcon'
+  | 'StorageIcon'
+  | 'DataObjectIcon'
+  | 'IntegrationInstructionsIcon';
+
+// Define the Skill type
 type Skill = {
   id: number;
   name: string;
   bgColor: string;
   color: string;
-  icon: "WebIcon" | "JavascriptIcon" | "CodeIcon" | "StorageIcon" | "DataObjectIcon" | "IntegrationInstructionsIcon";
+  icon: IconType;
 };
 
 // Pre-defined skills data
@@ -45,84 +59,108 @@ const initialSkills: Skill[] = [
     name: 'React',
     bgColor: '#61dafb',
     color: '#000000',
-    icon: 'WebIcon'
+    icon: 'WebIcon',
   },
   {
     id: 2,
     name: 'Node.js',
     bgColor: '#43853d',
     color: '#ffffff',
-    icon: 'JavascriptIcon'
+    icon: 'JavascriptIcon',
   },
   {
     id: 3,
     name: 'Python',
     bgColor: '#3776ab',
     color: '#ffffff',
-    icon: 'CodeIcon'
+    icon: 'CodeIcon',
   },
   {
     id: 4,
     name: 'Java',
     bgColor: '#f89820',
     color: '#ffffff',
-    icon: 'IntegrationInstructionsIcon'
+    icon: 'IntegrationInstructionsIcon',
   },
   {
     id: 5,
     name: 'Spring Boot',
     bgColor: '#6AAD3D',
     color: '#ffffff',
-    icon: 'DataObjectIcon'
+    icon: 'DataObjectIcon',
   },
   {
     id: 6,
     name: 'MongoDB',
     bgColor: '#13aa52',
     color: '#ffffff',
-    icon: 'StorageIcon'
-  }
+    icon: 'StorageIcon',
+  },
 ];
 
-const iconComponents = {
+// Map icon types to actual icon components
+const iconComponents: Record<IconType, JSX.Element> = {
   WebIcon: <WebIcon />,
   JavascriptIcon: <JavascriptIcon />,
   CodeIcon: <CodeIcon />,
   StorageIcon: <StorageIcon />,
   DataObjectIcon: <DataObjectIcon />,
-  IntegrationInstructionsIcon: <IntegrationInstructionsIcon />
+  IntegrationInstructionsIcon: <IntegrationInstructionsIcon />,
 };
+
+// List available icons for the dropdown
+const availableIcons = [
+  { value: 'WebIcon', label: 'Web Icon' },
+  { value: 'JavascriptIcon', label: 'JavaScript Icon' },
+  { value: 'CodeIcon', label: 'Code Icon' },
+  { value: 'StorageIcon', label: 'Storage Icon' },
+  { value: 'DataObjectIcon', label: 'Data Object Icon' },
+  { value: 'IntegrationInstructionsIcon', label: 'Integration Icon' },
+];
 
 const SkillsPage = () => {
   const [skills, setSkills] = useState<Skill[]>(initialSkills);
   const [open, setOpen] = useState(false);
+
+  // Default new skill state
   const [newSkill, setNewSkill] = useState<Skill>({
     id: 0,
     name: '',
-    bgColor: '',
-    color: '',
-    icon: 'WebIcon'
+    bgColor: '#000000',
+    color: '#ffffff',
+    icon: 'WebIcon',
   });
 
   const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+
+  const handleClose = () => {
+    // Reset form when closing
+    setNewSkill({
+      id: 0,
+      name: '',
+      bgColor: '#000000',
+      color: '#ffffff',
+      icon: 'WebIcon',
+    });
+    setOpen(false);
+  };
 
   const handleAddSkill = () => {
-    if (newSkill.name && newSkill.bgColor && newSkill.color && newSkill.icon) {
-      const skillToAdd: Skill = {
-        ...newSkill,
-        id: skills.length + 1
-      };
-      setSkills([...skills, skillToAdd]);
-      setNewSkill({
-        id: 0,
-        name: '',
-        bgColor: '',
-        color: '',
-        icon: 'WebIcon'
-      });
-      handleClose();
+    // Validate input fields
+    if (!newSkill.name.trim()) {
+      alert('Please enter a skill name');
+      return;
     }
+
+    // Add the new skill
+    const skillToAdd: Skill = {
+      ...newSkill,
+      id: skills.length + 1,
+    };
+    setSkills([...skills, skillToAdd]);
+
+    // Reset form and close dialog
+    handleClose();
   };
 
   return (
@@ -165,7 +203,13 @@ const SkillsPage = () => {
         <Button
           variant="contained"
           onClick={handleOpen}
-          sx={{ borderRadius: '20px' }}
+          sx={{
+            borderRadius: '20px',
+            bgcolor: '#1976d2',
+            '&:hover': {
+              bgcolor: '#1565c0',
+            },
+          }}
         >
           Add New Skill
         </Button>
@@ -173,8 +217,8 @@ const SkillsPage = () => {
 
       {/* Skills Grid */}
       <Grid container spacing={3}>
-        {skills.map((skill, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+        {skills.map((skill) => (
+          <Grid item xs={12} sm={6} md={4} key={skill.id}>
             <Paper
               sx={{
                 p: 2,
@@ -194,62 +238,90 @@ const SkillsPage = () => {
       </Grid>
 
       {/* Add Skill Dialog */}
-      <Dialog 
-        open={open} 
+      <Dialog
+        open={open}
         onClose={handleClose}
         sx={{
           '& .MuiDialog-paper': {
             borderRadius: '15px',
             p: 2,
-          }
+            minWidth: '400px',
+          },
         }}
         BackdropProps={{
           sx: {
             backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          }
+          },
         }}
       >
         <DialogTitle>Add New Skill</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+            {/* Skill Name */}
             <TextField
               label="Skill Name"
               fullWidth
+              required
               value={newSkill.name}
               onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
+              placeholder="e.g., React"
             />
-            <TextField
-              label="Background Color (hex)"
-              fullWidth
+
+            {/* Background Color (via ColorInput) */}
+            <Typography variant="body2">Background Color</Typography>
+            <ColorInput
               value={newSkill.bgColor}
-              onChange={(e) => setNewSkill({ ...newSkill, bgColor: e.target.value })}
+              onChange={(newValue: string) =>
+                setNewSkill((prev) => ({ ...prev, bgColor: newValue }))
+              }
             />
-            <TextField
-              label="Text Color (hex)"
-              fullWidth
+
+            {/* Text Color (via ColorInput) */}
+            <Typography variant="body2">Text Color</Typography>
+            <ColorInput
               value={newSkill.color}
-              onChange={(e) => setNewSkill({ ...newSkill, color: e.target.value })}
+              onChange={(newValue: string) =>
+                setNewSkill((prev) => ({ ...prev, color: newValue }))
+              }
             />
-            <FormControl fullWidth>
+
+            {/* Icon Selection */}
+            <FormControl fullWidth required>
               <InputLabel>Icon</InputLabel>
               <Select
                 value={newSkill.icon}
-                label="Icon"
-                onChange={(e) => setNewSkill({ ...newSkill, icon: e.target.value as keyof typeof iconComponents })}
+                label="Icon *"
+                onChange={(e) =>
+                  setNewSkill({
+                    ...newSkill,
+                    icon: e.target.value as IconType,
+                  })
+                }
               >
-                <MenuItem value="WebIcon">Web Icon</MenuItem>
-                <MenuItem value="JavascriptIcon">JavaScript Icon</MenuItem>
-                <MenuItem value="CodeIcon">Code Icon</MenuItem>
-                <MenuItem value="StorageIcon">Storage Icon</MenuItem>
-                <MenuItem value="DataObjectIcon">Data Object Icon</MenuItem>
-                <MenuItem value="IntegrationInstructionsIcon">Integration Icon</MenuItem>
+                {availableIcons.map((icon) => (
+                  <MenuItem key={icon.value} value={icon.value}>
+                    {icon.label}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Box>
         </DialogContent>
+
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleAddSkill} variant="contained">
+          <Button onClick={handleClose} sx={{ color: '#666' }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAddSkill}
+            variant="contained"
+            sx={{
+              bgcolor: '#1976d2',
+              '&:hover': {
+                bgcolor: '#1565c0',
+              },
+            }}
+          >
             Add Skill
           </Button>
         </DialogActions>
@@ -258,4 +330,4 @@ const SkillsPage = () => {
   );
 };
 
-export default SkillsPage; 
+export default SkillsPage;

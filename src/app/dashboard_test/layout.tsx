@@ -19,6 +19,7 @@ import { useDemoRouter } from '@toolpad/core/internal';
 import useRouter from 'next/router';
 import { getUserRole, setUserRole, normalizeRole, type UserRole } from '@/utils/roles';
 import { useEffect, useState } from 'react';
+import AuthWrapper from '../../components/AuthWrapper';
 import "../globals.css";
 
 // Define navigation items based on user role
@@ -248,6 +249,7 @@ export default function DashboardLayout({
   const navigation = getUserNavigation(role);
 
   return (
+    <AuthWrapper>
     <Box sx={{ height: '100vh' }} key={key}>
       <AppProvider
         navigation={navigation}
@@ -259,5 +261,6 @@ export default function DashboardLayout({
         </ToolpadDashboardLayout>
       </AppProvider>
     </Box>
+    </AuthWrapper>
   );
 }
