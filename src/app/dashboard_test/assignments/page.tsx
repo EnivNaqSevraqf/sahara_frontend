@@ -17,13 +17,15 @@ import DeleteIcon from "@mui/icons-material/Delete";
 
 interface Assignment {
   name: string;
+  description: string; 
+  file: File | null;
   dueDate: string;
 }
 
 const assignments: Assignment[] = [
-  { name: "C++ Assignment", dueDate: "2025-03-07" },
-  { name: "Bash Script Assignment", dueDate: "2025-03-28" },
-  { name: "Python Programming", dueDate: "2025-04-17" },
+  { name: "C++ Assignment", description: "placeholder", file: null, dueDate: "2025-03-07" },
+  { name: "Bash Script Assignment", description: "placeholder", file: null, dueDate: "2025-03-28" },
+  { name: "Python Programming", description: "placeholder", file: null, dueDate: "2025-04-17" },
 ];
 
 const AssignmentsPage: React.FC = () => {
@@ -94,6 +96,7 @@ const AssignmentsPage: React.FC = () => {
             <Card key={assignment.name} style={{ marginBottom: 16, padding: 16 }}>
               <CardContent>
                 <Typography variant="h6">{assignment.name}</Typography>
+                <Typography color="textSecondary">Description: {assignment.description}</Typography>
                 <Typography color="textSecondary">Due: {assignment.dueDate}</Typography>
 
                 {!submittedFile && (
@@ -173,6 +176,46 @@ const AssignmentsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+
+      <Typography variant="h5" fontWeight="bold" gutterBottom>
+        Previous Assignments
+      </Typography>
+      {assignments.map((assignment) => {
+        const dueDate = new Date(assignment.dueDate);
+        const isPast = dueDate < currentDate;
+        const submittedFile = submissions[assignment.name];
+
+        if (isPast) {
+          return (
+            <Card key={assignment.name} style={{ marginBottom: 16, padding: 16 }}>
+              <CardContent>
+                <Typography variant="h6">{assignment.name}</Typography>
+                <Typography color="textSecondary">Description: {assignment.description}</Typography>
+                <Typography color="textSecondary">Due: {assignment.dueDate}</Typography>
+                {submittedFile && (
+                  <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
+                    Submitted: {submittedFile.name}
+                  </Typography>
+                )}
+                <Button
+                  variant="contained"
+                  startIcon={<DownloadIcon />}
+                  onClick={() => handleDownload(assignment.name)}
+                  disabled={!submittedFile}
+                  style={{
+                    backgroundColor: submittedFile ? "#1E88E5" : "#E0E0E0",
+                    color: submittedFile ? "white" : "#A0A0A0",
+                    marginTop: 10,
+                  }}
+                >
+                  Download Submission
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        }
+      })}
     </div>
   );
 };
