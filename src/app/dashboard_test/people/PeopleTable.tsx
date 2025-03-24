@@ -90,13 +90,6 @@ const PeopleTable = () => {
       </TableContainer>
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-    <Button
-      variant="contained"
-      sx={buttonStyles.secondary}
-      onClick={() => router.push('/dashboard_test/people/add')}
-    >
-      ADD STUDENTS
-    </Button>
   </Box>
     </Box>
   );
