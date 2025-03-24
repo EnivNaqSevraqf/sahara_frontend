@@ -11,9 +11,15 @@ import {
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import Header from './components/Header';
 import { buttonStyles } from './constants/theme';
+import axios from 'axios';
 
 const AddStudents = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    severity: 'success' | 'error';
+    message: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,6 +31,43 @@ const AddStudents = () => {
         alert('Please select a CSV file');
         event.target.value = ''; // Reset input
       }
+    }
+  };
+  const handleSubmit = async () => {
+    if (!selectedFile) {
+      setSubmitStatus({
+        severity: 'error',
+        message: 'Please select a CSV file first'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const response = await axios.post('http://localhost:8000/people/upload-csv/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setSubmitStatus({
+        severity: 'success',
+        message: 'File uploaded successfully!'
+      });
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      setSubmitStatus({
+        severity: 'error',
+        message: 'Failed to upload file. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

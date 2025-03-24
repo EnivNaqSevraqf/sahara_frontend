@@ -15,12 +15,16 @@ import {
 import Header from './components/Header';
 import { buttonStyles, tableStyles } from './constants/theme';
 import type { Student } from './types';
+
+import { useRouter } from 'next/navigation';
 import axios from 'axios';
+// ...existing imports...
 
 // Sample student data
 // +
 
 const PeopleTable = () => {
+  const router = useRouter();
   const [students, setStudents] = useState<Student[]>([]);
 
   useEffect(() => {
@@ -78,14 +82,14 @@ const PeopleTable = () => {
       </TableContainer>
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <Button
-          variant="contained"
-          sx={buttonStyles.secondary}
-          href="/people/add"
-        >
-          ADD STUDENTS
-        </Button>
-      </Box>
+    <Button
+      variant="contained"
+      sx={buttonStyles.secondary}
+      onClick={() => router.push('/dashboard_test/people/add')}
+    >
+      ADD STUDENTS
+    </Button>
+  </Box>
     </Box>
   );
 };
