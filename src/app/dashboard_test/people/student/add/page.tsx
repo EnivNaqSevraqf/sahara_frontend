@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useRef } from 'react';
 import {
   Box,
@@ -7,13 +8,16 @@ import {
   Input,
   IconButton,
   Alert,
+  Button,
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import Header from './components/Header';
-import { buttonStyles } from './constants/theme';
+import Header from '../../components/Header';
+import { buttonStyles } from '../../constants/theme';
 import axios from 'axios';
+import { useRouter } from 'next/navigation';
 
-const AddStudents = () => {
+const AddStudentPage = () => {
+  const router = useRouter();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{
@@ -29,10 +33,11 @@ const AddStudents = () => {
         setSelectedFile(file);
       } else {
         alert('Please select a CSV file');
-        event.target.value = ''; // Reset input
+        event.target.value = '';
       }
     }
   };
+
   const handleSubmit = async () => {
     if (!selectedFile) {
       setSubmitStatus({
@@ -47,7 +52,7 @@ const AddStudents = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post('http://localhost:8000/people/upload-csv/', formData, {
+      const response = await axios.post('http://localhost:8000/student/upload-csv/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -55,12 +60,17 @@ const AddStudents = () => {
 
       setSubmitStatus({
         severity: 'success',
-        message: 'File uploaded successfully!'
+        message: 'Students added successfully!'
       });
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
+      
+      // Redirect to students page after successful upload
+      setTimeout(() => {
+        router.push('/dashboard_test/people/student');
+      }, 2000);
     } catch (error) {
       setSubmitStatus({
         severity: 'error',
@@ -140,17 +150,37 @@ const AddStudents = () => {
         {selectedFile && (
           <Alert 
             severity="success" 
-            sx={{ 
-              width: '100%', 
-              maxWidth: '600px',
-            }}
+            sx={{ width: '100%', maxWidth: '600px' }}
           >
             Successfully selected file: {selectedFile.name}
           </Alert>
         )}
+
+        {submitStatus && (
+          <Alert 
+            severity={submitStatus.severity} 
+            sx={{ width: '100%', maxWidth: '600px' }}
+          >
+            {submitStatus.message}
+          </Alert>
+        )}
+
+        <Button
+          variant="contained"
+          sx={{
+            ...buttonStyles.secondary,
+            width: '100%',
+            maxWidth: '600px',
+            mt: 2
+          }}
+          onClick={handleSubmit}
+          disabled={!selectedFile || isSubmitting}
+        >
+          {isSubmitting ? 'Uploading...' : 'Submit CSV'}
+        </Button>
       </Box>
     </Box>
   );
 };
 
-export default AddStudents; 
+export default AddStudentPage;
