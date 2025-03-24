@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography, 
@@ -10,13 +10,15 @@ import {
   Grid,
   Chip,
   IconButton,
-  TextField
+  TextField,
+  CircularProgress
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
+
 
 interface DocumentType {
   id: number;
@@ -38,6 +40,16 @@ const DocumentSubmissionList: React.FC = () => {
     { id: 5, name: 'Beta Test Report', openDate: new Date('2025-03-30'), dueDate: new Date('2025-04-13'), uploadedFile: null, uploadedOn: null },
     { id: 6, name: 'Final Project Report', dueDate: new Date('2025-04-23'), uploadedFile: null, uploadedOn: null }, // No openDate
   ]);
+
+  // Calculate completion percentage
+  const [completionPercentage, setCompletionPercentage] = useState(0);
+
+  useEffect(() => {
+    const totalDocuments = documents.length;
+    const completedDocuments = documents.filter(doc => doc.uploadedFile !== null).length;
+    const percentage = totalDocuments > 0 ? Math.round((completedDocuments / totalDocuments) * 100) : 0;
+    setCompletionPercentage(percentage);
+  }, [documents]);
 
   const handleUploadClick = (index: number) => {
     if (fileInputRefs.current[index]) {
@@ -157,7 +169,7 @@ const DocumentSubmissionList: React.FC = () => {
               <Box sx={{ mt: 1 }}>
                 <Typography variant="body2" color="success.main" sx={{ display: 'flex', alignItems: 'center' }}>
                   <CheckCircleIcon fontSize="small" sx={{ mr: 0.5 }} />
-                  Uploaded: {formatDate(doc.uploadedOn)} - {doc.uploadedFile.name}
+                  Submitted: {formatDate(doc.uploadedOn)} - {doc.uploadedFile.name}
                 </Typography>
               </Box>
             )}
@@ -190,19 +202,9 @@ const DocumentSubmissionList: React.FC = () => {
                 onClick={() => handleUploadClick(docIndex)}
                 disabled={!isAllowed}
               >
-                Upload Document
+                Submit Document
               </Button>
             )}
-            
-            {/* {doc.uploadedFile && isAllowed && (
-              <Button
-                variant="contained"
-                color="success"
-                sx={{ ml: 1 }}
-              >
-                Submit
-              </Button>
-            )} */}
           </Grid>
         </Grid>
       </Paper>
@@ -218,6 +220,57 @@ const DocumentSubmissionList: React.FC = () => {
           <span style={{ cursor: 'pointer' }}> Documents</span>
         </Typography>
       </Box>
+      
+      {/* Progress chart */}
+      <Paper 
+        elevation={3} 
+        sx={{ p: 3, mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ position: 'relative', display: 'inline-flex', mr: 3 }}>
+            <CircularProgress 
+              variant="determinate" 
+              value={completionPercentage} 
+              size={80} 
+              thickness={4} 
+              color="primary" 
+            />
+            <Box
+              sx={{
+                top: 0,
+                left: 0,
+                bottom: 0,
+                right: 0,
+                position: 'absolute',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Typography variant="h6" component="div" color="text.secondary">
+                {`${completionPercentage}%`}
+              </Typography>
+            </Box>
+          </Box>
+          
+          <Box>
+            <Typography variant="h5" component="div" gutterBottom>
+              Project Progress
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              {documents.filter(doc => doc.uploadedFile !== null).length} of {documents.length} documents submitted
+            </Typography>
+          </Box>
+        </Box>
+        
+        <Box>
+          <Typography variant="body2" color={completionPercentage === 100 ? 'success.main' : 'info.main'}>
+            {completionPercentage === 100 
+              ? 'All documents submitted!' 
+              : `${documents.length - documents.filter(doc => doc.uploadedFile !== null).length} documents remaining`}
+          </Typography>
+        </Box>
+      </Paper>
       
       {/* Ongoing/Upcoming Documents */}
       {(ongoingDocuments.length > 0 || upcomingDocuments.length > 0) && (
