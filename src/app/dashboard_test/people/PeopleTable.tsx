@@ -18,6 +18,14 @@ import type { Student } from './types';
 import axios from 'axios';
 
 // Sample student data
+const STUDENTS: Student[] = [
+  {
+    id: 1,
+    name: "Ravi",
+    email: "test@gmail.com",
+    role: "Student"
+  }
+]
 // +
 
 const PeopleTable = () => {
