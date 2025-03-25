@@ -90,37 +90,39 @@ const PeoplePage = () => {
       >
         Export to Excel
       </Button>
-      {!isLoading && (
-        <TableContainer component={Paper} sx={{ mb: 3, maxHeight: '60vh', overflowY: 'auto' }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow sx={tableStyles.headerCell}>
-                <TableCell>S. No.</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>email</TableCell>
-                <TableCell>Role</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredStudents.map((student) => (
-                <TableRow key={student.id} sx={tableStyles.alternatingRow}>
-                  <TableCell>{student.id}</TableCell>
-                  <TableCell>{student.name}</TableCell>
-                  <TableCell>{student.email}</TableCell>
-                  <TableCell
-                    sx={{
-                      color: student.role === 'Student' ? '#4caf50' : '#f44336',
-                    }}
-                  >
-                    {student.role}
-                  </TableCell>
+      <Box sx={{ mb: 3, maxHeight: '40vh', overflowY: 'auto', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
+        {!isLoading && (
+          <TableContainer component={Paper}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow sx={tableStyles.headerCell}>
+                  <TableCell>S. No.</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>email</TableCell>
+                  <TableCell>Role</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-      <Stack spacing={2} sx={{ position: 'fixed', bottom: 16, left: 16, right: 16 }}>
+              </TableHead>
+              <TableBody>
+                {filteredStudents.map((student) => (
+                  <TableRow key={student.id} sx={tableStyles.alternatingRow}>
+                    <TableCell>{student.id}</TableCell>
+                    <TableCell>{student.name}</TableCell>
+                    <TableCell>{student.email}</TableCell>
+                    <TableCell
+                      sx={{
+                        color: student.role === 'Student' ? '#4caf50' : '#f44336',
+                      }}
+                    >
+                      {student.role}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Box>
+      <Stack spacing={2} sx={{ bottom: 16, left: 16, right: 16 }}>
         <Button
           variant="contained"
           onClick={() => router.push('/dashboard_test/people/add')}
