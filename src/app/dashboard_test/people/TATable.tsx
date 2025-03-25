@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { JSX } from 'react';
 import {
   Box,
   Typography,
@@ -25,8 +25,15 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
 import { useRouter } from 'next/navigation';  
 
+// Define the type for skillsMap
+interface Skill {
+  bgColor: string;
+  color: string;
+  icon: JSX.Element;
+}
+
 // Skill to color and icon mapping
-const skillsMap = {
+const skillsMap: { [key: string]: Skill } = {
   'React': {
     bgColor: '#61dafb',  // Light blue - React's brand color
     color: '#000000',
@@ -159,15 +166,6 @@ const TATable = () => {
                   </TableCell>
                 </TableRow>
               ))}
-              {/* Empty rows with dots */}
-              {[...Array(6)].map((_, index) => (
-                <TableRow key={`empty-${index}`}>
-                  <TableCell>...</TableCell>
-                  <TableCell>...</TableCell>
-                  <TableCell>...</TableCell>
-                  <TableCell>...</TableCell>
-                </TableRow>
-              ))}
             </TableBody>
           </Table>
         </TableContainer>
@@ -218,4 +216,4 @@ const TATable = () => {
   );
 };
 
-export default TATable; 
+export default TATable;

@@ -33,11 +33,21 @@ const STUDENTS: Student[] = [
 
 const PeopleTable = () => {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
 
   useEffect(() => {
     const fetchStudents = async () => {
+      setIsLoading(true);
+      setError(null);
       const response = await axios.get("http://localhost:8000/people/");
+      if (response.status !== 200) {
+        setError("Failed to fetch students data.");
+      } else {
+        setError(null);
+        setIsLoading(false);
+      }
       // console.log(response.data);
       setStudents(response.data);
     };
@@ -46,6 +56,8 @@ const PeopleTable = () => {
   
   return (
     <Box sx={{ p: 3 }}>
+      {/* {isLoading && <Typography>Loading...</Typography>} */}
+      {error && <Typography color="error">{error}</Typography>}
       <Header title="PEOPLE" />
       
       <Typography
@@ -61,7 +73,7 @@ const PeopleTable = () => {
       >
         PEOPLE
       </Typography>
-      
+      {!isLoading && (
       <TableContainer component={Paper} sx={{ mb: 3 }}>
         <Table>
           <TableHead>
@@ -88,6 +100,7 @@ const PeopleTable = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      )}
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
   </Box>
