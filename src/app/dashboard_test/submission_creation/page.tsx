@@ -14,7 +14,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogContentText,
+DialogContentText,
   DialogActions,
   IconButton
 } from '@mui/material';
@@ -51,9 +51,9 @@ const EventCreationApp: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
-  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
-  const [eventToDelete, setEventToDelete] = useState<number | null>(null);
+    const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
+    const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+    const [eventToDelete, setEventToDelete] = useState<number | null>(null);
 
   // Handle file input
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,7 +73,7 @@ const EventCreationApp: React.FC = () => {
 
     // Validate that opensAt (if provided) is before due date
     if (opensAt && opensAt.isAfter(dueDate)) {
-      setIsValidationDialogOpen(true);
+      alert('Opens at date must be before or equal to the due date');
       return;
     }
 
@@ -174,7 +174,7 @@ const EventCreationApp: React.FC = () => {
       <Container maxWidth="md">
         <Box sx={{ my: 4 }}>
           <Typography variant="h4" component="h1" gutterBottom>
-            Create New Assignment
+            Create New Submittable
           </Typography>
 
           <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
@@ -262,14 +262,14 @@ const EventCreationApp: React.FC = () => {
                   fullWidth
                   onClick={handlePublishEvent}
                 >
-                  Publish Assignment
+                  Publish Submittable
                 </Button>
               </Grid>
             </Grid>
           </Paper>
 
           <Typography variant="h5" component="h2" gutterBottom>
-            Previous Assignments
+            Previous Submittables
           </Typography>
 
           <Paper elevation={3} sx={{ p: 2 }}>
@@ -387,7 +387,7 @@ const EventCreationApp: React.FC = () => {
           </DialogActions>
         </Dialog>
 
-         {/* Delete Confirmation Dialog */}
+          {/* Delete Confirmation Dialog */}
          <Dialog
           open={isDeleteConfirmationOpen}
           onClose={cancelDeleteEvent}

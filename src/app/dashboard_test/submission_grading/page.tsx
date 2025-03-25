@@ -27,7 +27,7 @@ import SearchIcon from '@mui/icons-material/Search';
 interface Assignment {
   id: number;  
   name: string;
-  username: string;
+  teamname: string;
   maxMarks: number;
   submittedFile: File | null;
   grade?: number;
@@ -40,30 +40,30 @@ const AssignmentGradingPage: React.FC = () => {
     // C++ Assignment with different users
     { 
       id: 1,
-      name: "C++ Assignment", 
-      username: "divip23",
+      name: "Design Document", 
+      teamname: "Ravi and friends",
       maxMarks: 50, 
       submittedFile: null 
     },
     { 
-      id: 1,
-      name: "C++ Assignment", 
-      username: "nikhilp23",
+      id: 2,
+      name: "Implementation Document", 
+      teamname: "Happy Coders",
       maxMarks: 50, 
       submittedFile: null 
     },
     // Bash Script Assignment with different users
     { 
-      id: 2,
-      name: "Bash Script Assignment", 
-      username: "divip23",
+      id: 1,
+      name: "Design Document", 
+      teamname: "Happy Coders",
       maxMarks: 30, 
       submittedFile: null 
     },
     { 
       id: 2,
-      name: "Bash Script Assignment", 
-      username: "nikhilp23",
+      name: "Implementation Document", 
+      teamname: "Ravi and friends",
       maxMarks: 30, 
       submittedFile: null 
     }
@@ -82,7 +82,7 @@ const AssignmentGradingPage: React.FC = () => {
   // Group assignments by their ID, filtered by username search
   const groupedAssignments = useMemo(() => {
     const filteredAssignments = assignments.filter(a => 
-      a.username.toLowerCase().includes(usernameSearch.toLowerCase())
+      a.teamname.toLowerCase().includes(usernameSearch.toLowerCase())
     );
 
     return filteredAssignments.reduce((acc, assignment) => {
@@ -111,7 +111,7 @@ const AssignmentGradingPage: React.FC = () => {
         setAssignments(prev => 
           prev.map(assignment => 
             (assignment.id === selectedAssignment.id && 
-             assignment.username === selectedAssignment.username)
+             assignment.teamname === selectedAssignment.teamname)
               ? { ...assignment, grade: gradeValue } 
               : assignment
           )
@@ -136,7 +136,7 @@ const AssignmentGradingPage: React.FC = () => {
       setAssignments(prev => 
         prev.map(assignment => 
           (assignment.id === selectedAssignment.id && 
-           assignment.username === selectedAssignment.username)
+           assignment.teamname === selectedAssignment.teamname)
             ? { ...assignment, comments: commentsInput } 
             : assignment
         )
@@ -158,7 +158,7 @@ const AssignmentGradingPage: React.FC = () => {
         <TextField
           fullWidth
           variant="outlined"
-          label="Search by Username"
+          label="Search by Team Name"
           value={usernameSearch}
           onChange={(e) => setUsernameSearch(e.target.value)}
           InputProps={{
@@ -168,7 +168,7 @@ const AssignmentGradingPage: React.FC = () => {
               </InputAdornment>
             ),
           }}
-          placeholder="Enter username to filter assignments"
+          placeholder="Enter Team Name to filter assignments"
         />
       </Box>
 
@@ -193,11 +193,11 @@ const AssignmentGradingPage: React.FC = () => {
           <AccordionDetails>
             <Box>
               {assignmentGroup.map((assignment, index) => (
-                <Card key={`${assignment.name}-${assignment.username}-${index}`} sx={{ mb: 2 }}>
+                <Card key={`${assignment.name}-${assignment.teamname}-${index}`} sx={{ mb: 2 }}>
                   <CardContent>
                     <Grid container spacing={2} alignItems="center">
                       <Grid item xs={12} md={4}>
-                        <Typography variant="h6">{assignment.username}</Typography>
+                        <Typography variant="h6">{assignment.teamname}</Typography>
                         <Typography variant="body2" color="textSecondary">
                           Max Marks: {assignment.maxMarks}
                         </Typography>
@@ -245,7 +245,7 @@ const AssignmentGradingPage: React.FC = () => {
 
       {/* Grade Dialog */}
       <Dialog open={gradeDialogOpen} onClose={() => setGradeDialogOpen(false)}>
-        <DialogTitle>Grade Assignment</DialogTitle>
+        <DialogTitle>Grade Submission</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -269,7 +269,7 @@ const AssignmentGradingPage: React.FC = () => {
 
       {/* Comments Dialog */}
       <Dialog open={commentsDialogOpen} onClose={() => setCommentsDialogOpen(false)}>
-        <DialogTitle>Assignment Comments</DialogTitle>
+        <DialogTitle>Submission Comments</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
