@@ -112,12 +112,6 @@ const getUserRole = () => {
   return 'admin';
 };
 
-type Priority = 'high' | 'medium' | 'low';
-
-const isPriority = (value: string): value is Priority => {
-  return value === 'high' || value === 'medium' || value === 'low';
-};
-
 export default function AnnouncementPage() {
   const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
@@ -126,11 +120,7 @@ export default function AnnouncementPage() {
     title: string;
     content: {
       tags: string[];
-      details?: {
-        date?: string;
-        time?: string;
-        venue?: string;
-      };
+      details?: ContentDetails;
       attachments: FormAttachment[];
       description: string;
     };
@@ -138,6 +128,11 @@ export default function AnnouncementPage() {
     title: '',
     content: {
       tags: [],
+      details: {
+        date: '',
+        time: '',
+        venue: ''
+      },
       attachments: [],
       description: ''
     }
@@ -192,6 +187,11 @@ export default function AnnouncementPage() {
       title: '',
       content: {
         tags: [],
+        details: {
+          date: '',
+          time: '',
+          venue: ''
+        },
         attachments: [],
         description: ''
       }
@@ -200,23 +200,47 @@ export default function AnnouncementPage() {
 
   const handleSaveAnnouncement = async () => {
     try {
-      const formData = new FormData();
-      formData.append('title', newAnnouncement.title);
-      formData.append('content', JSON.stringify(newAnnouncement.content));
-      newAnnouncement.content.attachments.forEach((attachment, index) => {
-        formData.append('attachments', attachment.file);
+      // Convert attachments to match API format
+      const attachmentPromises = newAnnouncement.content.attachments.map(async (attachment) => {
+        return new Promise<ApiAttachment>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve({
+              url: reader.result as string,
+              type: attachment.file.type
+            });
+          };
+          reader.readAsDataURL(attachment.file);
+        });
       });
 
-      const response = await axios.post('http://localhost:8000/announcements', formData, {
+      const attachments = await Promise.all(attachmentPromises);
+
+      // Create the announcement object with only title and content
+      const announcementData = {
+        title: newAnnouncement.title,
+        content: {
+          tags: newAnnouncement.content.tags,
+          details: newAnnouncement.content.details,
+          attachments: attachments,
+          description: newAnnouncement.content.description
+        }
+      };
+      
+
+      const response = await axios.post('http://localhost:8000/announcements', announcementData, {
         headers: {
-          'Content-Type': 'multipart/form-data',
+          'Content-Type': 'application/json',
         },
+        validateStatus: (status) => status < 500
       });
 
       if (response.status === 200) {
         setOpenCreateDialog(false);
         setSnackbar({ open: true, message: 'Announcement created successfully', severity: 'success' });
         fetchAnnouncements();
+      } else {
+        throw new Error(response.data?.message || 'Failed to create announcement');
       }
     } catch (error) {
       console.error('Error creating announcement:', error);
@@ -252,13 +276,17 @@ export default function AnnouncementPage() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high':
+  const getTagColor = (tag: string | undefined) => {
+    if (!tag) return 'primary';
+    
+    switch (tag.toLowerCase()) {
+      case 'important':
         return 'error';
-      case 'medium':
+      case 'event':
         return 'warning';
-      case 'low':
+      case 'notice':
+        return 'info';
+      case 'workshop':
         return 'success';
       default:
         return 'primary';
@@ -324,16 +352,16 @@ export default function AnnouncementPage() {
                 <Box display="flex" alignItems="center" gap={2}>
                   <Typography 
                     variant="body2" 
-                    color={getPriorityColor(announcement.content.tags[0])}
+                    color={getTagColor(announcement.content?.tags?.[0])}
                     sx={{ 
                       px: 1, 
                       py: 0.5, 
                       borderRadius: 1, 
-                      bgcolor: `${getPriorityColor(announcement.content.tags[0])}.light`,
-                      color: `${getPriorityColor(announcement.content.tags[0])}.dark`
+                      bgcolor: `${getTagColor(announcement.content?.tags?.[0])}.light`,
+                      color: `${getTagColor(announcement.content?.tags?.[0])}.dark`
                     }}
                   >
-                    {announcement.content.tags[0].toUpperCase()}
+                    {(announcement.content?.tags?.[0] || 'general').toUpperCase()}
                   </Typography>
                   {isAdmin && (
                     <Button
@@ -359,9 +387,10 @@ export default function AnnouncementPage() {
                 />
               </LocalizationProvider>
               <Typography variant="body1" sx={{ mt: 2, mb: 2 }}>
-                {announcement.content.description.substring(0, 150)}...
+                {(announcement.content?.description || '').substring(0, 150)}
+                {announcement.content?.description && announcement.content.description.length > 150 ? '...' : ''}
               </Typography>
-              {announcement.content.attachments.length > 0 && (
+              {announcement.content?.attachments?.length > 0 && (
                 <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                   <AttachFileIcon sx={{ fontSize: 20, color: 'primary.main' }} />
                   <Typography 
@@ -374,9 +403,7 @@ export default function AnnouncementPage() {
                       maxWidth: '200px'
                     }}
                   >
-                    {announcement.content.attachments.length > 1 
-                      ? `${announcement.content.attachments[0].url} + ${announcement.content.attachments.length - 1} more`
-                      : announcement.content.attachments[0].url}
+                    {announcement.content.attachments[0].url}
                   </Typography>
                 </Box>
               )}

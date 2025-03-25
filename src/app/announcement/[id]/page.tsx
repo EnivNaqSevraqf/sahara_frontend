@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, use } from 'react';
-import { Box, Typography, Button, Paper, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Paper, CircularProgress, Grid } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -156,7 +156,7 @@ export default function AnnouncementDetailPage({ params }: { params: Promise<{ i
         </Box>
 
         <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          {announcement.content.tags.map((tag, index) => (
+          {announcement.content?.tags?.map((tag, index) => (
             <Typography
               key={index}
               variant="body2"
@@ -173,7 +173,7 @@ export default function AnnouncementDetailPage({ params }: { params: Promise<{ i
           ))}
         </Box>
 
-        {announcement.content.details && (
+        {announcement.content?.details && (
           <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
             <Typography variant="h6" gutterBottom>
               Event Details
@@ -197,56 +197,40 @@ export default function AnnouncementDetailPage({ params }: { params: Promise<{ i
         )}
 
         <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 3 }}>
-          {announcement.content.description}
+          {announcement.content?.description}
         </Typography>
 
-        {/* Attachments Section */}
-        {announcement.content.attachments.length > 0 && (
-          <Box sx={{ mt: 3, borderTop: 1, borderColor: 'divider', pt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Attachments
+        {/* Attachments */}
+        {announcement.content?.attachments?.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Attachments:
             </Typography>
-            <Box 
-              sx={{ 
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                gap: 1.5,
-                mt: 1
-              }}
-            >
+            <Grid container spacing={2}>
               {announcement.content.attachments.map((attachment, index) => (
-                <Box 
-                  key={index}
-                  display="flex" 
-                  alignItems="center" 
-                  gap={1}
-                  sx={{ 
-                    p: 1.5,
-                    bgcolor: 'grey.100',
-                    borderRadius: 1,
-                    '&:hover': {
-                      bgcolor: 'grey.200',
-                      cursor: 'pointer'
-                    }
-                  }}
-                  onClick={() => window.open(attachment.url, '_blank')}
-                >
-                  <AttachFileIcon sx={{ fontSize: 20, color: 'primary.main', flexShrink: 0 }} />
-                  <Typography 
-                    variant="body2" 
-                    color="primary"
+                <Grid item xs={12} key={index}>
+                  <Paper
                     sx={{
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      flexGrow: 1
+                      p: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2,
+                      bgcolor: 'grey.50'
                     }}
                   >
-                    {attachment.url.split('/').pop()}
-                  </Typography>
-                </Box>
+                    <AttachFileIcon sx={{ fontSize: 24, color: 'primary.main' }} />
+                    <Box sx={{ flexGrow: 1 }}>
+                      <Typography variant="body2" color="primary">
+                        {attachment.url}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Type: {attachment.type}
+                      </Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
               ))}
-            </Box>
+            </Grid>
           </Box>
         )}
       </Paper>
