@@ -19,6 +19,7 @@
     "@mui/material": "^6.4.8",
     "@mui/material-nextjs": "^6.4.3",
     "@mui/x-date-pickers": "^7.28.0",
+    "@tailwindcss/oxide-linux-x64-gnu": "^4.0.15",
     "@toolpad/core": "^0.13.0",
     "@types/recharts": "^1.8.29",
     "axios": "^1.8.4",
@@ -39,6 +40,7 @@
     "@types/xlsx": "^0.0.35",
     "eslint": "^9",
     "eslint-config-next": "15.2.2",
+    "lightningcss": "^1.29.3",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import axios from 'axios';
 import {
   Box,
   Container,
@@ -74,10 +75,8 @@ export default function DiscussionPage() {
 
   const fetchUserData = async () => {
     try {
-      const response = await fetch('/discussions', {
-        method: 'POST',
-      });
-      const data = await response.json();
+      const response = await axios.post('http://localhost:8000/discussions');
+      const data = response.data;
       setUserData(data);
       if (data.channels.length > 0) {
         setSelectedChannel(data.channels[0]);
@@ -92,8 +91,8 @@ export default function DiscussionPage() {
   const fetchMessages = async () => {
     if (!selectedChannel) return;
     try {
-      const response = await fetch(`/discussions/channels/${selectedChannel.id}/messages`);
-      const data = await response.json();
+      const response = await axios.get(`http://localhost:8000/discussions/channels/${selectedChannel.id}/messages`);
+      const data = response.data;
       setMessages(data);
       scrollToBottom();
     } catch (error) {
@@ -118,38 +117,21 @@ export default function DiscussionPage() {
 
     wsRef.current = ws;
   };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedChannel || !userData) return;
   
     try {
-      const response = await fetch('/discussions/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: newMessage,
-          channel_id: selectedChannel.id,
-          sender_id: userData.id,
-          message_type: 'text',
-        }),
+      const response = await axios.post('http://localhost:8000/discussions/messages', {
+        content: newMessage,
+        channel_id: selectedChannel.id,
+        sender_id: userData.id,
+        message_type: 'text',
       });
   
-      // Check if response is ok and is json
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Server response was not JSON');
-      }
-  
-      const data = await response.json();
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
-      // Optionally add user feedback here
       alert('Failed to send message. Please try again.');
     }
   };
@@ -163,19 +145,13 @@ export default function DiscussionPage() {
       const base64Data = reader.result?.toString().split(',')[1];
       
       try {
-        await fetch('/discussions/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            content: 'File Upload',
-            channel_id: selectedChannel.id,
-            sender_id: userData.id,
-            message_type: 'file',
-            file_data: base64Data,
-            file_name: file.name,
-          }),
+        await axios.post('http://localhost:8000/discussions/messages', {
+          content: 'File Upload',
+          channel_id: selectedChannel.id,
+          sender_id: userData.id,
+          message_type: 'file',
+          file_data: base64Data,
+          file_name: file.name,
         });
       } catch (error) {
         console.error('Error uploading file:', error);
