@@ -19,14 +19,13 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
+//import FilterListIcon from '@mui/icons-material/FilterList';
 import { useParams } from 'next/navigation';
 
 interface StudentScore {
-  student_id: string;
+  user_id: number;
   name: string;
   score: number;
-  max_score: number;
 }
 
 type Order = 'asc' | 'desc';
@@ -80,18 +79,31 @@ const GradeableScoresPage: React.FC = () => {
 
     const fetchScores = async () => {
       try {
-        setLoading(true);
+        // setLoading(true);
+        const token = localStorage.getItem('token');
+        // if (!token) {
+        //   setError('Authentication required');
+        //   return;
+        // }
+
+        const config = {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+        };
+
         const [gradeableResponse, scoresResponse] = await Promise.all([
-          axios.get(`http://localhost:8000/gradeables/${id}`),
-          axios.get(`http://localhost:8000/gradeables/${id}/scores`)
+          axios.get(`http://localhost:8000/gradeables/${id}`, config),
+          axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)//axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)
         ]);
         
         setGradeableName(gradeableResponse.data.title || 'Untitled Assignment');
         setScores(scoresResponse.data);
         setError(null);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching scores:', error);
-        setError('Failed to load scores. Please try again later.');
+        setError(error.response?.data?.detail || 'Failed to load scores. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -134,7 +146,7 @@ const GradeableScoresPage: React.FC = () => {
   return (
     <Box p={3}>
       <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
-        {gradeableName} - Assignment Scores
+        {gradeableName} - Scores
       </Typography>
       <TableContainer component={Paper}>
         <Toolbar sx={{ backgroundColor: '#f5f9ff' }}>
@@ -143,20 +155,15 @@ const GradeableScoresPage: React.FC = () => {
               Student Results
             </Typography>
           </Box>
-          <Tooltip title="Filter list">
-            <IconButton>
-              <FilterListIcon />
-            </IconButton>
-          </Tooltip>
         </Toolbar>
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>
                 <TableSortLabel
-                  active={orderBy === 'student_id'}
-                  direction={orderBy === 'student_id' ? order : 'asc'}
-                  onClick={createSortHandler('student_id')}
+                  active={orderBy === 'user_id'}
+                  direction={orderBy === 'user_id' ? order : 'asc'}
+                  onClick={createSortHandler('user_id')}
                 >
                   Student ID
                 </TableSortLabel>
@@ -185,12 +192,12 @@ const GradeableScoresPage: React.FC = () => {
             {stableSort(scores, getComparator(order, orderBy))
               .map((score) => (
                 <TableRow 
-                  key={score.student_id}
+                  key={score.user_id}
                   sx={{ '&:hover': { backgroundColor: '#f0f7ff' } }}
                 >
-                  <TableCell>{score.student_id}</TableCell>
+                  <TableCell>{score.user_id}</TableCell>
                   <TableCell>{score.name}</TableCell>
-                  <TableCell>{score.score} / {score.max_score}</TableCell>
+                  <TableCell>{score.score}</TableCell>
                 </TableRow>
               ))}
           </TableBody>
@@ -201,3 +208,4 @@ const GradeableScoresPage: React.FC = () => {
 };
 
 export default GradeableScoresPage;
+

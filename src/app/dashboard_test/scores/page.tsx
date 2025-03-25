@@ -32,12 +32,21 @@ export default function GradeablesListPage() {
     const fetchGradeables = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:8000/gradeables');
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('Authentication required');
+          return;
+        }
+        const config = {
+          headers: { Authorization: `Bearer ${token}` }
+        };
+
+        const response = await axios.get('http://localhost:8000/gradeables', config);
         setGradeables(response.data);
         setError(null);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching gradeables:', error);
-        setError('Failed to load gradeables. Please try again later.');
+        setError(error.response?.data?.detail || 'Failed to load gradeables. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -73,7 +82,7 @@ export default function GradeablesListPage() {
             <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
               <TableCell sx={{ fontWeight: 'bold' }}>Due Date</TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>Total Points</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Maximum Points</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
