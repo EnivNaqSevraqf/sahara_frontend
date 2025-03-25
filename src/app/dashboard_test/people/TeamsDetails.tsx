@@ -16,12 +16,14 @@ import {
   TableHead,
   TableRow,
   InputAdornment,
+  Stack,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import { useRouter } from 'next/navigation';
 
 // Update the Team type to include members
 interface Team {
@@ -45,6 +47,7 @@ const TeamsDetails = () => {
 
   const [isComplete] = useState(true);
   const [betaPairsCreated] = useState(true);
+  const router = useRouter();
 
   const downloadExcel = (data: any[], fileName: string) => {
     // Format the data to ensure members are visible in the Excel file
@@ -78,6 +81,21 @@ const TeamsDetails = () => {
           </Box>
         </Box>
       </Box>
+
+      {/* Main heading */}
+      <Typography
+        variant="h4"
+        component="h2"
+        align="center"
+        sx={{
+          mb: 4,
+          p: 2,
+          border: '1px solid #e0e0e0',
+          borderRadius: '50px',
+        }}
+      >
+        TEAMS DETAILS
+      </Typography>
 
       {/* Status Section */}
       <Paper
@@ -228,6 +246,35 @@ const TeamsDetails = () => {
           )}
         </Box>
       </Box>
+
+      {/* Action Buttons */}
+      <Stack spacing={2} sx={{ mt: 4, minWidth: '200px' }}>
+        <Button
+          variant="contained"
+          onClick={() => router.push('/dashboard_test/people/teams/create')}
+          sx={{
+            backgroundColor: '#f0f0f0',
+            color: '#000',
+            '&:hover': {
+              backgroundColor: '#e0e0e0',
+            },
+          }}
+        >
+          CREATE TEAM
+        </Button>
+        <Button
+          variant="contained"
+          sx={{
+            backgroundColor: '#f0f0f0',
+            color: '#000',
+            '&:hover': {
+              backgroundColor: '#e0e0e0',
+            },
+          }}
+        >
+          VIEW TEAM DETAILS
+        </Button>
+      </Stack>
     </Box>
   );
 };

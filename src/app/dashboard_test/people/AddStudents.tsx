@@ -7,6 +7,7 @@ import {
   Input,
   IconButton,
   Alert,
+  Button,
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import Header from './components/Header';
@@ -148,9 +149,40 @@ const AddStudents = () => {
             Successfully selected file: {selectedFile.name}
           </Alert>
         )}
+
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          sx={{
+            mt: 2,
+            backgroundColor: '#1a73e8',
+            color: '#fff',
+            '&:hover': {
+              backgroundColor: '#1765c1',
+            },
+            px: 4,
+            borderRadius: '4px',
+          }}
+        >
+          {isSubmitting ? 'Uploading...' : 'Upload'}
+        </Button>
+
+        {submitStatus && (
+          <Alert 
+            severity={submitStatus.severity} 
+            sx={{ 
+              width: '100%', 
+              maxWidth: '600px',
+              mt: 2,
+            }}
+          >
+            {submitStatus.message}
+          </Alert>
+        )}
       </Box>
     </Box>
   );
 };
 
-export default AddStudents; 
+export default AddStudents;

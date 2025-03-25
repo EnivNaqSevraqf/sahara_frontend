@@ -133,10 +133,10 @@ const TeamCreationForm = () => {
           <Button
             variant="contained"
             sx={{
-              backgroundColor: '#f0f0f0',
-              color: '#000',
+              backgroundColor: '#1a73e8',
+              color: '#fff',
               '&:hover': {
-                backgroundColor: '#e0e0e0',
+                backgroundColor: '#1765c1',
               },
               px: 4,
               borderRadius: '4px',
@@ -150,4 +150,4 @@ const TeamCreationForm = () => {
   );
 };
 
-export default TeamCreationForm; 
+export default TeamCreationForm;

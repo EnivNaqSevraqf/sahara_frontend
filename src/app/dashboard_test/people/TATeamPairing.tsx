@@ -1,48 +1,36 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
   Paper,
+  Button,
   IconButton,
   Badge,
   Avatar,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Button,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-
-// Sample pairing data
-const teamPairings = [
-  {
-    id: 1,
-    teamName: 'Ravi and Friends',
-    teamEmail: 'bangaram@iitk.ac.in',
-    taAssigned: 'Venkat Raghav',
-    taEmail: 'venkatr@iitk.ac.in',
-  },
-  {
-    id: 2,
-    teamName: 'Nechrozma',
-    teamEmail: 'anant@iitk.ac.in',
-    taAssigned: 'Shubham Gupta',
-    taEmail: 'shubhamg@iitk.ac.in',
-  },
-  // Add more sample data as needed
-];
+import { useRouter } from 'next/navigation';
 
 const TATeamPairing = () => {
+  const router = useRouter();
+  const [isPairing, setIsPairing] = useState(false);
+
+  const handlePairing = () => {
+    setIsPairing(true);
+    // Simulate pairing process
+    setTimeout(() => {
+      setIsPairing(false);
+      alert('TA-team pairing completed successfully!');
+    }, 2000);
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header with notifications and profile */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h6" component="h1">
-          TA - TEAM PAIRING
+          TA TEAM PAIRING
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton>
@@ -69,81 +57,40 @@ const TATeamPairing = () => {
           borderRadius: '50px',
         }}
       >
-        TA - TEAMS PAIRING OVERVIEW
+        TA TEAM PAIRING
       </Typography>
 
-      {/* Table */}
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
-              <TableCell>S. No.</TableCell>
-              <TableCell>Name</TableCell>
-              <TableCell>email ID</TableCell>
-              <TableCell>TA assigned</TableCell>
-              <TableCell>TA email ID</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {teamPairings.map((pairing) => (
-              <TableRow 
-                key={pairing.id}
-                sx={{ '&:nth-of-type(odd)': { backgroundColor: '#fafafa' } }}
-              >
-                <TableCell>{pairing.id}</TableCell>
-                <TableCell>{pairing.teamName}</TableCell>
-                <TableCell>{pairing.teamEmail}</TableCell>
-                <TableCell>{pairing.taAssigned}</TableCell>
-                <TableCell>{pairing.taEmail}</TableCell>
-              </TableRow>
-            ))}
-            {/* Empty rows with dots */}
-            {[...Array(6)].map((_, index) => (
-              <TableRow key={`empty-${index}`}>
-                <TableCell>...</TableCell>
-                <TableCell>...</TableCell>
-                <TableCell>...</TableCell>
-                <TableCell>...</TableCell>
-                <TableCell>...</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Bottom Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+      {/* Pairing Button */}
+      <Paper
+        sx={{
+          p: 3,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 3,
+          backgroundColor: 'white',
+          borderRadius: '8px',
+        }}
+      >
         <Button
           variant="contained"
+          onClick={handlePairing}
+          disabled={isPairing}
           sx={{
-            backgroundColor: '#003366',
-            color: 'white',
+            backgroundColor: '#1a73e8',
+            color: '#fff',
             '&:hover': {
-              backgroundColor: '#002244',
+              backgroundColor: '#1765c1',
             },
-            width: '250px',
-            borderRadius: '20px',
+            px: 4,
+            borderRadius: '4px',
           }}
         >
-          Rematch TA&apos;s with teams
+          {isPairing ? 'Pairing...' : 'Start Pairing'}
         </Button>
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: '#003366',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#002244',
-            },
-            width: '250px',
-            borderRadius: '20px',
-          }}
-        >
-          Finalize TA team pairing
-        </Button>
-      </Box>
+      </Paper>
     </Box>
   );
 };
 
-export default TATeamPairing; 
+export default TATeamPairing;
