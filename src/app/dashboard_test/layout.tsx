@@ -249,7 +249,7 @@ export default function DashboardLayout({
   const navigation = getUserNavigation(role);
 
   return (
-    <AuthWrapper>
+    //<AuthWrapper>
     <Box sx={{ height: '100vh' }} key={key}>
       <AppProvider
         navigation={navigation}
@@ -261,6 +261,6 @@ export default function DashboardLayout({
         </ToolpadDashboardLayout>
       </AppProvider>
     </Box>
-    </AuthWrapper>
+    //</AuthWrapper>
   );
 }
