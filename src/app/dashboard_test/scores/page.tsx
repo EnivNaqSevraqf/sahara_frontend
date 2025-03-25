@@ -13,7 +13,8 @@ import {
   TableHead,
   TableRow,
   CircularProgress,
-  Alert
+  Alert,
+  Button
 } from '@mui/material';
 
 interface IGradeable {
@@ -73,9 +74,19 @@ export default function GradeablesListPage() {
 
   return (
     <Box p={3}>
-      <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
-        Gradeables
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
+          Gradeables
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => window.location.href = '/dashboard_test/scores/create_gradable'}
+          sx={{ mb: 2 }}
+        >
+          Create New Gradeable
+        </Button>
+      </Box>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
