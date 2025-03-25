@@ -26,8 +26,7 @@ const Header = ({ title }: HeaderProps) => {
           </Badge>
         </IconButton>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Avatar src="/path-to-profile-image.jpg" />
-          <Typography>Indranil Saha</Typography>
+          
         </Box>
       </Box>
     </Box>
