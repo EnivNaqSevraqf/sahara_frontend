@@ -17,17 +17,21 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  TableSortLabel,
+  Toolbar,
+  IconButton,
+  Tooltip,
   CircularProgress,
   Alert,
 } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import { useRouter } from 'next/router';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import axios from 'axios';
 import Header from './components/Header';
 import { tableStyles } from './constants/theme';
 import type { Student } from './types';
 import { SelectChangeEvent } from '@mui/material/Select';
 import * as XLSX from 'xlsx';
+import { useRouter } from 'next/navigation';
 import Auth from '../../../utils/auth';
 
 const PeoplePage = () => {
@@ -36,6 +40,8 @@ const PeoplePage = () => {
   const [error, setError] = useState<string | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [filter, setFilter] = useState('');
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [orderBy, setOrderBy] = useState<keyof Student>('name');
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -70,9 +76,35 @@ const PeoplePage = () => {
     setFilter(event.target.value as string);
   };
 
+  const handleRequestSort = (
+    event: React.MouseEvent<unknown>,
+    property: keyof Student,
+  ) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const createSortHandler = (property: keyof Student) => (
+    event: React.MouseEvent<unknown>,
+  ) => {
+    handleRequestSort(event, property);
+  };
+
+  const sortedStudents = [...students].sort((a, b) => {
+    if (orderBy === 'id' || orderBy === 'name' || orderBy === 'email' || orderBy === 'role') {
+      if (order === 'asc') {
+        return a[orderBy] > b[orderBy] ? 1 : -1;
+      } else {
+        return a[orderBy] < b[orderBy] ? 1 : -1;
+      }
+    }
+    return 0;
+  });
+
   const filteredStudents = filter
-    ? students.filter((student) => student.role === filter)
-    : students;
+    ? sortedStudents.filter((student) => student.role === filter)
+    : sortedStudents;
 
   const downloadExcel = () => {
     const worksheet = XLSX.utils.json_to_sheet(filteredStudents);
@@ -125,13 +157,57 @@ if (isLoading) {
       <Box sx={{ mb: 3, maxHeight: '40vh', overflowY: 'auto', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
         {!isLoading && (
           <TableContainer component={Paper}>
+            <Toolbar sx={{ backgroundColor: '#f5f9ff' }}>
+              <Box flexGrow={1}>
+                <Typography variant="h6" component="div">
+                  Student Results
+                </Typography>
+              </Box>
+              <Tooltip title="Filter list">
+                <IconButton>
+                  <FilterListIcon />
+                </IconButton>
+              </Tooltip>
+            </Toolbar>
             <Table stickyHeader>
               <TableHead>
                 <TableRow sx={tableStyles.headerCell}>
-                  <TableCell>S. No.</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>email</TableCell>
-                  <TableCell>Role</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    <TableSortLabel
+                      active={orderBy === 'id'}
+                      direction={orderBy === 'id' ? order : 'asc'}
+                      onClick={createSortHandler('id')}
+                    >
+                      S. No.
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    <TableSortLabel
+                      active={orderBy === 'name'}
+                      direction={orderBy === 'name' ? order : 'asc'}
+                      onClick={createSortHandler('name')}
+                    >
+                      Name
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    <TableSortLabel
+                      active={orderBy === 'email'}
+                      direction={orderBy === 'email' ? order : 'asc'}
+                      onClick={createSortHandler('email')}
+                    >
+                      email
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    <TableSortLabel
+                      active={orderBy === 'role'}
+                      direction={orderBy === 'role' ? order : 'asc'}
+                      onClick={createSortHandler('role')}
+                    >
+                      Role
+                    </TableSortLabel>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -154,7 +230,7 @@ if (isLoading) {
           </TableContainer>
         )}
       </Box>
-      <Stack spacing={2} sx={{ bottom: 16, left: 16, right: 16 }}>
+      <Stack spacing={2} sx={{ position: 'fixed', bottom: 16, left: 16, right: 16 }}>
         <Button
           variant="contained"
           onClick={() => router.push('/dashboard_test/people/add')}
