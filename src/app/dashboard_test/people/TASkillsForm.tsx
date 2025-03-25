@@ -1,21 +1,28 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
   Paper,
+  TextField,
+  Button,
   IconButton,
   Badge,
   Avatar,
-  Button,
-  Stack,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import TextFieldsIcon from '@mui/icons-material/TextFields';
-import ImageIcon from '@mui/icons-material/Image';
+import { useRouter } from 'next/navigation';
 
 const TASkillsForm = () => {
+  const router = useRouter();
+  const [skills, setSkills] = useState('');
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    // Handle form submission logic here
+    console.log('Skills:', skills);
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Header with notifications and profile */}
@@ -48,107 +55,52 @@ const TASkillsForm = () => {
           borderRadius: '50px',
         }}
       >
-        TEACHING ASSISTANTS SKILLS FORM
+        TA SKILLS FORM
       </Typography>
 
-      {/* Action Buttons at the top */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Button
-          variant="contained"
-          startIcon={<CalendarMonthIcon />}
-          sx={{
-            backgroundColor: '#003366',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#002244',
-            },
-            width: '200px',
-          }}
-        >
-          Add deadline
-        </Button>
-        <Button
-          variant="contained"
-          startIcon={<TextFieldsIcon />}
-          sx={{
-            backgroundColor: '#003366',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#002244',
-            },
-            width: '200px',
-          }}
-        >
-          Add text
-        </Button>
-      </Box>
-
-      {/* Form Content Area */}
+      {/* Form */}
       <Paper
+        component="form"
+        onSubmit={handleSubmit}
         sx={{
           p: 3,
-          mb: 4,
-          minHeight: '300px',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: '1px solid #e0e0e0',
+          gap: 3,
+          backgroundColor: 'white',
           borderRadius: '8px',
         }}
       >
-        {/* Gray drag and drop area */}
-        <Box
+        <TextField
+          label="Enter Skills"
+          variant="outlined"
+          fullWidth
+          value={skills}
+          onChange={(e) => setSkills(e.target.value)}
           sx={{
-            width: '100%',
-            height: '150px',
-            backgroundColor: '#f5f5f5',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '2px dashed #ccc',
+            '& .MuiOutlinedInput-root': {
+              borderRadius: '8px',
+            },
+          }}
+        />
+        <Button
+          type="submit"
+          variant="contained"
+          sx={{
+            backgroundColor: '#1a73e8',
+            color: '#fff',
+            '&:hover': {
+              backgroundColor: '#1765c1',
+            },
+            px: 4,
             borderRadius: '4px',
           }}
         >
-          <ImageIcon sx={{ fontSize: 40, color: '#666', mb: 1 }} />
-          <Typography color="textSecondary">
-            Drag and drop images required (currently empty)
-          </Typography>
-        </Box>
+          Submit
+        </Button>
       </Paper>
-
-      {/* Bottom Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: '#003366',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#002244',
-            },
-            width: '200px',
-          }}
-        >
-          Publish form
-        </Button>
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: '#003366',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#002244',
-            },
-            width: '300px',
-          }}
-        >
-          Finalize data and match teams with TA
-        </Button>
-      </Box>
     </Box>
   );
 };
 
-export default TASkillsForm; 
+export default TASkillsForm;

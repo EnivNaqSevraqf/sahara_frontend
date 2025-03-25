@@ -18,9 +18,9 @@ import {
 
 interface IGradeable {
   id: string;
-  name: string;
+  title: string;
   due_date: string;
-  total_points: number;
+  max_points: number;
 }
 
 export default function GradeablesListPage() {
@@ -64,16 +64,16 @@ export default function GradeablesListPage() {
 
   return (
     <Box p={3}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
         Gradeables
       </Typography>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
-            <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Due Date</TableCell>
-              <TableCell>Total Points</TableCell>
+            <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Due Date</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>Total Points</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -83,10 +83,11 @@ export default function GradeablesListPage() {
                 hover
                 onClick={() => window.location.href = `/dashboard_test/scores/${gradeable.id}`}
                 style={{ cursor: 'pointer' }}
+                sx={{ '&:hover': { backgroundColor: '#f0f7ff !important' } }}
               >
-                <TableCell>{gradeable.name}</TableCell>
+                <TableCell>{gradeable.title}</TableCell>
                 <TableCell>{new Date(gradeable.due_date).toLocaleDateString()}</TableCell>
-                <TableCell>{gradeable.total_points}</TableCell>
+                <TableCell>{gradeable.max_points}</TableCell>
               </TableRow>
             ))}
           </TableBody>

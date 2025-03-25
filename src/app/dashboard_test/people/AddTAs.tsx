@@ -1,40 +1,85 @@
 'use client';
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Box,
   Typography,
   Paper,
-  IconButton,
-  Badge,
-  Avatar,
   Input,
-  InputAdornment,
+  IconButton,
+  Alert,
+  Button,
 } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import Header from './components/Header';
+import { buttonStyles } from './constants/theme';
+import axios from 'axios';
 
 const AddTAs = () => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    severity: 'success' | 'error';
+    message: string;
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
+        setSelectedFile(file);
+      } else {
+        alert('Please select a CSV file');
+        event.target.value = ''; // Reset input
+      }
+    }
+  };
+  const handleSubmit = async () => {
+    if (!selectedFile) {
+      setSubmitStatus({
+        severity: 'error',
+        message: 'Please select a CSV file first'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    try {
+      const response = await axios.post('http://localhost:8000/people/upload-csv/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setSubmitStatus({
+        severity: 'success',
+        message: 'File uploaded successfully!'
+      });
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      setSubmitStatus({
+        severity: 'error',
+        message: 'Failed to upload file. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header with notifications and profile */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h6" component="h1">
-          ADD TAs
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton>
-            <Badge badgeContent={1} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src="/path-to-profile-image.jpg" />
-            <Typography>Indranil Saha</Typography>
-          </Box>
-        </Box>
-      </Box>
+      <Header title="ADD TAs" />
 
-      {/* Main heading */}
       <Typography
         variant="h4"
         component="h2"
@@ -49,12 +94,12 @@ const AddTAs = () => {
         ADD TAs
       </Typography>
 
-      {/* File upload section */}
       <Box
         sx={{
           display: 'flex',
-          justifyContent: 'center',
-          mt: 4,
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2,
         }}
       >
         <Paper
@@ -72,23 +117,72 @@ const AddTAs = () => {
             fullWidth
             disableUnderline
             sx={{ px: 2 }}
+            value={selectedFile ? selectedFile.name : ''}
             readOnly
           />
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept=".csv"
+            style={{ display: 'none' }}
+          />
           <IconButton
+            onClick={handleAttachClick}
             sx={{
-              backgroundColor: '#f5f5f5',
+              ...buttonStyles.secondary,
               borderRadius: '4px',
-              '&:hover': {
-                backgroundColor: '#e0e0e0',
-              },
             }}
           >
             <AttachFileIcon />
           </IconButton>
         </Paper>
+
+        {selectedFile && (
+          <Alert 
+            severity="success" 
+            sx={{ 
+              width: '100%', 
+              maxWidth: '600px',
+            }}
+          >
+            Successfully selected file: {selectedFile.name}
+          </Alert>
+        )}
+
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          sx={{
+            mt: 2,
+            backgroundColor: '#1a73e8',
+            color: '#fff',
+            '&:hover': {
+              backgroundColor: '#1765c1',
+            },
+            px: 4,
+            borderRadius: '4px',
+          }}
+        >
+          {isSubmitting ? 'Uploading...' : 'Upload'}
+        </Button>
+
+        {submitStatus && (
+          <Alert 
+            severity={submitStatus.severity} 
+            sx={{ 
+              width: '100%', 
+              maxWidth: '600px',
+              mt: 2,
+            }}
+          >
+            {submitStatus.message}
+          </Alert>
+        )}
       </Box>
     </Box>
   );
 };
 
-export default AddTAs; 
+export default AddTAs;
