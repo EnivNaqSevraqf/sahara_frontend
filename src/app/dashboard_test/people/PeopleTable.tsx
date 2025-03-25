@@ -56,10 +56,7 @@ const PeopleTable = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-<<<<<<< HEAD
       {isLoading && <Typography>Loading...</Typography>}
-=======
->>>>>>> 7d052b72009a82e4a438c17355e4044cd0127e6f
       {error && <Typography color="error">{error}</Typography>}
       <Header title="PEOPLE" />
       <Typography
