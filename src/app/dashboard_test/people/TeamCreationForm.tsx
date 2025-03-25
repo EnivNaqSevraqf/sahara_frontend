@@ -21,14 +21,9 @@ const TeamCreationForm = () => {
           TEAM CREATION FORM
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton>
-            <Badge badgeContent={1} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
+          
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src="/path-to-profile-image.jpg" />
-            <Typography>Indranil Saha</Typography>
+            
           </Box>
         </Box>
       </Box>
@@ -133,10 +128,10 @@ const TeamCreationForm = () => {
           <Button
             variant="contained"
             sx={{
-              backgroundColor: '#f0f0f0',
-              color: '#000',
+              backgroundColor: '#1a73e8',
+              color: '#fff',
               '&:hover': {
-                backgroundColor: '#e0e0e0',
+                backgroundColor: '#1765c1',
               },
               px: 4,
               borderRadius: '4px',
@@ -150,4 +145,4 @@ const TeamCreationForm = () => {
   );
 };
 
-export default TeamCreationForm; 
+export default TeamCreationForm;

@@ -1,154 +1,128 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
   Paper,
-  IconButton,
-  Badge,
-  Avatar,
   Button,
-  Stack,
+  Chip,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+  SelectChangeEvent,
 } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import TextFieldsIcon from '@mui/icons-material/TextFields';
-import ImageIcon from '@mui/icons-material/Image';
+import { useRouter } from 'next/navigation';
+
+const predefinedSkills = [
+  { label: 'React', color: '#61dafb' },
+  { label: 'Node.js', color: '#43853d' },
+  { label: 'Python', color: '#3776ab' },
+  { label: 'Java', color: '#f89820' },
+  { label: 'Spring Boot', color: '#6AAD3D' },
+  { label: 'MongoDB', color: '#13aa52' },
+  { label: 'Angular', color: '#dd1b16' },
+  { label: 'Vue.js', color: '#42b883' },
+  { label: 'Django', color: '#092e20' },
+  { label: 'Flask', color: '#000000' },
+  { label: 'Ruby on Rails', color: '#cc0000' },
+  { label: 'ASP.NET', color: '#512bd4' },
+  { label: 'Laravel', color: '#ff2d20' },
+  { label: 'GraphQL', color: '#e10098' },
+  { label: 'TypeScript', color: '#007acc' },
+  { label: 'Kotlin', color: '#0095d5' },
+  { label: 'Swift', color: '#f05138' },
+  { label: 'Go', color: '#00add8' },
+  { label: 'Rust', color: '#dea584' },
+  { label: 'C++', color: '#00599c' },
+  { label: 'C#', color: '#68217a' },
+  { label: 'PHP', color: '#777bb4' },
+  { label: 'SQL', color: '#e38c00' },
+  { label: 'NoSQL', color: '#a6e22e' },
+  { label: 'Docker', color: '#2496ed' },
+  { label: 'Kubernetes', color: '#326ce5' },
+  { label: 'AWS', color: '#ff9900' },
+  { label: 'Azure', color: '#0078d4' },
+  { label: 'GCP', color: '#4285f4' },
+];
 
 const TASkillsForm = () => {
+  const router = useRouter();
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+
+  const handleSkillChange = (event: SelectChangeEvent<string[]>) => {
+    setSelectedSkills(event.target.value as string[]);
+  };
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    // Handle form submission logic here
+    console.log('Selected Skills:', selectedSkills);
+  };
+
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header with notifications and profile */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h6" component="h1">
-          TA SKILLS FORM
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton>
-            <Badge badgeContent={1} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src="/path-to-profile-image.jpg" />
-            <Typography>Indranil Saha</Typography>
-          </Box>
-        </Box>
-      </Box>
-
-      {/* Main heading */}
-      <Typography
-        variant="h4"
-        component="h2"
-        align="center"
-        sx={{
-          mb: 4,
-          p: 2,
-          border: '1px solid #e0e0e0',
-          borderRadius: '50px',
-        }}
-      >
-        TEACHING ASSISTANTS SKILLS FORM
+    <Box sx={{ p: 3, maxWidth: '600px', margin: '0 auto' }}>
+      <Typography variant="h4" component="h1" align="center" gutterBottom>
+        TA Skills Form
       </Typography>
-
-      {/* Action Buttons at the top */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Button
-          variant="contained"
-          startIcon={<CalendarMonthIcon />}
-          sx={{
-            backgroundColor: '#003366',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#002244',
-            },
-            width: '200px',
-          }}
-        >
-          Add deadline
-        </Button>
-        <Button
-          variant="contained"
-          startIcon={<TextFieldsIcon />}
-          sx={{
-            backgroundColor: '#003366',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#002244',
-            },
-            width: '200px',
-          }}
-        >
-          Add text
-        </Button>
-      </Box>
-
-      {/* Form Content Area */}
       <Paper
+        component="form"
+        onSubmit={handleSubmit}
         sx={{
           p: 3,
-          mb: 4,
-          minHeight: '300px',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          border: '1px solid #e0e0e0',
+          gap: 3,
+          backgroundColor: 'white',
           borderRadius: '8px',
+          boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
         }}
       >
-        {/* Gray drag and drop area */}
-        <Box
+        <FormControl fullWidth>
+          <InputLabel id="skills-label">Select Skills</InputLabel>
+          <Select
+            labelId="skills-label"
+            multiple
+            value={selectedSkills}
+            onChange={handleSkillChange}
+            renderValue={(selected) => (
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {(selected as string[]).map((value) => (
+                  <Chip
+                    key={value}
+                    label={value}
+                    sx={{ backgroundColor: predefinedSkills.find(skill => skill.label === value)?.color, color: '#fff' }}
+                  />
+                ))}
+              </Box>
+            )}
+          >
+            {predefinedSkills.map((skill) => (
+              <MenuItem key={skill.label} value={skill.label}>
+                {skill.label}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Button
+          type="submit"
+          variant="contained"
           sx={{
-            width: '100%',
-            height: '150px',
-            backgroundColor: '#f5f5f5',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '2px dashed #ccc',
+            backgroundColor: '#1765c1',
+            color: '#fff',
+            '&:hover': {
+              backgroundColor: '#154a8a',
+            },
+            px: 2,
             borderRadius: '4px',
+            alignSelf: 'center',
           }}
         >
-          <ImageIcon sx={{ fontSize: 40, color: '#666', mb: 1 }} />
-          <Typography color="textSecondary">
-            Drag and drop images required (currently empty)
-          </Typography>
-        </Box>
+          Submit
+        </Button>
       </Paper>
-
-      {/* Bottom Action Buttons */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: '#003366',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#002244',
-            },
-            width: '200px',
-          }}
-        >
-          Publish form
-        </Button>
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: '#003366',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: '#002244',
-            },
-            width: '300px',
-          }}
-        >
-          Finalize data and match teams with TA
-        </Button>
-      </Box>
     </Box>
   );
 };
 
-export default TASkillsForm; 
+export default TASkillsForm;

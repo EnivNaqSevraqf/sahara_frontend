@@ -19,14 +19,13 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
-import { useParams } from 'react-router-dom';
+//import FilterListIcon from '@mui/icons-material/FilterList';
+import { useParams } from 'next/navigation';
 
 interface StudentScore {
-  student_id: string;
+  user_id: number;
   name: string;
-  total_score: number;
-  max_score: number;
+  score: number;
 }
 
 type Order = 'asc' | 'desc';
@@ -80,18 +79,31 @@ const GradeableScoresPage: React.FC = () => {
 
     const fetchScores = async () => {
       try {
-        setLoading(true);
+        // setLoading(true);
+        const token = localStorage.getItem('token');
+        // if (!token) {
+        //   setError('Authentication required');
+        //   return;
+        // }
+
+        const config = {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+        };
+
         const [gradeableResponse, scoresResponse] = await Promise.all([
-          axios.get(`/api/gradeables/${id}`),
-          axios.get(`/api/gradeables/${id}/scores`)
+          axios.get(`http://localhost:8000/gradeables/${id}`, config),
+          axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)//axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)
         ]);
         
-        setGradeableName(gradeableResponse.data.name);
+        setGradeableName(gradeableResponse.data.title || 'Untitled Assignment');
         setScores(scoresResponse.data);
         setError(null);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching scores:', error);
-        setError('Failed to load scores. Please try again later.');
+        setError(error.response?.data?.detail || 'Failed to load scores. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -133,35 +145,30 @@ const GradeableScoresPage: React.FC = () => {
 
   return (
     <Box p={3}>
-      <Typography variant="h4" gutterBottom>
-        {gradeableName} - Assignment Scores
+      <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
+        {gradeableName} - Scores
       </Typography>
       <TableContainer component={Paper}>
-        <Toolbar>
+        <Toolbar sx={{ backgroundColor: '#f5f9ff' }}>
           <Box flexGrow={1}>
             <Typography variant="h6" component="div">
               Student Results
             </Typography>
           </Box>
-          <Tooltip title="Filter list">
-            <IconButton>
-              <FilterListIcon />
-            </IconButton>
-          </Tooltip>
         </Toolbar>
         <Table>
           <TableHead>
-            <TableRow>
-              <TableCell>
+            <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>
                 <TableSortLabel
-                  active={orderBy === 'student_id'}
-                  direction={orderBy === 'student_id' ? order : 'asc'}
-                  onClick={createSortHandler('student_id')}
+                  active={orderBy === 'user_id'}
+                  direction={orderBy === 'user_id' ? order : 'asc'}
+                  onClick={createSortHandler('user_id')}
                 >
                   Student ID
                 </TableSortLabel>
               </TableCell>
-              <TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>
                 <TableSortLabel
                   active={orderBy === 'name'}
                   direction={orderBy === 'name' ? order : 'asc'}
@@ -170,11 +177,11 @@ const GradeableScoresPage: React.FC = () => {
                   Name
                 </TableSortLabel>
               </TableCell>
-              <TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>
                 <TableSortLabel
-                  active={orderBy === 'total_score'}
-                  direction={orderBy === 'total_score' ? order : 'asc'}
-                  onClick={createSortHandler('total_score')}
+                  active={orderBy === 'score'}
+                  direction={orderBy === 'score' ? order : 'asc'}
+                  onClick={createSortHandler('score')}
                 >
                   Score
                 </TableSortLabel>
@@ -184,10 +191,13 @@ const GradeableScoresPage: React.FC = () => {
           <TableBody>
             {stableSort(scores, getComparator(order, orderBy))
               .map((score) => (
-                <TableRow key={score.student_id}>
-                  <TableCell>{score.student_id}</TableCell>
+                <TableRow 
+                  key={score.user_id}
+                  sx={{ '&:hover': { backgroundColor: '#f0f7ff' } }}
+                >
+                  <TableCell>{score.user_id}</TableCell>
                   <TableCell>{score.name}</TableCell>
-                  <TableCell>{score.total_score} / {score.max_score}</TableCell>
+                  <TableCell>{score.score}</TableCell>
                 </TableRow>
               ))}
           </TableBody>
@@ -198,3 +208,4 @@ const GradeableScoresPage: React.FC = () => {
 };
 
 export default GradeableScoresPage;
+

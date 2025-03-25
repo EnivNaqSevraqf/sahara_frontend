@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useRef } from 'react';
 import {
   Box,
@@ -10,11 +11,9 @@ import {
   Button,
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import Header from './components/Header';
-import { buttonStyles } from './constants/theme';
 import axios from 'axios';
 
-const AddTAs = () => {
+const CreateGradeable = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<{
@@ -34,6 +33,7 @@ const AddTAs = () => {
       }
     }
   };
+
   const handleSubmit = async () => {
     if (!selectedFile) {
       setSubmitStatus({
@@ -48,15 +48,18 @@ const AddTAs = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post('http://localhost:8000/people/upload-csv/', formData, {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`http://localhost:8000/gradeables/${1}/upload-scores`, {
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
         },
+        data: formData,
       });
 
       setSubmitStatus({
         severity: 'success',
-        message: 'File uploaded successfully!'
+        message: 'Scores uploaded successfully!'
       });
       setSelectedFile(null);
       if (fileInputRef.current) {
@@ -65,7 +68,7 @@ const AddTAs = () => {
     } catch (error) {
       setSubmitStatus({
         severity: 'error',
-        message: 'Failed to upload file. Please try again.'
+        message: 'Failed to upload scores. Please try again.'
       });
     } finally {
       setIsSubmitting(false);
@@ -78,8 +81,6 @@ const AddTAs = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Header title="ADD TAs" />
-
       <Typography
         variant="h4"
         component="h2"
@@ -89,9 +90,10 @@ const AddTAs = () => {
           p: 2,
           border: '1px solid #e0e0e0',
           borderRadius: '50px',
+          color: '#1976d2'
         }}
       >
-        ADD TAs
+        Upload Scores
       </Typography>
 
       <Box
@@ -130,8 +132,12 @@ const AddTAs = () => {
           <IconButton
             onClick={handleAttachClick}
             sx={{
-              ...buttonStyles.secondary,
               borderRadius: '4px',
+              backgroundColor: '#1976d2',
+              color: 'white',
+              '&:hover': {
+                backgroundColor: '#1565c0',
+              }
             }}
           >
             <AttachFileIcon />
@@ -156,16 +162,16 @@ const AddTAs = () => {
           disabled={isSubmitting}
           sx={{
             mt: 2,
-            backgroundColor: '#1a73e8',
+            backgroundColor: '#1976d2',
             color: '#fff',
             '&:hover': {
-              backgroundColor: '#1765c1',
+              backgroundColor: '#1565c0',
             },
             px: 4,
             borderRadius: '4px',
           }}
         >
-          {isSubmitting ? 'Uploading...' : 'Upload'}
+          {isSubmitting ? 'Uploading...' : 'Upload Scores'}
         </Button>
 
         {submitStatus && (
@@ -185,4 +191,4 @@ const AddTAs = () => {
   );
 };
 
-export default AddTAs;
+export default CreateGradeable;

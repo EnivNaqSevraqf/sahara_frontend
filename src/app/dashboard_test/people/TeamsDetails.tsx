@@ -16,61 +16,51 @@ import {
   TableHead,
   TableRow,
   InputAdornment,
+  Stack,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import SearchIcon from '@mui/icons-material/Search';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
-
-//import Team from './types';
-
 import axios from 'axios';
+import * as XLSX from 'xlsx';
+import { useRouter } from 'next/navigation';
 
 // Update the Team type to include members
 interface Team {
   number: number;
   name: string;
-  details: string;
   members: string[]; // Add members property
 }
-
-// Sample data for formed teams
-// const formedTeams: Team[] = [
-//   { number: 1, name: 'Ravi and Friends', details: '...', members: ['Member1', 'Member2'] },
-//   { number: 2, name: 'Ravioli', details: '...', members: ['Member3', 'Member4'] },
-// ];
-
-// Sample data for beta test pairs
-// const betaTestPairs = [
-//   { 
-//     pairNumber: '1-2', 
-//     teamNames: 'Ravi and Friends - Ravioli'
-//   },
-// ];
 
 const TeamsDetails = () => {
   const [formedTeams, setFormedTeams] = useState<Team[]>([]);
   const [betaTestPairs, setBetaTestPairs] = useState<any[]>([]); // Adjust type as needed
 
   useEffect(() => {
-    const fetchStudents = async () => {
+    const fetchTeamsAndPairs = async () => {
       const response = await axios.get("http://localhost:8000/teams/FormedTeams/");
-      // console.log(response.data);
       setFormedTeams(response.data);
-      //setBetaTestPairs(response.data.betaTestPairs);
     };
 
-    const fetchBetaTestPairs = async () => {
-      const response = await axios.get("http://localhost:8000/teams/betaTestPairs/");
-      // console.log(response.data);
-      setBetaTestPairs(response.data);
-    };
-
-    fetchStudents();
-    fetchBetaTestPairs();
+    fetchTeamsAndPairs();
   }, []);
 
   const [isComplete] = useState(true);
   const [betaPairsCreated] = useState(true);
+  const router = useRouter();
+
+  const downloadExcel = (data: any[], fileName: string) => {
+    // Format the data to ensure members are visible in the Excel file
+    const formattedData = data.map(item => ({
+      ...item,
+      members: item.members ? item.members.join(', ') : ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(formattedData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -80,17 +70,27 @@ const TeamsDetails = () => {
           TEAMS&apos; DETAILS
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton>
-            <Badge badgeContent={1} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
+          
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src="/path-to-profile-image.jpg" />
-            <Typography>Indranil Saha</Typography>
+            
           </Box>
         </Box>
       </Box>
+
+      {/* Main heading */}
+      <Typography
+        variant="h4"
+        component="h2"
+        align="center"
+        sx={{
+          mb: 4,
+          p: 2,
+          border: '1px solid #e0e0e0',
+          borderRadius: '50px',
+        }}
+      >
+        TEAMS DETAILS
+      </Typography>
 
       {/* Status Section */}
       <Paper
@@ -159,13 +159,6 @@ const TeamsDetails = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {[...Array(2)].map((_, index) => (
-                  <TableRow key={`empty-formed-${index}`}>
-                    <TableCell>...</TableCell>
-                    <TableCell>...</TableCell>
-                    <TableCell>...</TableCell>
-                  </TableRow>
-                ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -173,6 +166,7 @@ const TeamsDetails = () => {
           <Button
             startIcon={<FileDownloadIcon />}
             sx={{ mt: 2, color: 'primary.main', textTransform: 'none' }}
+            onClick={() => downloadExcel(formedTeams, 'FormedTeams')}
           >
             Download as Excel File
           </Button>
@@ -216,12 +210,6 @@ const TeamsDetails = () => {
                         <TableCell>{pair.teamNames}</TableCell>
                       </TableRow>
                     ))}
-                    {[...Array(2)].map((_, index) => (
-                      <TableRow key={`empty-pairs-${index}`}>
-                        <TableCell>...</TableCell>
-                        <TableCell>...</TableCell>
-                      </TableRow>
-                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>
@@ -229,6 +217,7 @@ const TeamsDetails = () => {
               <Button
                 startIcon={<FileDownloadIcon />}
                 sx={{ mt: 2, color: 'primary.main', textTransform: 'none' }}
+                onClick={() => downloadExcel(betaTestPairs, 'BetaTestPairs')}
               >
                 Download as Excel File
               </Button>
@@ -252,6 +241,35 @@ const TeamsDetails = () => {
           )}
         </Box>
       </Box>
+
+      {/* Action Buttons */}
+      <Stack spacing={2} sx={{ mt: 4, minWidth: '200px' }}>
+        <Button
+          variant="contained"
+          onClick={() => router.push('/dashboard_test/people/teams/create')}
+          sx={{
+            backgroundColor: '#f0f0f0',
+            color: '#000',
+            '&:hover': {
+              backgroundColor: '#e0e0e0',
+            },
+          }}
+        >
+          CREATE TEAM
+        </Button>
+        <Button
+          variant="contained"
+          sx={{
+            backgroundColor: '#f0f0f0',
+            color: '#000',
+            '&:hover': {
+              backgroundColor: '#e0e0e0',
+            },
+          }}
+        >
+          VIEW TEAM DETAILS
+        </Button>
+      </Stack>
     </Box>
   );
 };
