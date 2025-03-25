@@ -93,14 +93,9 @@ const TATable = () => {
           TAs
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <IconButton>
-            <Badge badgeContent={1} color="error">
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
+          
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src="/path-to-profile-image.jpg" />
-            <Typography>Indranil Saha</Typography>
+            
           </Box>
         </Box>
       </Box>
