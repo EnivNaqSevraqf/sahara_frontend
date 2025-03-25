@@ -21,6 +21,7 @@ import { getUserRole, setUserRole, normalizeRole, type UserRole } from '@/utils/
 import { useEffect, useState } from 'react';
 import AuthWrapper from '../../components/AuthWrapper';
 import "../globals.css";
+import { Typography } from '@mui/material';
 
 // Define navigation items based on user role
 const getUserNavigation = (userRole: UserRole): Navigation => {
@@ -257,6 +258,7 @@ export default function DashboardLayout({
         theme={dashboardTheme}
       >
         <ToolpadDashboardLayout>
+          {/* <Typography>HELLO EVERYONE</Typography> */}
           {children}
         </ToolpadDashboardLayout>
       </AppProvider>
