@@ -1,5 +1,5 @@
 'use client';
-
+import { useRouter } from "next/navigation";
 import * as React from 'react';
 import { createTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -12,16 +12,17 @@ import QuizIcon from '@mui/icons-material/Quiz';
 import SchoolIcon from '@mui/icons-material/School';
 import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { ViewQuilt } from '@mui/icons-material';
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout as ToolpadDashboardLayout } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
-import useRouter from 'next/router';
 import { getUserRole, setUserRole, normalizeRole, type UserRole } from '@/utils/roles';
 import { useEffect, useState } from 'react';
 import AuthWrapper from '../../components/AuthWrapper';
 import "../globals.css";
 import { Typography } from '@mui/material';
+import LogoutButton from '@/components/logout';
 
 // Define navigation items based on user role
 const getUserNavigation = (userRole: UserRole): Navigation => {
@@ -32,6 +33,19 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
     kind: 'header' as const,
     title: 'Dashboard',
   };
+
+  // Common footer items for all roles
+  const footerItems = [
+    {
+      kind: 'header' as const,
+      title: 'Account',
+    },
+    {
+      segment: 'settings',
+      title: 'Settings',
+      icon: <SettingsRoundedIcon />,
+    }
+  ];
   
   // Admin navigation items
   if (role === 'admin') {
@@ -73,15 +87,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <CalendarMonthIcon />,
         // path: '/calendar',
       },
-      {
-        kind: 'header' as const,
-        title: 'System',
-      },
-      {
-        segment: 'settings',
-        title: 'Settings',
-        icon: <SettingsRoundedIcon />,
-      },
+      ...footerItems
     ];
   } 
   // TA navigation items
@@ -113,15 +119,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
       },
-      {
-        kind: 'header' as const,
-        title: 'Account',
-      },
-      {
-        segment: 'settings',
-        title: 'Settings',
-        icon: <SettingsRoundedIcon />,
-      },
+      ...footerItems
     ];
   }
   // Student/User navigation items (default)
@@ -164,15 +162,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Forms',
         icon: <ViewQuilt />,
       },
-      {
-        kind: 'header' as const,
-        title: 'Account',
-      },
-      {
-        segment: 'settings',
-        title: 'Settings',
-        icon: <SettingsRoundedIcon />,
-      },
+      ...footerItems
     ];
   }
 };
@@ -200,6 +190,22 @@ declare global {
     'roleChange': CustomEvent<{role: UserRole}>;
   }
 }
+
+const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Box sx={{ position: 'relative', height: '100%' }}>
+      <Box sx={{ 
+        position: 'absolute',
+        top: 8,  // Changed from 16 to 8 to move it up
+        right: 32, // Changed from 24 to 32 for more space from edge
+        zIndex: 1300 // Adjusted to ensure it stays above other elements
+      }}>
+        <LogoutButton />
+      </Box>
+      {children}
+    </Box>
+  );
+};
 
 export default function DashboardLayout({
   children,
@@ -250,19 +256,19 @@ export default function DashboardLayout({
   const navigation = getUserNavigation(role);
 
   return (
-    //<AuthWrapper>
-    <Box sx={{ height: '100vh' }} key={key}>
-      <AppProvider
-        navigation={navigation}
-        // router={router}
-        theme={dashboardTheme}
-      >
-        <ToolpadDashboardLayout>
-          {/* <Typography>HELLO EVERYONE</Typography> */}
-          {children}
-        </ToolpadDashboardLayout>
-      </AppProvider>
-    </Box>
-    //</AuthWrapper>
+    <AuthWrapper>
+      <Box sx={{ height: '100vh' }} key={key}>
+        <AppProvider
+          navigation={navigation}
+          theme={dashboardTheme}
+        >
+          <ToolpadDashboardLayout>
+            <DashboardWrapper>
+              {children}
+            </DashboardWrapper>
+          </ToolpadDashboardLayout>
+        </AppProvider>
+      </Box>
+    </AuthWrapper>
   );
 }
