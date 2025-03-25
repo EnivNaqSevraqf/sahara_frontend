@@ -5,9 +5,9 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
-import SaharaLogo from '../public/sahara-logo.png';
 import { TextField, CircularProgress, Alert, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { Box } from '@mui/system';
+import axios from 'axios';
 
 //user roles based on backend enum
 //type UserRole = 'prof' | 'student' | 'ta';
@@ -32,35 +32,28 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
     setMessage({ type: '', text: '' });
 
     try {
-      // to be implemented in the backend
-      const response = await fetch('http://localhost:8000/request-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+      const response = await axios.post('http://localhost:8000/request-otp', { email });
+      setMessage({
+        type: 'success',
+        text: 'A verification code has been sent to your email.'
       });
-
-      if (response.ok) {
-        setMessage({
-          type: 'success',
-          text: 'A verification code has been sent to your email.'
-        });
-        setStep(2); // Move to OTP verification step
-      } else {
-        const errorData = await response.json();
+      setStep(2);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
         setMessage({
           type: 'error',
-          text: errorData.detail || 'Failed to send verification code'
+          text: error.response?.data?.detail || 'Failed to send verification code'
+        });
+      } else {
+        setMessage({
+          type: 'error',
+          text: 'An error occurred. Please try again later.'
         });
       }
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: 'An error occurred. Please try again later.'
-      });
       console.error(error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleVerifyOTP = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -69,35 +62,28 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
     setMessage({ type: '', text: '' });
 
     try {
-      // This endpoint needs to be implemented in the backend
-      const response = await fetch('http://localhost:8000/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email,otp }),
+      const response = await axios.post('http://localhost:8000/verify-otp', { email, otp });
+      setMessage({
+        type: 'success',
+        text: 'Verification successful. Please set your new password.'
       });
-
-      if (response.ok) {
-        setMessage({
-          type: 'success',
-          text: 'Verification successful. Please set your new password.'
-        });
-        setStep(3); // Move to reset password step
-      } else {
-        const errorData = await response.json();
+      setStep(3);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
         setMessage({
           type: 'error',
-          text: errorData.detail || 'Invalid verification code'
+          text: error.response?.data?.detail || 'Invalid verification code'
+        });
+      } else {
+        setMessage({
+          type: 'error',
+          text: 'An error occurred. Please try again later.'
         });
       }
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: 'An error occurred. Please try again later.'
-      });
       console.error(error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const handleResetPassword = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -115,43 +101,37 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
     }
 
     try {
-      // based on ResetPasswordAfterOTPRequest model
-      const response = await fetch('http://localhost:8000/reset-password-with-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email,  
-          otp,
-          new_password: newPassword,
-          confirm_password: confirmPassword
-        }),
+      const response = await axios.post('http://localhost:8000/reset-password-with-otp', {
+        email,
+        otp,
+        new_password: newPassword,
+        confirm_password: confirmPassword
       });
 
-      if (response.ok) {
-        setMessage({
-          type: 'success',
-          text: 'Your password has been reset successfully.'
-        });
-        setTimeout(() => {
-          handleClose();
-          resetForm();
-        }, 3000);
-      } else {
-        const errorData = await response.json();
+      setMessage({
+        type: 'success',
+        text: 'Your password has been reset successfully.'
+      });
+      setTimeout(() => {
+        handleClose();
+        resetForm();
+      }, 3000);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
         setMessage({
           type: 'error',
-          text: errorData.detail || 'Failed to reset password'
+          text: error.response?.data?.detail || 'Failed to reset password'
+        });
+      } else {
+        setMessage({
+          type: 'error',
+          text: 'An error occurred. Please try again later.'
         });
       }
-    } catch (error) {
-      setMessage({
-        type: 'error',
-        text: 'An error occurred. Please try again later.'
-      });
       console.error(error);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   const resetForm = () => {

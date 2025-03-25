@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Box, 
   Typography, 
@@ -11,7 +12,9 @@ import {
   Chip,
   IconButton,
   TextField,
-  CircularProgress
+  CircularProgress,
+  Alert,
+  Snackbar
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -19,37 +22,86 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 
+// Configure axios base URL
+axios.defaults.baseURL = 'http://localhost:8000';
 
-interface DocumentType {
+interface SubmittableType {
   id: number;
-  name: string;
-  dueDate: Date;
-  openDate?: Date;  // Made openDate optional
-  uploadedFile: File | null;
-  uploadedOn: Date | null;
+  description: string;
+  opens_at?: string;
+  deadline: string;
+  reference_files: Array<{
+    id: number;
+    original_filename: string;
+  }>;
+  submission_status?: {
+    has_submitted: boolean;
+    submission_id: number | null;
+    submitted_on: string | null;
+    original_filename: string | null;
+  };
 }
 
 const DocumentSubmissionList: React.FC = () => {
   const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
-  
-  const [documents, setDocuments] = useState<DocumentType[]>([
-    { id: 1, name: 'Requirement Document', openDate: new Date('2025-01-10'), dueDate: new Date('2025-01-24'), uploadedFile: null, uploadedOn: null },
-    { id: 2, name: 'Design Document', dueDate: new Date('2025-02-07'), uploadedFile: null, uploadedOn: null }, // No openDate
-    { id: 3, name: 'Implementation Document', openDate: new Date('2025-03-14'), dueDate: new Date('2025-03-28'), uploadedFile: null, uploadedOn: null },
-    { id: 4, name: 'Test Document & User Manual', dueDate: new Date('2025-04-04'), uploadedFile: null, uploadedOn: null }, // No openDate
-    { id: 5, name: 'Beta Test Report', openDate: new Date('2025-03-30'), dueDate: new Date('2025-04-13'), uploadedFile: null, uploadedOn: null },
-    { id: 6, name: 'Final Project Report', dueDate: new Date('2025-04-23'), uploadedFile: null, uploadedOn: null }, // No openDate
-  ]);
+  const [submittables, setSubmittables] = useState<SubmittableType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   // Calculate completion percentage
   const [completionPercentage, setCompletionPercentage] = useState(0);
 
   useEffect(() => {
-    const totalDocuments = documents.length;
-    const completedDocuments = documents.filter(doc => doc.uploadedFile !== null).length;
-    const percentage = totalDocuments > 0 ? Math.round((completedDocuments / totalDocuments) * 100) : 0;
+    fetchSubmittables();
+  }, []);
+
+  useEffect(() => {
+    const totalSubmittables = submittables.length;
+    const completedSubmittables = submittables.filter(doc => doc.submission_status?.has_submitted).length;
+    const percentage = totalSubmittables > 0 ? Math.round((completedSubmittables / totalSubmittables) * 100) : 0;
     setCompletionPercentage(percentage);
-  }, [documents]);
+  }, [submittables]);
+
+  const fetchSubmittables = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching submittables...');
+      console.log('Token:', localStorage.getItem('token')); // Log token for debugging
+      
+      const response = await axios.get('/submittables/', {  // Added trailing slash
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      console.log('Response:', response.data);
+      
+      // Combine all submittables from different categories
+      const allSubmittables = [
+        ...response.data.upcoming,
+        ...response.data.open,
+        ...response.data.closed
+      ];
+      
+      setSubmittables(allSubmittables);
+      setError(null);
+    } catch (err: any) {
+      console.error('Error fetching submittables:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        headers: err.response?.headers
+      });
+      setError(`Failed to fetch submittables: ${err.response?.data?.detail || err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleUploadClick = (index: number) => {
     if (fileInputRefs.current[index]) {
@@ -57,52 +109,144 @@ const DocumentSubmissionList: React.FC = () => {
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const newFile = event.target.files[0];
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, submittableId: number) => {
+    if (!event.target.files || event.target.files.length === 0) return;
+
+    const file = event.target.files[0];
+    const formData = new FormData();
+    formData.append('files', file);
+
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `/submittables/${submittableId}/submit`,
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      // Refresh submittables to get updated status
+      await fetchSubmittables();
       
-      const updatedDocuments = [...documents];
-      updatedDocuments[index] = {
-        ...updatedDocuments[index],
-        uploadedFile: newFile,
-        uploadedOn: new Date()
-      };
-      
-      setDocuments(updatedDocuments);
+      setSnackbar({
+        open: true,
+        message: 'File submitted successfully!',
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Error submitting file:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to submit file. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDelete = (index: number) => {
-    const updatedDocuments = [...documents];
-    updatedDocuments[index] = {
-      ...updatedDocuments[index],
-      uploadedFile: null,
-      uploadedOn: null
-    };
+  const handleReferenceFileDownload = async (submittableId: number, fileId: number, fileName: string) => {
+    try {
+      console.log('Downloading reference file:', { submittableId, fileId, fileName });
+      
+      const response = await axios.get(
+        `/submittables/${submittableId}/reference-files/${fileId}/download`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          responseType: 'blob'
+        }
+      );
+
+      console.log('Download response:', {
+        status: response.status,
+        headers: response.headers,
+        contentType: response.headers['content-type'],
+        contentLength: response.headers['content-length']
+      });
+
+      // Check if we received a valid response
+      if (!response.data || response.data.size === 0) {
+        throw new Error('Received empty file data');
+      }
+
+      // Create a blob with the correct type from headers
+      const contentType = response.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([response.data], { type: contentType });
+      
+      // Create and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      setSnackbar({
+        open: true,
+        message: 'File downloaded successfully!',
+        severity: 'success'
+      });
+    } catch (err: any) {
+      console.error('Error downloading reference file:', {
+        error: err,
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status,
+        headers: err.response?.headers
+      });
+      
+      let errorMessage = 'Failed to download reference file.';
+      if (err.response?.status === 404) {
+        errorMessage = 'File not found on the server.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'You do not have permission to download this file.';
+      } else if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      }
+      
+      setSnackbar({
+        open: true,
+        message: `${errorMessage} Please try again.`,
+        severity: 'error'
+      });
+    }
+  };
+
+  const isSubmissionAllowed = (doc: SubmittableType) => {
+    const now = new Date();
+    const opensAt = doc.opens_at ? new Date(doc.opens_at) : null;
+    const deadline = new Date(doc.deadline);
     
-    setDocuments(updatedDocuments);
+    return opensAt ? (now >= opensAt && now <= deadline) : (now <= deadline);
   };
 
-  const isSubmissionAllowed = (doc: DocumentType) => {
-    const today = new Date();
-    // If openDate is not provided, only check if due date hasn't passed
-    return doc.openDate ? (today >= doc.openDate && today <= doc.dueDate) : (today <= doc.dueDate);
+  const isUpcoming = (doc: SubmittableType) => {
+    if (!doc.opens_at) return false;
+    const now = new Date();
+    const opensAt = new Date(doc.opens_at);
+    return now < opensAt;
   };
 
-  const isUpcoming = (doc: DocumentType) => {
-    // If no openDate, document is not considered upcoming
-    if (!doc.openDate) return false;
-    
-    const today = new Date();
-    return today < doc.openDate;
+  const isPast = (doc: SubmittableType) => {
+    const now = new Date();
+    const deadline = new Date(doc.deadline);
+    return now > deadline;
   };
 
-  const isPast = (doc: DocumentType) => {
-    const today = new Date();
-    return today > doc.dueDate;
-  };
-
-  const formatDate = (date: Date) => {
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -114,15 +258,15 @@ const DocumentSubmissionList: React.FC = () => {
     });
   };
 
-  // Split documents into upcoming, ongoing, and previous
-  const ongoingDocuments = documents.filter(doc => isSubmissionAllowed(doc));
-  const upcomingDocuments = documents.filter(doc => isUpcoming(doc));
-  const previousDocuments = documents.filter(doc => isPast(doc));
+  // Split submittables into categories
+  const ongoingSubmittables = submittables.filter(doc => isSubmissionAllowed(doc));
+  const upcomingSubmittables = submittables.filter(doc => isUpcoming(doc));
+  const previousSubmittables = submittables.filter(doc => isPast(doc));
 
-  // Render a single document item
-  const renderDocumentItem = (doc: DocumentType, index: number) => {
+  // Render a single submittable item
+  const renderSubmittableItem = (doc: SubmittableType, index: number) => {
     const isAllowed = isSubmissionAllowed(doc);
-    const docIndex = documents.findIndex(d => d.id === doc.id);
+    const hasSubmitted = doc.submission_status?.has_submitted;
     
     return (
       <Paper 
@@ -132,7 +276,7 @@ const DocumentSubmissionList: React.FC = () => {
           p: 2, 
           mb: 2, 
           borderLeft: 4, 
-          borderColor: doc.uploadedFile ? 'success.main' : isAllowed ? 'primary.main' : 'text.disabled'
+          borderColor: hasSubmitted ? 'success.main' : isAllowed ? 'primary.main' : 'text.disabled'
         }}
       >
         <Grid container spacing={2} alignItems="center">
@@ -146,30 +290,53 @@ const DocumentSubmissionList: React.FC = () => {
                 sx={{ mr: 2 }} 
               />
               <Typography variant="h6" component="div">
-                {doc.name}
+                {doc.description}
               </Typography>
             </Box>
             
             <Box sx={{ mt: 1, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-              {/* Only display 'Opens at' if openDate is provided */}
-              {doc.openDate && (
+              {doc.opens_at && (
                 <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
                   <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
-                  Opens at: {formatDate(doc.openDate)}
+                  Opens at: {formatDate(doc.opens_at)}
                 </Typography>
               )}
               
               <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
                 <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
-                Due on: {formatDate(doc.dueDate)}
+                Due on: {formatDate(doc.deadline)}
               </Typography>
             </Box>
+
+            {/* Reference Files Section */}
+            {doc.reference_files && doc.reference_files.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Reference Files:
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {doc.reference_files.map((file) => (
+                    <Button
+                      key={file.id}
+                      variant="outlined"
+                      size="small"
+                      startIcon={<AttachFileIcon />}
+                      onClick={() => handleReferenceFileDownload(doc.id, file.id, file.original_filename)}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {file.original_filename}
+                    </Button>
+                  ))}
+                </Box>
+              </Box>
+            )}
             
-            {doc.uploadedFile && doc.uploadedOn && (
+            {hasSubmitted && doc.submission_status?.submitted_on && (
               <Box sx={{ mt: 1 }}>
                 <Typography variant="body2" color="success.main" sx={{ display: 'flex', alignItems: 'center' }}>
                   <CheckCircleIcon fontSize="small" sx={{ mr: 0.5 }} />
-                  Submitted: {formatDate(doc.uploadedOn)} - {doc.uploadedFile.name}
+                  Submitted: {formatDate(doc.submission_status.submitted_on)}
+                  {doc.submission_status.original_filename && ` - ${doc.submission_status.original_filename}`}
                 </Typography>
               </Box>
             )}
@@ -178,38 +345,42 @@ const DocumentSubmissionList: React.FC = () => {
           <Grid item xs={12} md={4} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
             <input
               type="file"
-              ref={(el) => { fileInputRefs.current[docIndex] = el; }}
-              onChange={(e) => handleFileChange(e, docIndex)}
+              ref={(el) => { fileInputRefs.current[index] = el; }}
+              onChange={(e) => handleFileChange(e, doc.id)}
               style={{ display: 'none' }}
               accept=".pdf,.doc,.docx,.txt"
             />
             
-            {doc.uploadedFile ? (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={() => handleDelete(docIndex)}
-                disabled={!isAllowed}
-                sx={{ ml: 1 }}
-              >
-                Remove
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                startIcon={<AttachFileIcon />}
-                onClick={() => handleUploadClick(docIndex)}
-                disabled={!isAllowed}
-              >
-                Submit Document
-              </Button>
-            )}
+            <Button
+              variant={hasSubmitted ? "outlined" : "contained"}
+              color={hasSubmitted ? "success" : "primary"}
+              startIcon={hasSubmitted ? <CheckCircleIcon /> : <AttachFileIcon />}
+              onClick={() => handleUploadClick(index)}
+              disabled={!isAllowed}
+            >
+              {hasSubmitted ? 'Resubmit' : 'Submit Document'}
+            </Button>
           </Grid>
         </Grid>
       </Paper>
     );
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: '100%', p: 2 }}>
@@ -258,7 +429,7 @@ const DocumentSubmissionList: React.FC = () => {
               Project Progress
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              {documents.filter(doc => doc.uploadedFile !== null).length} of {documents.length} documents submitted
+              {submittables.filter(doc => doc.submission_status?.has_submitted).length} of {submittables.length} documents submitted
             </Typography>
           </Box>
         </Box>
@@ -267,33 +438,44 @@ const DocumentSubmissionList: React.FC = () => {
           <Typography variant="body2" color={completionPercentage === 100 ? 'success.main' : 'info.main'}>
             {completionPercentage === 100 
               ? 'All documents submitted!' 
-              : `${documents.length - documents.filter(doc => doc.uploadedFile !== null).length} documents remaining`}
+              : `${submittables.length - submittables.filter(doc => doc.submission_status?.has_submitted).length} documents remaining`}
           </Typography>
         </Box>
       </Paper>
       
       {/* Ongoing/Upcoming Documents */}
-      {(ongoingDocuments.length > 0 || upcomingDocuments.length > 0) && (
+      {(ongoingSubmittables.length > 0 || upcomingSubmittables.length > 0) && (
         <>
           <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
             Ongoing/Upcoming Documents
           </Typography>
           
-          {ongoingDocuments.map((doc, index) => renderDocumentItem(doc, index))}
-          {upcomingDocuments.map((doc, index) => renderDocumentItem(doc, index))}
+          {ongoingSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
+          {upcomingSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
         </>
       )}
       
       {/* Previous Documents */}
-      {previousDocuments.length > 0 && (
+      {previousSubmittables.length > 0 && (
         <>
           <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mt: 4, mb: 2 }}>
             Previous Documents
           </Typography>
           
-          {previousDocuments.map((doc, index) => renderDocumentItem(doc, index))}
+          {previousSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
         </>
       )}
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
