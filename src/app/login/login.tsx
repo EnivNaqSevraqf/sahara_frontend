@@ -9,14 +9,13 @@ import LockIcon from '@mui/icons-material/Lock';
 import ForgotPassword from "./ForgotPassword";
 import { TextField, Button, Typography, Box, Link, FormControl, InputLabel, MenuItem, Select, CircularProgress, InputAdornment } from "@mui/material";
 import axios from 'axios';
+import { currentConfig } from '@/config';
 
 interface Credentials {
   username: string;
   password: string;
   grant_type: string;
 }
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 const LoginComponent = () => {
   const [credentials, setCredentials] = useState<Credentials>({
@@ -58,7 +57,7 @@ const LoginComponent = () => {
       formData.append('password', credentials.password);
       formData.append('grant_type', 'password'); // Required by OAuth2 password flow
 
-      const response = await axios.post(`${API_BASE_URL}/login`, formData, {
+      const response = await axios.post(`${currentConfig.apiBaseUrl}/login`, formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json'

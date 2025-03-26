@@ -22,6 +22,7 @@ import type { Student } from './types';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
 import { SelectChangeEvent } from '@mui/material';
+import { currentConfig } from '@/config';
 
 const StudentTable = () => {
   const router = useRouter();
@@ -34,7 +35,7 @@ const StudentTable = () => {
     const fetchStudents = async () => {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:8000/people/');
+      const response = await axios.get(`${currentConfig.apiBaseUrl}/people/`);
       if (response.status !== 200) {
         setError('Failed to fetch students data.');
       } else {

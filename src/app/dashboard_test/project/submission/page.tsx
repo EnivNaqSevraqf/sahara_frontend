@@ -27,9 +27,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import { currentConfig } from '@/config';
 
 // Configure axios base URL
-axios.defaults.baseURL = 'http://localhost:8000';
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 interface SubmittableType {
   id: number;

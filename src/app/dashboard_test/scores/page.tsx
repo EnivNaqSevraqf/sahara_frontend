@@ -16,6 +16,7 @@ import {
   Alert,
   Button
 } from '@mui/material';
+import { currentConfig } from '@/config';
 
 interface IGradeable {
   id: string;
@@ -42,7 +43,7 @@ export default function GradeablesListPage() {
           headers: { Authorization: `Bearer ${token}` }
         };
 
-        const response = await axios.get('http://localhost:8000/gradeables', config);
+        const response = await axios.get(`${currentConfig.apiBaseUrl}/gradeables`, config);
         setGradeables(response.data);
         setError(null);
       } catch (error: any) {
