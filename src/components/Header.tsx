@@ -1,54 +1,45 @@
-import * as React from 'react';
-import Stack from '@mui/material/Stack';
-import { Breadcrumbs, Button, Typography } from '@mui/material';
-// import CustomDatePicker from './CustomDatePicker';
-// import NavbarBreadcrumbs from './NavbarBreadcrumbs';
-import MenuButton from './MenuButton';
-// import ColorModeIconDropdown from '.././theme/ColorModeIconDropdown';
+'use client';
+import React from 'react';
+import {
+  Box,
+  Typography,
+  IconButton,
+  Badge,
+  Stack
+} from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-// import Search from './Search';
+import LogoutButton from './logout';
 
-const NotificationsButton = () => {
-  return (
-    <Button>
-      <NotificationsIcon />
-    </Button>
-  );
+interface HeaderProps {
+  title: string;
 }
 
-export default function Header() {
+const Header = ({ title }: HeaderProps) => {
   return (
-    <Stack
-      direction="row"
-      sx={{
-        display: { xs: 'flex', md: 'flex' },
-        width: '100%',
-        alignItems: { xs: 'flex-start', md: 'center' },
-        bgcolor: 'background.paper',
-        justifyContent: 'space-between',
-        maxWidth: { sm: '100%', md: '1700px' },
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        p: 2,
+        borderBottom: '1px solid',
         borderColor: 'divider',
-        pt: 1.5,
-        p: { xs: 1, md: 2 },
+        bgcolor: 'background.paper'
       }}
-      spacing={2}
     >
-        <Breadcrumbs sx = {{p: 1}}>
-              <Typography variant="body1">Dashboard</Typography>
-        </Breadcrumbs>
-      {/* <NavbarBreadcrumbs /> */}
-      <Stack direction="row" sx={{ gap: 1 }}>
-        {/* <Search /> */}
-        {/* <CustomDatePicker /> */}
-        {/* <MenuButton showBadge aria-label="Open notifications"> */}
-          {/* <NotificationsIcon /> */}
-          {/* <NotificationsButton /> */}
-        {/* </MenuButton> */}
-        <MenuButton showBadge aria-label="Open notifications">
+      <Typography variant="h6" component="h1">
+        {title}
+      </Typography>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <IconButton>
+          <Badge badgeContent={1} color="error">
             <NotificationsIcon />
-        </MenuButton>
-        {/* <ColorModeIconDropdown /> */}
+          </Badge>
+        </IconButton>
+        <LogoutButton />
       </Stack>
-    </Stack>
+    </Box>
   );
-}
+};
+
+export default Header;

@@ -12,7 +12,7 @@ interface LogoutButtonProps extends ButtonProps {
 const LogoutButton: React.FC<LogoutButtonProps> = ({ 
   children = "Logout", 
   variant = "contained", 
-  color = "primary",  // Changed from error to primary
+  color = "primary",
   ...props 
 }) => {
   const router = useRouter();
@@ -27,14 +27,11 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({
       variant={variant}
       color={color}
       sx={{
-        boxShadow: 2,
-        backgroundColor: "#000080", // Navy blue to match login button
+        backgroundColor: "#000080",
         color: "white",
         fontWeight: 500,
-        minWidth: '100px',
         '&:hover': {
-          backgroundColor: "#000060", // Darker navy blue on hover
-          boxShadow: 4,
+          backgroundColor: "#000060",
         },
         '&:disabled': {
           backgroundColor: "#cccccc",
