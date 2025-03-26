@@ -23,11 +23,12 @@ interface TeamMember {
   name: string;
   contribution: number;
   remarks: string;
+  is_current_user: boolean;
 }
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: 'http://localhost:8000',  // Add the backend server URL
+  baseURL: 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -40,21 +41,7 @@ api.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
-}, (error) => {
-  return Promise.reject(error);
 });
-
-// Add response interceptor for better error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error);
-    if (error.response?.data?.detail) {
-      return Promise.reject(new Error(error.response.data.detail));
-    }
-    return Promise.reject(error);
-  }
-);
 
 export default function FeedbackForm() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -63,6 +50,9 @@ export default function FeedbackForm() {
   const [totalContribution, setTotalContribution] = useState(0);
   const [loading, setLoading] = useState(true);
   const [teamName, setTeamName] = useState('');
+  const [teamId, setTeamId] = useState<number | null>(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submittedAt, setSubmittedAt] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTeamData();
@@ -70,22 +60,46 @@ export default function FeedbackForm() {
 
   const fetchTeamData = async () => {
     try {
-      // Get user's team info
-      const { data: teamData } = await api.get('/feedback/user/team');
+      setError(null);
+      const { data } = await api.get('/feedback/students');
+      
+      setTeamId(data.team_id);
+      setTeamName(data.team_name);
 
-      // Get team members
-      const { data: membersData } = await api.get(`/feedback/team/${teamData.team_id}/members`);
-
-      setTeamName(teamData.team_name);
-      setTeamMembers(membersData.members.map((member: any) => ({
-        id: member.id,
-        name: member.name,
-        contribution: 0,
-        remarks: ''
-      })));
+      // If there's submitted feedback, populate the form with it
+      if (data.submitted_feedback) {
+        setIsSubmitted(true);
+        setSubmittedAt(data.submitted_feedback.submitted_at);
+        
+        // Map the feedback data to team members
+        const submittedDetails = data.submitted_feedback.details;
+        const membersWithFeedback = data.members.map((member: any) => ({
+          id: member.id,
+          name: member.name,
+          is_current_user: member.is_current_user,
+          contribution: submittedDetails.find((d: any) => d.member_id === member.id)?.contribution || 0,
+          remarks: submittedDetails.find((d: any) => d.member_id === member.id)?.remarks || ''
+        }));
+        
+        setTeamMembers(membersWithFeedback);
+        setTotalContribution(100); // Since it was already validated when submitted
+      } else {
+        // Initialize new feedback form
+        setTeamMembers(data.members.map((member: any) => ({
+          id: member.id,
+          name: member.name,
+          is_current_user: member.is_current_user,
+          contribution: 0,
+          remarks: ''
+        })));
+      }
       setLoading(false);
     } catch (err) {
-      setError(axios.isAxiosError(err) ? err.response?.data?.detail || err.message : 'Failed to load team data');
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || 'Failed to load team data');
+      } else {
+        setError('An unexpected error occurred');
+      }
       setLoading(false);
     }
   };
@@ -113,17 +127,20 @@ export default function FeedbackForm() {
   };
 
   const handleSubmit = async () => {
-    // Validate total contribution equals 100%
+    if (!teamId) {
+      setError('No team ID found');
+      return;
+    }
+
     if (totalContribution !== 100) {
       setError('Total contribution must equal 100%');
       return;
     }
 
     try {
-      const { data: teamData } = await api.get('/feedback/user/team');
-
-      await api.post('/feedback/submit', {
-        team_id: teamData.team_id,
+      setError(null);
+      await api.post('/feedback/student/submit', {
+        team_id: teamId,
         details: teamMembers.map(member => ({
           member_id: member.id,
           contribution: member.contribution,
@@ -133,8 +150,15 @@ export default function FeedbackForm() {
 
       setSuccess(true);
       setError(null);
+      setIsSubmitted(true);
+      setSubmittedAt(new Date().toISOString());
     } catch (err) {
-      setError(axios.isAxiosError(err) ? err.response?.data?.detail || err.message : 'Failed to submit feedback');
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.detail || 'Failed to submit feedback');
+      } else {
+        setError('An unexpected error occurred while submitting feedback');
+      }
+      setSuccess(false);
     }
   };
 
@@ -164,6 +188,12 @@ export default function FeedbackForm() {
         </Alert>
       )}
 
+      {isSubmitted && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          This feedback was submitted on {new Date(submittedAt!).toLocaleString()}
+        </Alert>
+      )}
+
       <Paper sx={{ mb: 3 }}>
         <TableContainer>
           <Table>
@@ -171,13 +201,18 @@ export default function FeedbackForm() {
               <TableRow>
                 <TableCell>Team Member</TableCell>
                 <TableCell align="right">Contribution Percentage (%)</TableCell>
-                <TableCell>Remarks (Optional)</TableCell>
+                <TableCell>Remarks</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {teamMembers.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>{member.name}</TableCell>
+                <TableRow 
+                  key={member.id}
+                  sx={member.is_current_user ? { backgroundColor: 'rgba(0, 0, 0, 0.04)' } : {}}
+                >
+                  <TableCell>
+                    {member.name} {member.is_current_user ? '(You)' : ''}
+                  </TableCell>
                   <TableCell align="right">
                     <TextField
                       type="number"
@@ -188,17 +223,19 @@ export default function FeedbackForm() {
                       }}
                       size="small"
                       sx={{ width: 100 }}
+                      disabled={isSubmitted}
                     />
                   </TableCell>
                   <TableCell>
                     <TextField
                       value={member.remarks}
                       onChange={(e) => handleRemarksChange(member.id, e.target.value)}
-                      placeholder="Add optional remarks"
+                      placeholder="Add remarks"
                       size="small"
                       fullWidth
                       multiline
                       maxRows={2}
+                      disabled={isSubmitted}
                     />
                   </TableCell>
                 </TableRow>
@@ -207,7 +244,7 @@ export default function FeedbackForm() {
                 <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
                 <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                   {totalContribution}%
-                  {totalContribution !== 100 && (
+                  {!isSubmitted && totalContribution !== 100 && (
                     <Typography color="error" variant="caption" display="block">
                       Total must equal 100%
                     </Typography>
@@ -220,16 +257,18 @@ export default function FeedbackForm() {
         </TableContainer>
       </Paper>
 
-      <Box display="flex" justifyContent="center">
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={totalContribution !== 100}
-          sx={{ minWidth: 200 }}
-        >
-          Submit Feedback
-        </Button>
-      </Box>
+      {!isSubmitted && (
+        <Box display="flex" justifyContent="center">
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={totalContribution !== 100}
+            sx={{ minWidth: 200 }}
+          >
+            Submit Feedback
+          </Button>
+        </Box>
+      )}
     </Box>
   );
 }
