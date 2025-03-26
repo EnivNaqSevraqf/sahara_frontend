@@ -32,7 +32,7 @@ import type { Student } from './types';
 import { SelectChangeEvent } from '@mui/material/Select';
 import * as XLSX from 'xlsx';
 import { useRouter } from 'next/navigation';
-import Auth from '../../../utils/auth';
+import Auth from '../../login/auth';
 
 const PeoplePage = () => {
   const router = useRouter();
