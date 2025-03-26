@@ -21,6 +21,8 @@ import {
   Toolbar,
   IconButton,
   Tooltip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import axios from 'axios';
@@ -30,6 +32,7 @@ import type { Student } from './types';
 import { SelectChangeEvent } from '@mui/material/Select';
 import * as XLSX from 'xlsx';
 import { useRouter } from 'next/navigation';
+import Auth from '../../../utils/auth';
 
 const PeoplePage = () => {
   const router = useRouter();
@@ -42,16 +45,30 @@ const PeoplePage = () => {
 
   useEffect(() => {
     const fetchStudents = async () => {
+      console.log("Fetching students");
       setIsLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:8000/people/');
-      if (response.status !== 200) {
-        setError('Failed to fetch students data.');
-      } else {
-        setError(null);
-        setIsLoading(false);
+      try{
+        const response = await axios.get('http://localhost:8000/people/');
+        setStudents(response.data);
       }
-      setStudents(response.data);
+      catch (error) {
+
+        console.error('Error fetching students:', error);
+        const status = (error as any).response?.status;
+        console.log('Status:', status);
+        if(status === 401){
+          Auth.logOut();
+          const router = useRouter();
+          router.push('/login');
+          setIsLoading(false);
+        }
+        else if(status === 403){
+          setIsLoading(false);
+          setError('Access denied. You do not have permission to view this page.');
+        }
+        // setError('Failed to fetch students data: ' + error.message);
+      }
     };
     fetchStudents();
   }, []);
@@ -96,6 +113,22 @@ const PeoplePage = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'People');
     XLSX.writeFile(workbook, 'People.xlsx');
   };
+
+if (isLoading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3, position: 'relative', minHeight: '100vh' }}>
