@@ -84,10 +84,6 @@ const RoleSwitcher = ({ currentRole, onRoleChange }: { currentRole: string, onRo
 // Student Dashboard Component
 const StudentDashboard: React.FC = () => (
   <Box>
-    <Typography variant="h4" component="h1" gutterBottom>
-      Student Dashboard
-    </Typography>
-    
     <Grid container spacing={3}>
       <Grid item xs={12} md={8}>
         <Paper elevation={0} sx={{ p: 3, height: '100%' }}>
@@ -187,10 +183,6 @@ const StudentDashboard: React.FC = () => (
 // TA Dashboard Component
 const TADashboard: React.FC = () => (
   <Box>
-    <Typography variant="h4" component="h1" gutterBottom>
-      Teaching Assistant Dashboard
-    </Typography>
-    
     <Grid container spacing={3}>
       <Grid item xs={12} md={6}>
         <Paper elevation={0} sx={{ p: 3 }}>
@@ -296,10 +288,6 @@ const TADashboard: React.FC = () => (
 // Admin Dashboard Component
 const AdminDashboard: React.FC = () => (
   <Box>
-    <Typography variant="h4" component="h1" gutterBottom>
-      Administrator Dashboard
-    </Typography>
-    
     <Grid container spacing={3}>
       <Grid item xs={12} md={3}>
         <Paper elevation={0} sx={{ p: 3 }}>
@@ -441,9 +429,11 @@ export default function Dashboard() {
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <RoleSwitcher currentRole={role} onRoleChange={handleRoleChange} />
-      {renderDashboard()}
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ p: 2 }}>
+        <RoleSwitcher currentRole={role} onRoleChange={handleRoleChange} />
+        {renderDashboard()}
+      </Box>
     </Box>
   );
 }

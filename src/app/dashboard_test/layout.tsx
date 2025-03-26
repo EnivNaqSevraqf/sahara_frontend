@@ -15,14 +15,18 @@ import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { ViewQuilt } from '@mui/icons-material';
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
-import { DashboardLayout as ToolpadDashboardLayout } from '@toolpad/core/DashboardLayout';
+import { DashboardLayout as ToolpadDashboardLayout, DashboardLayoutProps } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
 import { getUserRole, setUserRole, normalizeRole, type UserRole } from '@/utils/roles';
 import { useEffect, useState } from 'react';
-import AuthWrapper from '../../components/AuthWrapper';
+import AuthWrapper from '@/components/AuthWrapper';
 import "../globals.css";
 import { Typography } from '@mui/material';
 import LogoutButton from '@/components/logout';
+import Header from '@/components/Header';
+//import toolbaritems from '@/components/toolbaritems';
+import NotificationsIcon from '@mui/icons-material/Notifications';
+import MenuButton from '@/components/MenuButton';
 
 // Define navigation items based on user role
 const getUserNavigation = (userRole: UserRole): Navigation => {
@@ -193,16 +197,14 @@ declare global {
 
 const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
-    <Box sx={{ position: 'relative', height: '100%' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ 
-        position: 'absolute',
-        top: 8,  // Changed from 16 to 8 to move it up
-        right: 32, // Changed from 24 to 32 for more space from edge
-        zIndex: 1300 // Adjusted to ensure it stays above other elements
+        flexGrow: 1, 
+        overflow: 'auto',
+        backgroundColor: '#f5f5f5' 
       }}>
-        <LogoutButton />
+        {children}
       </Box>
-      {children}
     </Box>
   );
 };
@@ -262,7 +264,27 @@ export default function DashboardLayout({
           navigation={navigation}
           theme={dashboardTheme}
         >
-          <ToolpadDashboardLayout>
+          <ToolpadDashboardLayout
+            toolbarItems={
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                <MenuButton 
+                  showBadge 
+                  aria-label="Open notifications"
+                  sx={{ p: 1 }}
+                >
+                  <NotificationsIcon fontSize="small" />
+                </MenuButton>
+                <LogoutButton 
+                  size="small"
+                  sx={{ 
+                    minWidth: 'auto',
+                    px: 2,
+                    py: 0.5
+                  }} 
+                />
+              </Box>
+            }
+          >
             <DashboardWrapper>
               {children}
             </DashboardWrapper>
