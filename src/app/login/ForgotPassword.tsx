@@ -8,6 +8,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import { TextField, CircularProgress, Alert, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { Box } from '@mui/system';
 import axios from 'axios';
+import { currentConfig } from '@/config';
 
 //user roles based on backend enum
 //type UserRole = 'prof' | 'student' | 'ta';
@@ -32,7 +33,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post('http://localhost:8000/request-otp', { email });
+      const response = await axios.post(`${currentConfig.apiBaseUrl}/request-otp`, { email });
       setMessage({
         type: 'success',
         text: 'A verification code has been sent to your email.'
@@ -62,7 +63,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await axios.post('http://localhost:8000/verify-otp', { email, otp });
+      const response = await axios.post(`${currentConfig.apiBaseUrl}/verify-otp`, { email, otp });
       setMessage({
         type: 'success',
         text: 'Verification successful. Please set your new password.'
@@ -101,7 +102,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
     }
 
     try {
-      const response = await axios.post('http://localhost:8000/reset-password-with-otp', {
+      const response = await axios.post(`${currentConfig.apiBaseUrl}/reset-password-with-otp`, {
         email,
         otp,
         new_password: newPassword,

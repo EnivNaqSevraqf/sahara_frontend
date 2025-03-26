@@ -29,9 +29,10 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import { Edit, Delete, Visibility, FileDownload } from '@mui/icons-material';
 import axios from 'axios';
+import { currentConfig } from '@/config';
 
 // Configure axios base URL to handle different ports
-axios.defaults.baseURL = 'http://localhost:8000';
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 // Define Submittable interface with fields matching the backend model
 interface Submittable {
@@ -106,7 +107,7 @@ const SubmittableCreationApp: React.FC = () => {
       console.log('Fetching submittables...');
       console.log('Token:', token); // Log token for debugging
       
-      const response = await axios.get("http://localhost:8000/submittables/", {
+      const response = await axios.get(`${currentConfig.apiBaseUrl}/submittables/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'accept': 'application/json'
@@ -259,7 +260,7 @@ const SubmittableCreationApp: React.FC = () => {
         if (isEditMode && selectedSubmittable) {
           // Update existing submittable
           response = await axios.put(
-            `http://localhost:8000/submittables/${selectedSubmittable.id}`, 
+            `${currentConfig.apiBaseUrl}/submittables/${selectedSubmittable.id}`, 
             formData, 
             {
               headers: {
@@ -272,7 +273,7 @@ const SubmittableCreationApp: React.FC = () => {
         } else {
           // Create new submittable
           response = await axios.post(
-            "http://localhost:8000/submittables/create", 
+            `${currentConfig.apiBaseUrl}/submittables/create`, 
             formData, 
             {
               headers: {
@@ -355,7 +356,7 @@ const SubmittableCreationApp: React.FC = () => {
       
       // Fetch complete submittable details to ensure we have all file information
       const response = await axios.get(
-        `http://localhost:8000/submittables/${submittable.id}`,
+        `${currentConfig.apiBaseUrl}/submittables/${submittable.id}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -410,7 +411,7 @@ const SubmittableCreationApp: React.FC = () => {
         }
 
         await axios.delete(
-          `http://localhost:8000/submittables/${submittableToDelete}`, 
+          `${currentConfig.apiBaseUrl}/submittables/${submittableToDelete}`, 
           {
             headers: {
               'Authorization': `Bearer ${token}`,

@@ -24,6 +24,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import { useRouter } from 'next/navigation';
+import { currentConfig } from '@/config';
 
 // Update the Team type to include members
 interface Team {
@@ -38,7 +39,7 @@ const TeamsDetails = () => {
 
   useEffect(() => {
     const fetchTeamsAndPairs = async () => {
-      const response = await axios.get("http://localhost:8000/teams/FormedTeams/");
+      const response = await axios.get(`${currentConfig.apiBaseUrl}/teams/FormedTeams/`);
       setFormedTeams(response.data);
     };
 

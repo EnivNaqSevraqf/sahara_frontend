@@ -32,7 +32,8 @@ import type { Student } from './types';
 import { SelectChangeEvent } from '@mui/material/Select';
 import * as XLSX from 'xlsx';
 import { useRouter } from 'next/navigation';
-import Auth from '../../../utils/auth';
+import { currentConfig } from '@/config';
+import Auth from '../../login/auth';
 
 const PeoplePage = () => {
   const router = useRouter();
@@ -49,7 +50,7 @@ const PeoplePage = () => {
       setIsLoading(true);
       setError(null);
       try{
-        const response = await axios.get('http://localhost:8000/people/');
+        const response = await axios.get(`${currentConfig.apiBaseUrl}/people/`);
         setStudents(response.data);
       }
       catch (error) {

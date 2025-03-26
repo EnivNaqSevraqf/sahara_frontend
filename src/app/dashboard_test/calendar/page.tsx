@@ -9,6 +9,7 @@ import { Scheduler } from "@aldabil/react-scheduler";
 //   } from "@aldabil/react-scheduler/types";
 import axios from "axios";
 import { ProcessedEvent } from "@aldabil/react-scheduler/types";
+import { currentConfig } from '@/config';
 
 export default function Calendar(){
     const [Events, setEvents] = React.useState<ProcessedEvent[]>([]);
@@ -26,7 +27,7 @@ export default function Calendar(){
             events: stringifiedEvents,
         }
         console.log("Payload:", payload);
-        axios.post("http://localhost:8000/calendar/update", payload)
+        axios.post(`${currentConfig.apiBaseUrl}/calendar/update`, payload)
         .then(response => {
             console.log('Calendar updated:', response);
         })
@@ -52,7 +53,7 @@ export default function Calendar(){
     const handleRefresh = () => {
         console.log("Button cicked");
         console.log("Events:", JSON.stringify(Events));
-        axios.get("http://localhost:8000/calendar/")
+        axios.get(`${currentConfig.apiBaseUrl}/calendar/`)
         .then(response => {
             console.log('Calendar refreshed:', response);
             const returnedEvents = response.data;

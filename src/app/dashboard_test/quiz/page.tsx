@@ -8,6 +8,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
+import { currentConfig } from '@/config';
 
 interface Quiz {
   _id: string;
@@ -25,7 +26,7 @@ export default function QuizPage() {
     user_id: "123",
   }
   useEffect(() => {
-    axios.post('http://localhost:8000/api/get_forms', payload)
+    axios.post(`${currentConfig.apiBaseUrl}/api/get_forms`, payload)
       .then(response => {
         setQuizzes(response.data);
       })
