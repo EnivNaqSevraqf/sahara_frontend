@@ -386,8 +386,25 @@ export default function DiscussionPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ height: '100vh', display: 'flex', flexDirection: 'column', py: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+    <Container 
+      maxWidth="lg" 
+      sx={{ 
+        height: '100vh', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        py: 2,
+        position: 'relative', // Add relative positioning
+      }}
+    >
+      <Box 
+        sx={{ 
+          position: 'sticky',  // Make header sticky
+          top: 0,
+          zIndex: 1,
+          bgcolor: 'background.default',
+          pb: 2
+        }}
+      >
         <Button
           endIcon={<KeyboardArrowDown />}
           onClick={(e) => setAnchorEl(e.currentTarget)}
@@ -405,10 +422,8 @@ export default function DiscussionPage() {
             <MenuItem
               key={channel.id}
               onClick={() => {
-                console.log('Switching to channel:', channel.id);
                 setAnchorEl(null);
                 if (channel.id !== selectedChannel?.id) {
-                  // Reset connection states before changing channel
                   setWsConnected(false);
                   setIsConnecting(false);
                   currentChannelRef.current = channel.id;
@@ -422,79 +437,108 @@ export default function DiscussionPage() {
         </Menu>
       </Box>
 
-      <Paper
-        ref={messageContainerRef}
-        elevation={3}
-        sx={{
+      <Box 
+        sx={{ 
           flex: 1,
-          mb: 2,
-          p: 2,
-          overflow: 'auto',
-          backgroundColor: '#f5f5f5',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0, // Important for proper scrolling
+          position: 'relative'
         }}
       >
-        {messages && messages.length > 0 ? (
-          <>
-            {messages.map((message, index) => {
-              const showDateDivider = index === 0 || !isSameDay(messages[index - 1].created_at, message.created_at);
-              
-              return (
-                <Box key={message.id}>
-                  {showDateDivider && (
+        <Paper
+          ref={messageContainerRef}
+          elevation={3}
+          sx={{
+            flex: 1,
+            mb: 2,
+            p: 2,
+            overflow: 'auto',
+            bgcolor: 'background.paper',
+          }}
+        >
+          {messages && messages.length > 0 ? (
+            <>
+              {messages.map((message, index) => {
+                const showDateDivider = index === 0 || !isSameDay(messages[index - 1].created_at, message.created_at);
+                const isOwnMessage = message.sender_id === userData?.id;
+                
+                return (
+                  <Box key={message.id}>
+                    {showDateDivider && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          my: 2,
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            backgroundColor: (theme) => theme.palette.mode === 'dark' 
+                              ? 'rgba(255, 255, 255, 0.05)' 
+                              : 'rgba(0, 0, 0, 0.05)',
+                            px: 2,
+                            py: 0.5,
+                            borderRadius: 1,
+                            color: 'text.secondary',
+                          }}
+                        >
+                          {formatMessageDate(message.created_at)}
+                        </Typography>
+                      </Box>
+                    )}
                     <Box
                       sx={{
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        my: 2,
+                        alignItems: 'flex-start',
+                        mb: 2,
+                        flexDirection: isOwnMessage ? 'row-reverse' : 'row',
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                          px: 2,
-                          py: 0.5,
-                          borderRadius: 1,
-                          color: 'text.secondary',
+                      <Avatar 
+                        sx={{ 
+                          bgcolor: isOwnMessage ? 'primary.main' : 'secondary.main',
+                          mr: 1,
+                          ml: 1,
                         }}
                       >
-                        {formatMessageDate(message.created_at)}
-                      </Typography>
-                    </Box>
-                  )}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      mb: 2,
-                      flexDirection: message.sender_id === userData?.id ? 'row-reverse' : 'row',
-                    }}
-                  >
-                    <Avatar sx={{ bgcolor: message.sender_id === userData?.id ? 'primary.main' : 'secondary.main', mr: 1, ml: 1 }}>
-                      {message.sender_name[0].toUpperCase()}
-                    </Avatar>
-                    <Paper
-                      sx={{
-                        p: 2,
-                        maxWidth: '70%',
-                        backgroundColor: message.sender_id === userData?.id ? '#1976d2' : 'white',
-                        color: message.sender_id === userData?.id ? 'white' : 'inherit',
-                      }}
-                    >
-                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+                        {message.sender_name[0].toUpperCase()}
+                      </Avatar>
+                      <Paper
+                        sx={{
+                          p: 1.5, // Reduced padding to make it shorter
+                          maxWidth: '85%', // Increased from 70% to make it wider
+                          minWidth: '200px', // Added minimum width
+                          bgcolor: (theme) => isOwnMessage 
+                            ? theme.palette.mode === 'dark'
+                              ? 'primary.dark'
+                              : 'primary.main'
+                            : theme.palette.mode === 'dark'
+                              ? '#1f2e6a'
+                              : '#1f2e6a',
+                          color: '#ffffff',
+                          boxShadow: (theme) => theme.palette.mode === 'dark'
+                            ? '0 2px 4px rgba(0,0,0,0.2)'
+                            : '0 2px 4px rgba(0,0,0,0.1)',
+                        }}
+                      >
+                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', opacity: 0.9, mb: 0.5 }}>
                           {message.sender_name}
                         </Typography>
                         {message.message_type === 'text' ? (
-                          <Typography>{message.content}</Typography>
+                          <Typography sx={{ opacity: 0.95, lineHeight: 1.4 }}>{message.content}</Typography> // Added lineHeight to make text more compact
                         ) : (
                           <Button
                             variant="text"
                             onClick={() => handleFileDownload(message.file_name || '')}
                             sx={{ 
-                              color: message.sender_id === userData?.id ? 'white' : 'primary.main',
-                              textDecoration: 'none',
+                              color: '#ffffff',
+                              opacity: 0.9,
                               '&:hover': {
+                                opacity: 1,
                                 textDecoration: 'underline'
                               }
                             }}
@@ -502,63 +546,67 @@ export default function DiscussionPage() {
                             📎 {message.file_name}
                           </Button>
                         )}
-                        <Typography variant="caption" display="block" sx={{ mt: 1, opacity: 0.7 }}>
+                        <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.7 }}>
                           {new Date(message.created_at).toLocaleTimeString()}
                         </Typography>
-                    </Paper>
+                      </Paper>
+                    </Box>
                   </Box>
-                </Box>
-              );
-            })}
-          </>
-        ) : (
-          <Typography align="center" color="textSecondary">
-            No messages in this channel
-          </Typography>
-        )}
-      </Paper>
+                );
+              })}
+            </>
+          ) : (
+            <Typography align="center" color="text.secondary">
+              No messages in this channel
+            </Typography>
+          )}
+        </Paper>
 
-      <Paper
-        component="form"
-        sx={{
-          p: '2px 4px',
-          display: 'flex',
-          alignItems: 'center',
-          width: '100%',
-        }}
-      >
-        <InputBase
-          sx={{ ml: 1, flex: 1 }}
-          placeholder="Type a message"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSendMessage();
-            }
+        <Paper
+          component="form"
+          sx={{
+            p: '2px 4px',
+            display: 'flex',
+            alignItems: 'center',
+            width: '100%',
+            bgcolor: 'background.paper',
+            position: 'sticky',
+            bottom: 0,
           }}
-        />
-        <input
-          type="file"
-          ref={fileInputRef}
-          style={{ display: 'none' }}
-          onChange={handleFileUpload}
-        />
-        <IconButton
-          color="primary"
-          onClick={() => fileInputRef.current?.click()}
         >
-          <AttachFileIcon />
-        </IconButton>
-        <IconButton
-          color="primary"
-          sx={{ p: '10px' }}
-          onClick={handleSendMessage}
-        >
-          <SendIcon />
-        </IconButton>
-      </Paper>
+          <InputBase
+            sx={{ ml: 1, flex: 1 }}
+            placeholder="Type a message"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
+          />
+          <input
+            type="file"
+            ref={fileInputRef}
+            style={{ display: 'none' }}
+            onChange={handleFileUpload}
+          />
+          <IconButton
+            color="primary"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <AttachFileIcon />
+          </IconButton>
+          <IconButton
+            color="primary"
+            sx={{ p: '10px' }}
+            onClick={handleSendMessage}
+          >
+            <SendIcon />
+          </IconButton>
+        </Paper>
+      </Box>
     </Container>
   );
 }
