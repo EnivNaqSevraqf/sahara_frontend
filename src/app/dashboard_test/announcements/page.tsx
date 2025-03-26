@@ -22,12 +22,17 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Divider
+  Divider,
+  Card,
+  CardContent,
+  CardActions
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DownloadIcon from '@mui/icons-material/Download';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000';
@@ -46,14 +51,15 @@ interface Announcement {
   title: string;
   content: string;
   created_at: string;
-  url_name: string;
+  url_name: string | null;
   creator_id: number;
 }
 
-interface NewAnnouncementForm {
+interface AnnouncementForm {
+  id?: number;
   title: string;
   content: string;
-  attachments: FormAttachment[];
+  attachment?: FormAttachment;
 }
 
 // Mock function to get user role
@@ -66,12 +72,12 @@ const AnnouncementPage: React.FC = () => {
   const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedAnnouncementId, setSelectedAnnouncementId] = useState<number | null>(null);
-  const [newAnnouncement, setNewAnnouncement] = useState<NewAnnouncementForm>({
+  const [announcementForm, setAnnouncementForm] = useState<AnnouncementForm>({
     title: '',
     content: '',
-    attachments: []
   });
   const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
     open: false,
@@ -104,16 +110,28 @@ const AnnouncementPage: React.FC = () => {
   };
 
   const handleCreateAnnouncement = () => {
+    setAnnouncementForm({
+      title: '',
+      content: '',
+    });
     setOpenCreateDialog(true);
+  };
+
+  const handleEditAnnouncement = (announcement: Announcement) => {
+    setAnnouncementForm({
+      id: announcement.id,
+      title: announcement.title,
+      content: announcement.content,
+    });
+    setOpenEditDialog(true);
   };
 
   const handleCloseCreateDialog = () => {
     setOpenCreateDialog(false);
-    setNewAnnouncement({
-      title: '',
-      content: '',
-      attachments: []
-    });
+  };
+
+  const handleCloseEditDialog = () => {
+    setOpenEditDialog(false);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -140,9 +158,9 @@ const AnnouncementPage: React.FC = () => {
         return;
       }
 
-      setNewAnnouncement(prev => ({
+      setAnnouncementForm(prev => ({
         ...prev,
-        attachments: [{ file, name: file.name }]
+        attachment: { file, name: file.name }
       }));
     }
   };
@@ -172,10 +190,10 @@ const AnnouncementPage: React.FC = () => {
 
   const handleSaveAnnouncement = async () => {
     try {
-      if (!newAnnouncement.title || !newAnnouncement.content || !newAnnouncement.attachments?.length) {
+      if (!announcementForm.title || !announcementForm.content) {
         setSnackbar({
           open: true,
-          message: 'Please fill in all required fields and upload a file',
+          message: 'Please fill in all required fields',
           severity: 'error'
         });
         return;
@@ -183,9 +201,11 @@ const AnnouncementPage: React.FC = () => {
 
       setIsSubmitting(true);
       const formData = new FormData();
-      formData.append('title', newAnnouncement.title);
-      formData.append('description', newAnnouncement.content);
-      formData.append('file', newAnnouncement.attachments[0].file);
+      formData.append('title', announcementForm.title);
+      formData.append('description', announcementForm.content);
+      if (announcementForm.attachment) {
+        formData.append('file', announcementForm.attachment.file);
+      }
 
       const response = await axios.post('/announcements', formData, {
         headers: {
@@ -200,16 +220,75 @@ const AnnouncementPage: React.FC = () => {
           severity: 'success'
         });
         setOpenCreateDialog(false);
-        setNewAnnouncement({
+        setAnnouncementForm({
           title: '',
           content: '',
-          attachments: []
         });
         fetchAnnouncements();
       }
     } catch (error: any) {
       console.error('Error creating announcement:', error);
       let errorMessage = 'Error creating announcement';
+      
+      if (error.response?.data?.detail) {
+        if (Array.isArray(error.response.data.detail)) {
+          errorMessage = error.response.data.detail.map((err: any) => err.msg).join(', ');
+        } else {
+          errorMessage = error.response.data.detail;
+        }
+      }
+      
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: 'error'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateAnnouncement = async () => {
+    try {
+      if (!announcementForm.id || !announcementForm.title || !announcementForm.content) {
+        setSnackbar({
+          open: true,
+          message: 'Please fill in all required fields',
+          severity: 'error'
+        });
+        return;
+      }
+
+      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append('title', announcementForm.title);
+      formData.append('description', announcementForm.content);
+      if (announcementForm.attachment) {
+        formData.append('file', announcementForm.attachment.file);
+      }
+
+      const response = await axios.put(`/announcements/${announcementForm.id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (response.status === 202) {
+        setSnackbar({
+          open: true,
+          message: 'Announcement updated successfully',
+          severity: 'success'
+        });
+        setOpenEditDialog(false);
+        setAnnouncementForm({
+          title: '',
+          content: '',
+        });
+        fetchAnnouncements();
+      }
+    } catch (error: any) {
+      console.error('Error updating announcement:', error);
+      let errorMessage = 'Error updating announcement';
       
       if (error.response?.data?.detail) {
         if (Array.isArray(error.response.data.detail)) {
@@ -292,91 +371,103 @@ const AnnouncementPage: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <List sx={{ bgcolor: 'background.paper', borderRadius: 1, boxShadow: 1 }}>
-          {announcements.map((announcement, index) => (
-            <React.Fragment key={announcement.id}>
-              <ListItem 
-                alignItems="flex-start"
-                sx={{ 
-                  py: 3,
-                  flexDirection: 'column',
-                  '&:hover': {
-                    bgcolor: 'action.hover'
-                  }
-                }}
-              >
-                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                  <Typography
-                    variant="h6"
-                    component="h2"
-                    sx={{
-                      fontWeight: 500,
-                      color: 'primary.main',
-                      mb: 1
-                    }}
-                  >
-                    {announcement.title}
-                  </Typography>
-                  <IconButton 
-                    edge="end" 
-                    aria-label="delete"
-                    onClick={() => handleDeleteClick(announcement.id)}
-                    sx={{ ml: 2, mt: -1 }}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: 'text.primary',
-                    whiteSpace: 'pre-wrap',
-                    mb: 2,
-                    width: '100%'
-                  }}
-                >
-                  {announcement.content}
-                </Typography>
-
-                <Box sx={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center',
-                  width: '100%'
-                }}>
-                  <Typography 
-                    variant="caption" 
-                    sx={{ 
-                      color: 'text.secondary',
-                      fontSize: '0.875rem'
-                    }}
-                  >
-                    Posted on: {formatDate(announcement.created_at)}
-                  </Typography>
-
-                  {announcement.url_name && (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      startIcon={<AttachFileIcon />}
-                      onClick={() => handleDownload(announcement.id)}
+        <Grid container spacing={3}>
+          {announcements.map((announcement) => (
+            <Grid item xs={12} key={announcement.id}>
+              <Card sx={{ 
+                bgcolor: 'background.paper', 
+                borderRadius: 1, 
+                boxShadow: 1,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  boxShadow: 3,
+                  transform: 'translateY(-3px)'
+                }
+              }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Typography
+                      variant="h6"
+                      component="h2"
                       sx={{
-                        ml: 2,
-                        textTransform: 'none'
+                        fontWeight: 500,
+                        color: 'primary.main',
+                        mb: 1
                       }}
                     >
-                      {announcement.url_name}
-                    </Button>
-                  )}
-                </Box>
-              </ListItem>
-              {index < announcements.length - 1 && <Divider />}
-            </React.Fragment>
+                      {announcement.title}
+                    </Typography>
+                    <Box>
+                      <IconButton 
+                        edge="end" 
+                        aria-label="edit"
+                        onClick={() => handleEditAnnouncement(announcement)}
+                        sx={{ ml: 1 }}
+                      >
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton 
+                        edge="end" 
+                        aria-label="delete"
+                        onClick={() => handleDeleteClick(announcement.id)}
+                        sx={{ ml: 1 }}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  </Box>
+
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: 'text.primary',
+                      whiteSpace: 'pre-wrap',
+                      mb: 2,
+                      width: '100%'
+                    }}
+                  >
+                    {announcement.content}
+                  </Typography>
+
+                  <Box sx={{ 
+                    display: 'flex', 
+                    justifyContent: 'space-between', 
+                    alignItems: 'center',
+                    width: '100%'
+                  }}>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: 'text.secondary',
+                        fontSize: '0.875rem'
+                      }}
+                    >
+                      Posted on: {formatDate(announcement.created_at)}
+                    </Typography>
+
+                    {announcement.url_name && (
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<DownloadIcon />}
+                        onClick={() => handleDownload(announcement.id)}
+                        sx={{
+                          ml: 2,
+                          textTransform: 'none'
+                        }}
+                      >
+                        Download Attachment
+                      </Button>
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
           ))}
-        </List>
+        </Grid>
       )}
 
+      {/* Create Announcement Dialog */}
       <Dialog 
         open={openCreateDialog} 
         onClose={handleCloseCreateDialog}
@@ -391,8 +482,8 @@ const AnnouncementPage: React.FC = () => {
             label="Title"
             fullWidth
             required
-            value={newAnnouncement.title}
-            onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
+            value={announcementForm.title}
+            onChange={(e) => setAnnouncementForm(prev => ({ ...prev, title: e.target.value }))}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -402,8 +493,8 @@ const AnnouncementPage: React.FC = () => {
             multiline
             rows={6}
             required
-            value={newAnnouncement.content}
-            onChange={(e) => setNewAnnouncement(prev => ({
+            value={announcementForm.content}
+            onChange={(e) => setAnnouncementForm(prev => ({
               ...prev,
               content: e.target.value
             }))}
@@ -416,7 +507,6 @@ const AnnouncementPage: React.FC = () => {
               style={{ display: 'none' }}
               onChange={handleFileChange}
               accept={ALLOWED_FILE_TYPES.join(',')}
-              required
             />
             <Box sx={{ 
               p: 3, 
@@ -431,23 +521,21 @@ const AnnouncementPage: React.FC = () => {
                   component="span"
                   variant="outlined"
                   startIcon={<CloudUploadIcon />}
-                  color={newAnnouncement.attachments && newAnnouncement.attachments.length > 0 ? "success" : "primary"}
+                  color={announcementForm.attachment ? "success" : "primary"}
                   sx={{ mb: 1 }}
                 >
-                  {newAnnouncement.attachments && newAnnouncement.attachments.length > 0 
-                    ? 'Change File' 
-                    : 'Upload File *'}
+                  {announcementForm.attachment ? 'Change File' : 'Upload File (Optional)'}
                 </Button>
               </label>
-              {newAnnouncement.attachments && newAnnouncement.attachments.length > 0 ? (
+              {announcementForm.attachment ? (
                 <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
                   <AttachFileIcon fontSize="small" color="success" />
                   <Typography variant="body2" color="success.main">
-                    {newAnnouncement.attachments[0].name}
+                    {announcementForm.attachment.name}
                   </Typography>
                   <IconButton
                     size="small"
-                    onClick={() => setNewAnnouncement(prev => ({ ...prev, attachments: [] }))}
+                    onClick={() => setAnnouncementForm(prev => ({ ...prev, attachment: undefined }))}
                     sx={{ ml: 1 }}
                     color="error"
                   >
@@ -470,7 +558,7 @@ const AnnouncementPage: React.FC = () => {
             onClick={handleSaveAnnouncement} 
             variant="contained" 
             color="primary"
-            disabled={!newAnnouncement.title || !newAnnouncement.content || !newAnnouncement.attachments?.length || isSubmitting}
+            disabled={!announcementForm.title || !announcementForm.content || isSubmitting}
             sx={{ minWidth: 100 }}
           >
             {isSubmitting ? <CircularProgress size={24} /> : 'Create'}
@@ -478,6 +566,106 @@ const AnnouncementPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Edit Announcement Dialog */}
+      <Dialog 
+        open={openEditDialog} 
+        onClose={handleCloseEditDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>Edit Announcement</DialogTitle>
+        <DialogContent sx={{ pb: 2 }}>
+          <TextField
+            autoFocus
+            margin="normal"
+            label="Title"
+            fullWidth
+            required
+            value={announcementForm.title}
+            onChange={(e) => setAnnouncementForm(prev => ({ ...prev, title: e.target.value }))}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            margin="normal"
+            label="Description"
+            fullWidth
+            multiline
+            rows={6}
+            required
+            value={announcementForm.content}
+            onChange={(e) => setAnnouncementForm(prev => ({
+              ...prev,
+              content: e.target.value
+            }))}
+            sx={{ mb: 3 }}
+          />
+          <Box sx={{ mt: 2 }}>
+            <input
+              type="file"
+              id="file-upload-edit"
+              style={{ display: 'none' }}
+              onChange={handleFileChange}
+              accept={ALLOWED_FILE_TYPES.join(',')}
+            />
+            <Box sx={{ 
+              p: 3, 
+              border: '2px dashed',
+              borderColor: 'primary.main',
+              borderRadius: 1,
+              textAlign: 'center',
+              bgcolor: 'background.paper'
+            }}>
+              <label htmlFor="file-upload-edit">
+                <Button
+                  component="span"
+                  variant="outlined"
+                  startIcon={<CloudUploadIcon />}
+                  color={announcementForm.attachment ? "success" : "primary"}
+                  sx={{ mb: 1 }}
+                >
+                  {announcementForm.attachment ? 'Change File' : 'Upload New File (Optional)'}
+                </Button>
+              </label>
+              {announcementForm.attachment ? (
+                <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                  <AttachFileIcon fontSize="small" color="success" />
+                  <Typography variant="body2" color="success.main">
+                    {announcementForm.attachment.name}
+                  </Typography>
+                  <IconButton
+                    size="small"
+                    onClick={() => setAnnouncementForm(prev => ({ ...prev, attachment: undefined }))}
+                    sx={{ ml: 1 }}
+                    color="error"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              ) : (
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                  Accepted files: PDF, Word, or Image (Max size: 50MB)
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleCloseEditDialog} variant="outlined">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleUpdateAnnouncement} 
+            variant="contained" 
+            color="primary"
+            disabled={!announcementForm.title || !announcementForm.content || isSubmitting}
+            sx={{ minWidth: 100 }}
+          >
+            {isSubmitting ? <CircularProgress size={24} /> : 'Update'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
       <Dialog
         open={openDeleteDialog}
         onClose={() => setOpenDeleteDialog(false)}
