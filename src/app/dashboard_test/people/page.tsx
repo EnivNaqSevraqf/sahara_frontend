@@ -45,6 +45,7 @@ const PeoplePage = () => {
 
   useEffect(() => {
     const fetchStudents = async () => {
+      console.log("Fetching students");
       setIsLoading(true);
       setError(null);
       try{

@@ -14,6 +14,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   IconButton
 } from '@mui/material';
@@ -23,10 +24,11 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import { Edit, Delete, Visibility, FileDownload } from '@mui/icons-material';
 
-// Define Event interface
+// Define Event interface with optional opensAt field
 interface Event {
   id: number;
   name: string;
+  opensAt: Dayjs | null;  // New optional field
   dueDate: Dayjs;
   maxPoints: number;
   description: string;
@@ -36,6 +38,7 @@ interface Event {
 const EventCreationApp: React.FC = () => {
   // State for form inputs
   const [name, setName] = useState<string>('');
+  const [opensAt, setOpensAt] = useState<Dayjs | null>(null);  // New state for opensAt
   const [dueDate, setDueDate] = useState<Dayjs | null>(null);
   const [maxPoints, setMaxPoints] = useState<string>('');
   const [description, setDescription] = useState<string>('');
@@ -48,6 +51,9 @@ const EventCreationApp: React.FC = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isValidationDialogOpen, setIsValidationDialogOpen] = useState(false);
+  const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState<number | null>(null);
 
   // Handle file input
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +71,12 @@ const EventCreationApp: React.FC = () => {
       return;
     }
 
+    // Validate that opensAt (if provided) is before due date
+    if (opensAt && opensAt.isAfter(dueDate)) {
+      setIsValidationDialogOpen(true);
+      return;
+    }
+
     if (isEditMode && selectedEvent) {
       // Update existing event
       setEvents(events.map(event => 
@@ -72,6 +84,7 @@ const EventCreationApp: React.FC = () => {
           ? { 
               ...event, 
               name, 
+              opensAt,  // Add opensAt to update
               dueDate, 
               maxPoints: parseFloat(maxPoints), 
               description,
@@ -86,6 +99,7 @@ const EventCreationApp: React.FC = () => {
       const newEvent: Event = {
         id: Date.now(), // use timestamp as unique id
         name,
+        opensAt,  // Add opensAt to new event
         dueDate,
         maxPoints: parseFloat(maxPoints),
         description,
@@ -98,6 +112,7 @@ const EventCreationApp: React.FC = () => {
 
     // Reset form
     setName('');
+    setOpensAt(null);  // Reset opensAt
     setDueDate(null);
     setMaxPoints('');
     setDescription('');
@@ -114,6 +129,7 @@ const EventCreationApp: React.FC = () => {
   const handleEditEvent = (event: Event) => {
     setSelectedEvent(event);
     setName(event.name);
+    setOpensAt(event.opensAt);  // Set opensAt when editing
     setDueDate(event.dueDate);
     setMaxPoints(event.maxPoints.toString());
     setDescription(event.description);
@@ -123,7 +139,23 @@ const EventCreationApp: React.FC = () => {
 
   // Delete event
   const handleDeleteEvent = (eventId: number) => {
-    setEvents(events.filter(event => event.id !== eventId));
+    setEventToDelete(eventId);
+    setIsDeleteConfirmationOpen(true);
+  };
+
+  // Confirm delete event
+  const confirmDeleteEvent = () => {
+    if (eventToDelete !== null) {
+      setEvents(events.filter(event => event.id !== eventToDelete));
+      setIsDeleteConfirmationOpen(false);
+      setEventToDelete(null);
+    }
+  };
+
+  // Cancel delete
+  const cancelDeleteEvent = () => {
+    setIsDeleteConfirmationOpen(false);
+    setEventToDelete(null);
   };
 
   // Download file
@@ -154,6 +186,17 @@ const EventCreationApp: React.FC = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   variant="outlined"
+                />
+              </Grid>
+
+              <Grid item xs={6}>
+                <DatePicker
+                  label="Opens At (Optional)"
+                  value={opensAt}
+                  onChange={(newValue) => setOpensAt(newValue)}
+                  slots={{
+                    textField: (params) => <TextField fullWidth {...params} />
+                  }}
                 />
               </Grid>
 
@@ -219,14 +262,14 @@ const EventCreationApp: React.FC = () => {
                   fullWidth
                   onClick={handlePublishEvent}
                 >
-                  Publish Event
+                  Publish Assignment
                 </Button>
               </Grid>
             </Grid>
           </Paper>
 
           <Typography variant="h5" component="h2" gutterBottom>
-            Previous Events
+            Previous Assignments
           </Typography>
 
           <Paper elevation={3} sx={{ p: 2 }}>
@@ -268,7 +311,7 @@ const EventCreationApp: React.FC = () => {
                   >
                     <ListItemText
                       primary={event.name}
-                      secondary={`Due: ${event.dueDate.format('DD/MM/YYYY')} | Max Points: ${event.maxPoints}`}
+                      secondary={`Opens: ${event.opensAt ? event.opensAt.format('DD/MM/YYYY') : 'N/A'} | Due: ${event.dueDate.format('DD/MM/YYYY')} | Max Points: ${event.maxPoints}`}
                     />
                   </ListItem>
                 ))}
@@ -288,6 +331,9 @@ const EventCreationApp: React.FC = () => {
               {selectedEvent && (
                 <>
                   <Typography variant="h6">Name: {selectedEvent.name}</Typography>
+                  {selectedEvent.opensAt && (
+                    <Typography variant="body1">Opens At: {selectedEvent.opensAt.format('DD/MM/YYYY')}</Typography>
+                  )}
                   <Typography variant="body1">Due Date: {selectedEvent.dueDate.format('DD/MM/YYYY')}</Typography>
                   <Typography variant="body1">Max Points: {selectedEvent.maxPoints}</Typography>
                   <Typography variant="body1" sx={{ mt: 2 }}>Description:</Typography>
@@ -318,6 +364,54 @@ const EventCreationApp: React.FC = () => {
               <Button onClick={() => setIsDetailsOpen(false)}>Close</Button>
             </DialogActions>
           </Dialog>
+
+           {/* Validation Dialog */}
+        <Dialog
+          open={isValidationDialogOpen}
+          onClose={() => setIsValidationDialogOpen(false)}
+        >
+          <DialogTitle>Invalid Date</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              The opening date must be before or equal to the due date. 
+              Please adjust the dates and try again.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button 
+              onClick={() => setIsValidationDialogOpen(false)} 
+              color="primary"
+            >
+              OK
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+         {/* Delete Confirmation Dialog */}
+         <Dialog
+          open={isDeleteConfirmationOpen}
+          onClose={cancelDeleteEvent}
+        >
+          <DialogTitle>Confirm Deletion</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to delete this event? 
+              This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={cancelDeleteEvent} color="primary">
+              Cancel
+            </Button>
+            <Button 
+              onClick={confirmDeleteEvent} 
+              color="secondary" 
+              variant="contained"
+            >
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
         </Box>
       </Container>
     </LocalizationProvider>
