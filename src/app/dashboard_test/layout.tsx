@@ -27,6 +27,7 @@ import Header from '@/components/Header';
 //import toolbaritems from '@/components/toolbaritems';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuButton from '@/components/MenuButton';
+import { green, purple } from '@mui/material/colors';
 
 // Define navigation items based on user role
 const getUserNavigation = (userRole: UserRole): Navigation => {
@@ -176,7 +177,7 @@ const dashboardTheme = createTheme({
   cssVariables: {
     colorSchemeSelector: 'data-toolpad-color-scheme',
   },
-  colorSchemes: { light: true, dark: true },
+  colorSchemes: { light: true, dark: false },
   breakpoints: {
     values: {
       xs: 0,
@@ -186,6 +187,67 @@ const dashboardTheme = createTheme({
       xl: 1536,
     },
   },
+  components: {
+    // MuiButton: {
+    //   styleOverrides: {
+    //     root: {
+    //       backgroundColor: '#19244C',
+    //       color: '#FFFFFF',
+    //       '&:hover': {
+    //         backgroundColor: '#0F1A3E',
+    //       },
+    //     },
+    //   },
+    // },
+    MuiDrawer: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: '#1f2e6a',
+          color: '#a3aac1',
+        },
+      },
+    },
+    MuiListSubheader: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#1f2e6a',
+          color: '#a3aac1',
+        },
+      },
+    },
+    MuiListItemIcon: {
+      styleOverrides: {
+        root: {
+          fill: '#a3aac1',
+          color: '#a3aac1',
+        },
+      },
+    },
+    MuiSvgIcon: {
+      styleOverrides: {
+        root: {
+          fill: '#a3aac1',
+          color: '#a3aac1',
+        },
+      },
+    },
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: '#F5F5F5', // Light gray background
+          color: '#000000', // Text color
+        },
+      },
+    },
+  },
+  palette: {
+    primary: {
+      main: purple[500],
+    },
+    secondary: {
+      main: green[500],
+    },
+  }, 
 });
 
 // Create a custom event for role changes
