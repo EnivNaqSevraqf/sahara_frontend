@@ -15,6 +15,7 @@ import Header from '../../components/Header';
 import { buttonStyles } from '../../constants/theme';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { currentConfig } from '@/config';
 
 const AddStudentPage = () => {
   const router = useRouter();
@@ -52,7 +53,7 @@ const AddStudentPage = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post('http://localhost:8000/student/upload-csv/', formData, {
+      const response = await axios.post(`${currentConfig.apiBaseUrl}/student/upload-csv/`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

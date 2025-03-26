@@ -30,6 +30,7 @@ import type { Student } from './types';
 import { SelectChangeEvent } from '@mui/material/Select';
 import * as XLSX from 'xlsx';
 import { useRouter } from 'next/navigation';
+import { currentConfig } from '@/config';
 
 const PeoplePage = () => {
   const router = useRouter();
@@ -44,7 +45,7 @@ const PeoplePage = () => {
     const fetchStudents = async () => {
       setIsLoading(true);
       setError(null);
-      const response = await axios.get('http://localhost:8000/people/');
+      const response = await axios.get(`${currentConfig.apiBaseUrl}/people/`);
       if (response.status !== 200) {
         setError('Failed to fetch students data.');
       } else {

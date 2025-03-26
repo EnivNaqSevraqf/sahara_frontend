@@ -12,6 +12,7 @@ import {
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import axios from 'axios';
+import { currentConfig } from '@/config';
 
 const CreateGradeable = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -49,7 +50,7 @@ const CreateGradeable = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`http://localhost:8000/gradeables/${1}/upload-scores`, {
+      const response = await axios.get(`${currentConfig.apiBaseUrl}/gradeables/${1}/upload-scores`, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data',
