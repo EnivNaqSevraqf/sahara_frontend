@@ -26,7 +26,8 @@
     "lightningcss-win32-x64-msvc": "^1.29.3",
     "mui-color-input": "^6.0.0",
     "mui-tiptap": "^1.18.0",
-    "next": "15.2.2",
+    "next": "^15.2.4",
+    "postcss": "^8.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.1",
@@ -42,7 +43,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.2.2",
     "lightningcss": "^1.29.3",
-    "tailwindcss": "^4",
-    "typescript": "^5"
+    "tailwindcss": "^4.0.17",
+    "typescript": "5.8.2"
   }
 }
