@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CircularProgress, Box } from '@mui/material';
-import AdminFeedback from './professor';
-import FeedbackForm from './student';
+import ProfessorSubmissionList from './professor';
+import StudentSubmissionList from './student';
 
-export default function FeedbackPage() {
+export default function SubmissionsList() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState<string | null>(null);
@@ -19,7 +19,7 @@ export default function FeedbackPage() {
       // Redirect based on role
       // if (role === 'prof' || role === 'ta') {
       //   // router.push('/dashboard_test/feedback/admin');
-      //   return <AdminFeedback />;
+      //   return <ProfessorSubmissionList />;
       // } else {
       //   // router.push('/dashboard_test/feedback/student');
 
@@ -42,10 +42,10 @@ export default function FeedbackPage() {
       </Box>
     );
   }
-  if(role === 'prof' || role === 'ta') {
-    return <AdminFeedback />;
+  if(role === 'prof') {
+    return <ProfessorSubmissionList />;
   } else if(role === 'student') {
-    return <FeedbackForm />;
+    return <StudentSubmissionList />;
   }
 
   // Show loading state while redirecting

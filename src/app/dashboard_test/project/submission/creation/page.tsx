@@ -210,7 +210,7 @@ const EventCreationApp: React.FC = () => {
 
         // Redirect to the submittables list page after a short delay
         setTimeout(() => {
-          window.location.href = '/dashboard_test/project/submission/prof';
+          window.location.href = '/dashboard_test/submission';
         }, 2000);
       }
     } catch (error: any) {
