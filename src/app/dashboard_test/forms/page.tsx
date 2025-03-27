@@ -11,7 +11,7 @@ import dayjs from 'dayjs';
 import { currentConfig } from '@/config';
 
 interface Form {
-  _id: string;
+  id: string;
   form_name: string;
   deadline: string;
   score: string;
@@ -26,7 +26,13 @@ export default function FormPage() {
     user_id: "123",
   }
   useEffect(() => {
-    axios.post(`${currentConfig.apiBaseUrl}/api/get_forms`, payload)
+    const config = {
+      headers: {
+        'Authorization' : 'Bearer ' + localStorage.getItem('token'),
+        'Content-Type': 'application/json',
+      }
+    };
+    axios.post(`${currentConfig.apiBaseUrl}/api/get_forms`, payload, config)
       .then(response => {
         setForms(response.data);
       })
@@ -36,7 +42,7 @@ export default function FormPage() {
   }, []);
 
   const handleFormClick = (FormId: string) => {
-    router.push(`/Form/${FormId}`);
+    router.push(`/dashboard_test/form/${FormId}`);
   };
 
   return (
@@ -47,7 +53,7 @@ export default function FormPage() {
         </Typography>
         <Grid container spacing={2}>
           {Forms.map((Form) => (
-            <Grid item xs={12} key={Form._id}>
+            <Grid item xs={12} key={Form.id}>
               <Card>
                 <CardContent>
                   <Typography variant="h6">Title: {Form.form_name}</Typography>
@@ -65,7 +71,7 @@ export default function FormPage() {
                       <Button
                         variant="contained"
                         size="small"
-                        onClick={() => handleFormClick(Form._id)}
+                        onClick={() => handleFormClick(Form.id)}
                       >
                         Attempt
                       </Button>
@@ -80,7 +86,7 @@ export default function FormPage() {
                         <Button
                           variant="contained"
                           size="small"
-                          onClick={() => handleFormClick(Form._id)}
+                          onClick={() => handleFormClick(Form.id)}
                           color="success"
                           >View Attempt</Button>
                         // <Typography variant="body2" color="success">Attempted</Typography>

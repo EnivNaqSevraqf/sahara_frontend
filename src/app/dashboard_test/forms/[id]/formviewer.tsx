@@ -26,7 +26,13 @@ export default function FormViewer({ id }: { id: string }) {
     const fetchSurveyJson = async () => {
       try {
         console.log("Fetching the survey JSON");
-        const response = await axios.get(`${currentConfig.apiBaseUrl}/api/forms/${id}`);
+        const config = {
+          headers: {
+            "Authorization": 'Bearer ' + localStorage.getItem('token'),
+            "Content-Type": "application/json"
+          }
+        }
+        const response = await axios.get(`${currentConfig.apiBaseUrl}/api/forms/${id}`, config);
         setSurveyJson(response.data);
       } catch (error) {
         console.error('Error fetching survey JSON:', error);
