@@ -24,3 +24,138 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* TipTap Editor Styles */
+.tiptap-editor-content {
+  font-family: inherit;
+  color: inherit;
+}
+
+.tiptap-editor-content p {
+  margin: 0.5em 0;
+}
+
+.tiptap-editor-content ul, 
+.tiptap-editor-content ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+
+.tiptap-editor-content h1 {
+  font-size: 1.75em;
+  font-weight: 600;
+  margin: 1em 0 0.5em;
+}
+
+.tiptap-editor-content h2 {
+  font-size: 1.5em;
+  font-weight: 600;
+  margin: 0.8em 0 0.4em;
+}
+
+.tiptap-editor-content h3 {
+  font-size: 1.25em;
+  font-weight: 600;
+  margin: 0.6em 0 0.3em;
+}
+
+.tiptap-editor-content blockquote {
+  border-left: 3px solid #e0e0e0;
+  padding-left: 1em;
+  margin: 1em 0;
+  font-style: italic;
+}
+
+.tiptap-editor-content a {
+  color: #1976d2;
+  text-decoration: underline;
+}
+
+.tiptap-editor-content code {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+  padding: 0.2em 0.4em;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.tiptap-editor-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* TipTap focus styles */
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .tiptap-editor-content blockquote {
+  border-left-color: #555;
+}
+
+[data-theme="dark"] .tiptap-editor-content code {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Rich text content display styles */
+.rich-text-content {
+  font-family: inherit;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: inherit;
+}
+
+.rich-text-content ul {
+  list-style-type: disc;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.rich-text-content ol {
+  list-style-type: decimal;
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.rich-text-content li {
+  margin: 0.2em 0;
+}
+
+.rich-text-content li p {
+  margin: 0;
+}
+
+.rich-text-content blockquote {
+  border-left: 3px solid;
+  border-color: rgba(0, 0, 0, 0.12);
+  padding-left: 1em;
+  margin: 1em 0;
+  color: rgba(0, 0, 0, 0.7);
+  font-style: italic;
+}
+
+.rich-text-content a {
+  color: #1976d2;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.2s ease;
+  word-break: break-word;
+}
+
+.rich-text-content a:hover {
+  color: #1565c0;
+}
+
+/* Dark mode adjustments */
+[data-theme='dark'] .rich-text-content blockquote {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme='dark'] .rich-text-content a {
+  color: #90caf9;
+}
+
+[data-theme='dark'] .rich-text-content a:hover {
+  color: #64b5f6;
+}

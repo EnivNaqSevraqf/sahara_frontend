@@ -13,6 +13,7 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import Header from './components/Header';
 import { buttonStyles } from './constants/theme';
 import axios from 'axios';
+import { currentConfig } from '@/config';
 
 const AddStudents = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -48,8 +49,9 @@ const AddStudents = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post('http://localhost:8000/people/upload-csv/', formData, {
+      const response = await axios.post(`${currentConfig.apiBaseUrl}/upload-students/`, formData, {
         headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data',
         },
       });

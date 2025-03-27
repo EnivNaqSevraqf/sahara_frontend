@@ -24,6 +24,46 @@ import SchoolIcon from '@mui/icons-material/School';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
+
+// Configure axios base URL
+axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+// Add request interceptor to handle errors
+axios.interceptors.request.use(
+  (config) => {
+    // You can add auth headers here if needed
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle errors
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ERR_NETWORK') {
+      console.error('Network error - Please check if the backend server is running');
+    }
+    return Promise.reject(error);
+  }
+);
+
+interface Announcement {
+  id: number;
+  title: string;
+  content: string;
+  created_at: string;
+  created_by: {
+    id: number;
+    name: string;
+    email: string;
+    role: string;
+  };
+}
 
 // Role selector component for testing
 const RoleSwitcher = ({ currentRole, onRoleChange }: { currentRole: string, onRoleChange: (role: UserRole) => void }) => {
@@ -82,115 +122,163 @@ const RoleSwitcher = ({ currentRole, onRoleChange }: { currentRole: string, onRo
 };
 
 // Student Dashboard Component
-const StudentDashboard: React.FC = () => (
-  <Box>
-    <Typography variant="h4" component="h1" gutterBottom>
-      Student Dashboard
-    </Typography>
-    
-    <Grid container spacing={3}>
-      <Grid item xs={12} md={8}>
-        <Paper elevation={0} sx={{ p: 3, height: '100%' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6" component="h2">
-              Your Upcoming Assignments
-            </Typography>
-            <Chip label="3 Due Soon" color="primary" size="small" />
-          </Box>
-          
-          <List disablePadding>
-            {[
-              { title: 'Lab Report 3', due: '2 days', course: 'CS 253' },
-              { title: 'Midterm Exam', due: '1 week', course: 'MATH 221' },
-              { title: 'Project Proposal', due: '2 weeks', course: 'CS 253' }
-            ].map((item, index) => (
-              <ListItem key={index} disablePadding divider={index < 2}>
-                <ListItemButton>
-                  <ListItemText 
-                    primary={item.title} 
-                    secondary={`Due in ${item.due} • ${item.course}`}
-                    primaryTypographyProps={{ fontWeight: index === 0 ? 'bold' : 'regular' }}
-                  />
-                  <ArrowForwardIcon color="action" fontSize="small" />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-          
-          <Button variant="outlined" sx={{ mt: 2 }}>View All Assignments</Button>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12} md={4}>
-        <Paper elevation={0} sx={{ p: 3, height: '100%' }}>
-          <Typography variant="h6" component="h2" gutterBottom>
-            Course Progress
-          </Typography>
-          
-          <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', my: 4 }}>
-            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-              <CircularProgress variant="determinate" value={65} size={120} thickness={5} />
-              <Box
-                sx={{
-                  top: 0,
-                  left: 0,
-                  bottom: 0,
-                  right: 0,
-                  position: 'absolute',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Typography variant="h5" component="div" color="text.secondary">
-                  65%
-                </Typography>
-              </Box>
+const StudentDashboard: React.FC = () => {
+  const router = useRouter();
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await axios.get('/announcements');
+      // Sort announcements by created_at in descending order and take the latest 2
+      const sortedAnnouncements = response.data.sort((a: Announcement, b: Announcement) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setAnnouncements(sortedAnnouncements.slice(0, 2));
+    } catch (error: any) {
+      console.error('Error fetching announcements:', error);
+      if (error.code === 'ERR_NETWORK') {
+        setError('Unable to connect to the server. Please check if the backend is running.');
+      } else {
+        setError('Failed to fetch announcements. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnnouncements();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    }
+  };
+
+  const handleAnnouncementClick = (announcementId: number) => {
+    router.push(`/dashboard_test/announcements?expanded=${announcementId}`);
+  };
+
+  return (
+    <Box>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={8}>
+          <Paper elevation={0} sx={{ p: 3, height: '100%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+              <Typography variant="h6" component="h2">
+                Your Upcoming Assignments
+              </Typography>
+              <Chip label="3 Due Soon" color="primary" size="small" />
             </Box>
-            <Typography variant="body1" sx={{ mt: 2 }}>Semester Completed</Typography>
-          </Box>
-          
-          <Typography variant="body2" paragraph>
-            You're making good progress. Keep up the good work!
-          </Typography>
-        </Paper>
+            
+            <List disablePadding>
+              {[
+                { title: 'Lab Report 3', due: '2 days', course: 'CS 253' },
+                { title: 'Midterm Exam', due: '1 week', course: 'MATH 221' },
+                { title: 'Project Proposal', due: '2 weeks', course: 'CS 253' }
+              ].map((item, index) => (
+                <ListItem key={index} disablePadding divider={index < 2}>
+                  <ListItemButton>
+                    <ListItemText 
+                      primary={item.title} 
+                      secondary={`Due in ${item.due} • ${item.course}`}
+                      primaryTypographyProps={{ fontWeight: index === 0 ? 'bold' : 'regular' }}
+                    />
+                    <ArrowForwardIcon color="action" fontSize="small" />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+            
+            <Button variant="outlined" sx={{ mt: 2 }}>View All Assignments</Button>
+          </Paper>
+        </Grid>
+        
+        <Grid item xs={12} md={4}>
+          <Paper elevation={0} sx={{ p: 3, height: '100%' }}>
+            <Typography variant="h6" component="h2" gutterBottom>
+              Course Progress
+            </Typography>
+            
+            <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', my: 4 }}>
+              <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                <CircularProgress variant="determinate" value={65} size={120} thickness={5} />
+                <Box
+                  sx={{
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                    position: 'absolute',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Typography variant="h5" component="div" color="text.secondary">
+                    65%
+                  </Typography>
+                </Box>
+              </Box>
+              <Typography variant="body1" sx={{ mt: 2 }}>Semester Completed</Typography>
+            </Box>
+            
+            <Typography variant="body2" paragraph>
+              You're making good progress. Keep up the good work!
+            </Typography>
+          </Paper>
+        </Grid>
+        
+        <Grid item xs={12}>
+          <Paper elevation={0} sx={{ p: 3 }}>
+            <Typography variant="h6" component="h2" gutterBottom>
+              Recent Announcements
+            </Typography>
+            
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (
+              <List disablePadding>
+                {announcements.map((announcement, index) => (
+                  <ListItem key={announcement.id} disablePadding divider={index === 0}>
+                    <ListItemButton onClick={() => handleAnnouncementClick(announcement.id)}>
+                      <ListItemText 
+                        primary={announcement.title} 
+                        secondary={`${formatDate(announcement.created_at)} • ${announcement.created_by?.name || 'Unknown User'}`}
+                      />
+                      <ArrowForwardIcon color="action" fontSize="small" />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Paper>
+        </Grid>
       </Grid>
-      
-      <Grid item xs={12}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography variant="h6" component="h2" gutterBottom>
-            Recent Announcements
-          </Typography>
-          
-          <List disablePadding>
-            {[
-              { title: 'Midterm Schedule Posted', date: 'Today', course: 'CS 253' },
-              { title: 'Guest Lecture Next Week', date: 'Yesterday', course: 'MATH 221' }
-            ].map((item, index) => (
-              <ListItem key={index} disablePadding divider={index === 0}>
-                <ListItemButton>
-                  <ListItemText 
-                    primary={item.title} 
-                    secondary={`${item.date} • ${item.course}`}
-                  />
-                  <ArrowForwardIcon color="action" fontSize="small" />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
-      </Grid>
-    </Grid>
-  </Box>
-);
+    </Box>
+  );
+};
 
 // TA Dashboard Component
 const TADashboard: React.FC = () => (
   <Box>
-    <Typography variant="h4" component="h1" gutterBottom>
-      Teaching Assistant Dashboard
-    </Typography>
-    
     <Grid container spacing={3}>
       <Grid item xs={12} md={6}>
         <Paper elevation={0} sx={{ p: 3 }}>
@@ -296,10 +384,6 @@ const TADashboard: React.FC = () => (
 // Admin Dashboard Component
 const AdminDashboard: React.FC = () => (
   <Box>
-    <Typography variant="h4" component="h1" gutterBottom>
-      Administrator Dashboard
-    </Typography>
-    
     <Grid container spacing={3}>
       <Grid item xs={12} md={3}>
         <Paper elevation={0} sx={{ p: 3 }}>
@@ -399,6 +483,7 @@ const AdminDashboard: React.FC = () => (
 // Main Dashboard Component
 export default function Dashboard() {
   const [role, setRole] = useState<UserRole>('student');
+  const router = useRouter();
   
   useEffect(() => {
     // Get role from localStorage on component mount
@@ -441,9 +526,11 @@ export default function Dashboard() {
   };
 
   return (
-    <Box sx={{ p: 2 }}>
-      <RoleSwitcher currentRole={role} onRoleChange={handleRoleChange} />
-      {renderDashboard()}
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ p: 2 }}>
+        <RoleSwitcher currentRole={role} onRoleChange={handleRoleChange} />
+        {renderDashboard()}
+      </Box>
     </Box>
   );
 }

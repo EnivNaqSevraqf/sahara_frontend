@@ -9,6 +9,7 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import dayjs, { Dayjs } from "dayjs";
+import { currentConfig } from '@/config';
 
 const Card = styled(MuiCard)(({ theme }) => ({  
     display: 'flex',
@@ -52,7 +53,13 @@ export default function Page() {
             };
 
             try {
-                const response = await axios.post('http://localhost:8000/api/forms/create', payload);
+                const config = {
+                    headers: {
+                        'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                        'Content-Type': 'application/json',
+                    }
+                }
+                const response = await axios.post(`${currentConfig.apiBaseUrl}/api/forms/create`, payload, config);
                 console.log('Response:', response.data);
             } catch (error) {
                 console.error('Error submitting form:', error);

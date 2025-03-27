@@ -18,7 +18,15 @@ import {
   Collapse,
   Card,
   CardContent,
-  CardActions
+  CardActions,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -27,9 +35,21 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import EditIcon from '@mui/icons-material/Edit';
+import { useRouter } from 'next/navigation';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000';
+
+interface SubmissionType {
+  id: number;
+  team_id: number;
+  submitted_on: string;
+  original_filename: string;
+  team: {
+    name: string;
+  };
+}
 
 interface SubmittableType {
   id: number;
@@ -47,14 +67,22 @@ interface SubmittableType {
     submitted_on: string | null;
     original_filename: string | null;
   };
+  creator_id: number;  // Added to check if current user is creator
 }
 
 const DocumentSubmissionList: React.FC = () => {
-  const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const router = useRouter();
   const [submittables, setSubmittables] = useState<SubmittableType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newSubmittable, setNewSubmittable] = useState({
+    title: '',
+    description: '',
+    deadline: '',
+    opens_at: ''
+  });
   const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
     open: false,
     message: '',
@@ -63,6 +91,11 @@ const DocumentSubmissionList: React.FC = () => {
 
   // Calculate completion percentage
   const [completionPercentage, setCompletionPercentage] = useState(0);
+
+  const [selectedSubmittable, setSelectedSubmittable] = useState<SubmittableType | null>(null);
+  const [submissions, setSubmissions] = useState<SubmissionType[]>([]);
+  const [submissionsDialogOpen, setSubmissionsDialogOpen] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchSubmittables();
@@ -75,19 +108,33 @@ const DocumentSubmissionList: React.FC = () => {
     setCompletionPercentage(percentage);
   }, [submittables]);
 
+  useEffect(() => {
+    // Get user role and ID from token
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('Token payload:', payload); // Debug log
+        setCurrentUserId(payload.user_id);
+        console.log('Current user ID:', payload.user_id); // Debug log
+      } catch (error) {
+        console.error('Error parsing token:', error);
+      }
+    }
+  }, []);
+
   const fetchSubmittables = async () => {
     try {
       setLoading(true);
       console.log('Fetching submittables...');
-      console.log('Token:', localStorage.getItem('token')); // Log token for debugging
       
-      const response = await axios.get('/submittables/', {  // Added trailing slash
+      const response = await axios.get('/submittables/', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
-      console.log('Response:', response.data);
+      console.log('Submittables response:', response.data);
       
       // Combine all submittables from different categories
       const allSubmittables = [
@@ -111,52 +158,6 @@ const DocumentSubmissionList: React.FC = () => {
     }
   };
 
-  const handleUploadClick = (index: number) => {
-    if (fileInputRefs.current[index]) {
-      fileInputRefs.current[index]?.click();
-    }
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, submittableId: number) => {
-    if (!event.target.files || event.target.files.length === 0) return;
-
-    const file = event.target.files[0];
-    const formData = new FormData();
-    formData.append('file', file);  // Changed from 'files' to 'file' to match backend
-
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        `/submittables/${submittableId}/submit`,
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
-
-      // Refresh submittables to get updated status
-      await fetchSubmittables();
-      
-      setSnackbar({
-        open: true,
-        message: 'File submitted successfully!',
-        severity: 'success'
-      });
-    } catch (err) {
-      console.error('Error submitting file:', err);
-      setSnackbar({
-        open: true,
-        message: 'Failed to submit file. Please try again.',
-        severity: 'error'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSubmissionDownload = async (submissionId: number, fileName: string) => {
     try {
       const response = await axios.get(
@@ -169,10 +170,7 @@ const DocumentSubmissionList: React.FC = () => {
         }
       );
 
-      // Create a blob with the correct type
       const blob = new Blob([response.data], { type: response.headers['content-type'] });
-      
-      // Create and trigger download
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -180,7 +178,6 @@ const DocumentSubmissionList: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       
-      // Cleanup
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
@@ -203,20 +200,15 @@ const DocumentSubmissionList: React.FC = () => {
 
   const handleDeleteSubmission = async (submissionId: number) => {
     try {
-      // Show confirmation dialog
       if (!window.confirm('Are you sure you want to delete this submission?')) {
         return;
       }
 
-      setLoading(true);
-      await axios.delete(
-        `/submissions/${submissionId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+      await axios.delete(`/submissions/${submissionId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
-      );
+      });
 
       // Refresh submittables to get updated status
       await fetchSubmittables();
@@ -233,15 +225,11 @@ const DocumentSubmissionList: React.FC = () => {
         message: err.response?.data?.detail || 'Failed to delete submission. Please try again.',
         severity: 'error'
       });
-    } finally {
-      setLoading(false);
     }
   };
 
   const handleReferenceFileDownload = async (submittableId: number, fileName: string) => {
     try {
-      console.log('Downloading reference file:', { submittableId, fileName });
-      
       const response = await axios.get(
         `/submittables/${submittableId}/reference-files/download`,
         {
@@ -252,11 +240,7 @@ const DocumentSubmissionList: React.FC = () => {
         }
       );
 
-      // Create a blob with the correct type from headers
-      const contentType = response.headers['content-type'] || 'application/octet-stream';
-      const blob = new Blob([response.data], { type: contentType });
-      
-      // Create and trigger download
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -264,7 +248,6 @@ const DocumentSubmissionList: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       
-      // Cleanup
       setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
@@ -277,19 +260,9 @@ const DocumentSubmissionList: React.FC = () => {
       });
     } catch (err: any) {
       console.error('Error downloading reference file:', err);
-      
-      let errorMessage = 'Failed to download reference file.';
-      if (err.response?.status === 404) {
-        errorMessage = 'File not found on the server.';
-      } else if (err.response?.status === 403) {
-        errorMessage = 'You do not have permission to download this file.';
-      } else if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
-      }
-      
       setSnackbar({
         open: true,
-        message: `${errorMessage} Please try again.`,
+        message: 'Failed to download reference file. Please try again.',
         severity: 'error'
       });
     }
@@ -338,11 +311,82 @@ const DocumentSubmissionList: React.FC = () => {
     setExpandedId(expandedId === id ? null : id);
   };
 
+  const fetchSubmissions = async (submittableId: number) => {
+    try {
+      const response = await axios.get(`/submittables/${submittableId}/submissions`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      // Find the submittable in the list
+      const submittable = submittables.find(s => s.id === submittableId);
+      if (submittable) {
+        setSelectedSubmittable(submittable);
+        setSubmissions(response.data);
+        setSubmissionsDialogOpen(true);
+      }
+    } catch (err: any) {
+      console.error('Error fetching submissions:', err);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch submissions. Please try again.',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleDeleteSubmittable = async (submittableId: number) => {
+    try {
+      if (!window.confirm('Are you sure you want to delete this submittable? This action cannot be undone.')) {
+        return;
+      }
+
+      await axios.delete(`/submittables/${submittableId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      // Refresh submittables list
+      await fetchSubmittables();
+      
+      setSnackbar({
+        open: true,
+        message: 'Submittable deleted successfully!',
+        severity: 'success'
+      });
+    } catch (err: any) {
+      console.error('Error deleting submittable:', err);
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.detail || 'Failed to delete submittable. Please try again.',
+        severity: 'error'
+      });
+    }
+  };
+
+  const handleUpdateSubmittable = (submittableId: number) => {
+    router.push(`/dashboard_test/project/submission/prof/update?id=${submittableId}`);
+  };
+
+  const handleCreateSubmittable = () => {
+    router.push('/dashboard_test/project/submission/prof/creation');
+  };
+
   // Render a single submittable item
   const renderSubmittableItem = (doc: SubmittableType, index: number) => {
     const isAllowed = isSubmissionAllowed(doc);
     const hasSubmitted = doc.submission_status?.has_submitted;
     const isExpanded = expandedId === doc.id;
+    const isCreator = currentUserId === doc.creator_id;
+    
+    console.log('Rendering submittable:', { // Debug log
+      docId: doc.id,
+      currentUserId,
+      creatorId: doc.creator_id,
+      isCreator
+    });
     
     return (
       <Card 
@@ -451,34 +495,41 @@ const DocumentSubmissionList: React.FC = () => {
           </CardContent>
 
           <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
-            <input
-              type="file"
-              ref={(el) => { fileInputRefs.current[index] = el; }}
-              onChange={(e) => handleFileChange(e, doc.id)}
-              style={{ display: 'none' }}
-              accept=".pdf,.doc,.docx,.txt"
-            />
-            
-            {hasSubmitted ? (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={() => handleDeleteSubmission(doc.submission_status!.submission_id!)}
-                disabled={!isAllowed}
-              >
-                Delete Submission
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AttachFileIcon />}
-                onClick={() => handleUploadClick(index)}
-                disabled={!isAllowed}
-              >
-                Submit Document
-              </Button>
+            {isCreator && (
+              <>
+                <Button
+                  variant="outlined"
+                  color="info"
+                  startIcon={<AttachFileIcon />}
+                  onClick={() => {
+                    console.log('Fetching submissions for:', doc.id);
+                    fetchSubmissions(doc.id);
+                  }}
+                  sx={{ mr: 1 }}
+                >
+                  View All Submissions
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<EditIcon />}
+                  onClick={() => handleUpdateSubmittable(doc.id)}
+                  sx={{ mr: 1 }}
+                >
+                  Update Submittable
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => {
+                    console.log('Deleting submittable:', doc.id);
+                    handleDeleteSubmittable(doc.id);
+                  }}
+                >
+                  Delete Submittable
+                </Button>
+              </>
             )}
           </CardActions>
         </Collapse>
@@ -504,14 +555,22 @@ const DocumentSubmissionList: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%', p: 2 }}>
-      {/* Course navigation */}
-      <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+      {/* Course navigation and Create button */}
+      <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="body2" component="div">
           <span style={{ color: '#3f51b5', cursor: 'pointer' }}>Course Home</span> / 
           <span style={{ cursor: 'pointer' }}> Documents</span>
         </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<CloudUploadIcon />}
+          onClick={handleCreateSubmittable}
+        >
+          Create Submittable
+        </Button>
       </Box>
-      
+
       {/* Progress chart */}
       <Paper 
         elevation={3} 
@@ -585,6 +644,56 @@ const DocumentSubmissionList: React.FC = () => {
           {previousSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
         </>
       )}
+
+      {/* Submissions Dialog */}
+      <Dialog
+        open={submissionsDialogOpen}
+        onClose={() => {
+          setSubmissionsDialogOpen(false);
+          setSelectedSubmittable(null);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          All Submissions for {selectedSubmittable?.title}
+        </DialogTitle>
+        <DialogContent>
+          {submissions.length === 0 ? (
+            <Typography color="text.secondary" align="center">
+              No submissions yet
+            </Typography>
+          ) : (
+            <List>
+              {submissions.map((submission) => (
+                <ListItem key={submission.id}>
+                  <ListItemText
+                    primary={submission.original_filename}
+                    secondary={`Team: ${submission.team.name} | Submitted: ${formatDate(submission.submitted_on)}`}
+                  />
+                  <ListItemSecondaryAction>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleSubmissionDownload(submission.id, submission.original_filename)}
+                    >
+                      Download
+                    </Button>
+                  </ListItemSecondaryAction>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setSubmissionsDialogOpen(false);
+            setSelectedSubmittable(null);
+          }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar for notifications */}
       <Snackbar

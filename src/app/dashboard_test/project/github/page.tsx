@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Box, Button, TextField, Typography, Paper, CircularProgress, Link } from '@mui/material';
+import { currentConfig } from '@/config';
 
 const GitHubLinkComponent = () => {
   const [githubLink, setGithubLink] = useState('');
@@ -16,7 +17,7 @@ const GitHubLinkComponent = () => {
   const fetchGithubLink = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.get('http://localhost:8000/project/github');
+      const response = await axios.get(`${currentConfig.apiBaseUrl}/project/github`);
       if (response.data && response.data.link) {
         setGithubLink(response.data.link);
         setHasExistingLink(true);
@@ -53,7 +54,7 @@ const handleSubmit = async (e: SubmitEvent): Promise<void> => {
     setIsLoading(true);
 
     try {
-        const endpoint: string = 'http://localhost:8000/project';
+        const endpoint: string = `${currentConfig.apiBaseUrl}/project`;
         const method: 'put' | 'post' = hasExistingLink ? 'put' : 'post';
 
         await axios[method]<GithubResponse>(endpoint, { githubLink });

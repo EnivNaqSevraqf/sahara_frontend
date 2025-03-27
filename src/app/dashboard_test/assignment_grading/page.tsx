@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Typography, 
   Card, 
@@ -11,14 +11,21 @@ import {
   DialogActions, 
   TextField,
   Box,
-  Grid
+  Grid,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  InputAdornment
 } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import GradeIcon from '@mui/icons-material/Grade';
 import CommentIcon from '@mui/icons-material/Comment';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import SearchIcon from '@mui/icons-material/Search';
 
-// Define Assignment interface
+// Define Assignment interface with new id attribute
 interface Assignment {
+  id: number;  
   name: string;
   username: string;
   maxMarks: number;
@@ -28,29 +35,33 @@ interface Assignment {
 }
 
 const AssignmentGradingPage: React.FC = () => {
-  // Initial state for assignments with two users
+  // Initial state for assignments with unique ids
   const [assignments, setAssignments] = useState<Assignment[]>([
-    // Divip23 Assignments
+    // C++ Assignment with different users
     { 
+      id: 1,
       name: "C++ Assignment", 
       username: "divip23",
       maxMarks: 50, 
       submittedFile: null 
     },
     { 
-      name: "Bash Script Assignment", 
-      username: "divip23",
-      maxMarks: 30, 
-      submittedFile: null 
-    },
-    // Nikhilp23 Assignments
-    { 
+      id: 1,
       name: "C++ Assignment", 
       username: "nikhilp23",
       maxMarks: 50, 
       submittedFile: null 
     },
+    // Bash Script Assignment with different users
     { 
+      id: 2,
+      name: "Bash Script Assignment", 
+      username: "divip23",
+      maxMarks: 30, 
+      submittedFile: null 
+    },
+    { 
+      id: 2,
       name: "Bash Script Assignment", 
       username: "nikhilp23",
       maxMarks: 30, 
@@ -64,6 +75,24 @@ const AssignmentGradingPage: React.FC = () => {
   const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
   const [gradeInput, setGradeInput] = useState<string>('');
   const [commentsInput, setCommentsInput] = useState<string>('');
+  
+  // New state for username search
+  const [usernameSearch, setUsernameSearch] = useState<string>('');
+
+  // Group assignments by their ID, filtered by username search
+  const groupedAssignments = useMemo(() => {
+    const filteredAssignments = assignments.filter(a => 
+      a.username.toLowerCase().includes(usernameSearch.toLowerCase())
+    );
+
+    return filteredAssignments.reduce((acc, assignment) => {
+      if (!acc[assignment.id]) {
+        acc[assignment.id] = [];
+      }
+      acc[assignment.id].push(assignment);
+      return acc;
+    }, {} as Record<number, Assignment[]>);
+  }, [assignments, usernameSearch]);
 
   // Handler for opening grade dialog
   const handleOpenGradeDialog = (assignment: Assignment) => {
@@ -81,7 +110,7 @@ const AssignmentGradingPage: React.FC = () => {
       if (!isNaN(gradeValue) && gradeValue >= 0 && gradeValue <= selectedAssignment.maxMarks) {
         setAssignments(prev => 
           prev.map(assignment => 
-            (assignment.name === selectedAssignment.name && 
+            (assignment.id === selectedAssignment.id && 
              assignment.username === selectedAssignment.username)
               ? { ...assignment, grade: gradeValue } 
               : assignment
@@ -106,7 +135,7 @@ const AssignmentGradingPage: React.FC = () => {
     if (selectedAssignment) {
       setAssignments(prev => 
         prev.map(assignment => 
-          (assignment.name === selectedAssignment.name && 
+          (assignment.id === selectedAssignment.id && 
            assignment.username === selectedAssignment.username)
             ? { ...assignment, comments: commentsInput } 
             : assignment
@@ -124,53 +153,94 @@ const AssignmentGradingPage: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      {assignments.map((assignment, index) => (
-        <Card key={`${assignment.name}-${assignment.username}-${index}`} sx={{ mb: 2 }}>
-          <CardContent>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} md={4}>
-                <Typography variant="h6">{assignment.name}</Typography>
-                <Typography variant="body2" color="textSecondary">
-                  Max Marks: {assignment.maxMarks}
-                </Typography>
-                <Typography variant="caption" color="textPrimary">
-                  Student: {assignment.username}
-                </Typography>
-              </Grid>
+      {/* Username Search TextField */}
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          fullWidth
+          variant="outlined"
+          label="Search by Username"
+          value={usernameSearch}
+          onChange={(e) => setUsernameSearch(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
+          placeholder="Enter username to filter assignments"
+        />
+      </Box>
 
-              <Grid item xs={12} md={8}>
-                <Box display="flex" gap={2}>
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    startIcon={<DownloadIcon />}
-                    onClick={handleDownload}
-                  >
-                    Download Submission
-                  </Button>
+      {/* If no assignments match the search */}
+      {Object.keys(groupedAssignments).length === 0 && (
+        <Typography variant="body1" color="textSecondary" align="center">
+          No assignments found for the searched username.
+        </Typography>
+      )}
 
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    startIcon={<GradeIcon />}
-                    onClick={() => handleOpenGradeDialog(assignment)}
-                  >
-                    Grade (Current: {assignment.grade ?? 'Not Graded'})
-                  </Button>
+      {Object.entries(groupedAssignments).map(([assignmentId, assignmentGroup]) => (
+        <Accordion key={assignmentId}>
+          <AccordionSummary
+            expandIcon={<ExpandMoreIcon />}
+            aria-controls={`panel-${assignmentId}-content`}
+            id={`panel-${assignmentId}-header`}
+          >
+            <Typography variant="h6">
+              {assignmentGroup[0].name} 
+            </Typography>
+          </AccordionSummary>
+          <AccordionDetails>
+            <Box>
+              {assignmentGroup.map((assignment, index) => (
+                <Card key={`${assignment.name}-${assignment.username}-${index}`} sx={{ mb: 2 }}>
+                  <CardContent>
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid item xs={12} md={4}>
+                        <Typography variant="h6">{assignment.username}</Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Max Marks: {assignment.maxMarks}
+                        </Typography>
+                    
+                      </Grid>
 
-                  <Button 
-                    variant="contained" 
-                    color="primary" 
-                    startIcon={<CommentIcon />}
-                    onClick={() => handleOpenCommentsDialog(assignment)}
-                  >
-                    Comments
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
+                      <Grid item xs={12} md={8}>
+                        <Box display="flex" gap={2}>
+                          <Button 
+                            variant="contained" 
+                            color="primary" 
+                            startIcon={<DownloadIcon />}
+                            onClick={handleDownload}
+                          >
+                            Download Submission
+                          </Button>
+
+                          <Button 
+                            variant="contained" 
+                            color="primary" 
+                            startIcon={<GradeIcon />}
+                            onClick={() => handleOpenGradeDialog(assignment)}
+                          >
+                            Grade (Current: {assignment.grade ?? 'Not Graded'})
+                          </Button>
+
+                          <Button 
+                            variant="contained" 
+                            color="primary" 
+                            startIcon={<CommentIcon />}
+                            onClick={() => handleOpenCommentsDialog(assignment)}
+                          >
+                            Comments
+                          </Button>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          </AccordionDetails>
+        </Accordion>
       ))}
 
       {/* Grade Dialog */}
