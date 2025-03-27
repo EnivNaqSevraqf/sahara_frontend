@@ -84,9 +84,20 @@ const UpdateSubmittable: React.FC = () => {
 
     try {
       setSaving(true);
-      await axios.put(`/submittables/${submittableId}`, submittable, {
+      
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('title', submittable.title);
+      formData.append('deadline', submittable.deadline);
+      formData.append('description', submittable.description);
+      if (submittable.opens_at) {
+        formData.append('opens_at', submittable.opens_at);
+      }
+
+      await axios.put(`/submittables/${submittableId}`, formData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'multipart/form-data'
         }
       });
 
@@ -98,7 +109,7 @@ const UpdateSubmittable: React.FC = () => {
 
       // Redirect back to the submission page after a short delay
       setTimeout(() => {
-        router.push('/dashboard_test/project/submission_prof');
+        router.push('/dashboard_test/project/submission/prof');
       }, 1500);
     } catch (err: any) {
       console.error('Error updating submittable:', err);
@@ -254,7 +265,7 @@ const UpdateSubmittable: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => router.push('/dashboard_test/project/submission_prof')}
+                  onClick={() => router.push('/dashboard_test/project/submission/prof')}
                   disabled={saving}
                 >
                   Cancel
