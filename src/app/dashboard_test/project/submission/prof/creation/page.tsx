@@ -137,6 +137,7 @@ const EventCreationApp: React.FC = () => {
       const response = await axios.post('/submittables/create', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
       });
 
@@ -160,21 +161,11 @@ const EventCreationApp: React.FC = () => {
       
       if (error.response) {
         // Handle specific error messages from the backend
-        switch (error.response.status) {
-          case 400:
-            errorMessage = error.response.data.detail || 'Invalid input data';
-            break;
-          case 401:
-            errorMessage = 'You are not authorized to create submittables';
-            break;
-          case 404:
-            errorMessage = 'User not found';
-            break;
-          case 500:
-            errorMessage = 'Server error occurred';
-            break;
-          default:
-            errorMessage = error.response.data.detail || errorMessage;
+        const errorData = error.response.data;
+        if (typeof errorData === 'object' && errorData.detail) {
+          errorMessage = errorData.detail;
+        } else if (Array.isArray(errorData)) {
+          errorMessage = errorData.map(err => err.msg).join(', ');
         }
       } else if (error.request) {
         errorMessage = 'No response received from server';
@@ -309,12 +300,13 @@ const EventCreationApp: React.FC = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Description (Optional)"
+                label="Description"
                 multiline
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 variant="outlined"
+                required
                 sx={{ mb: 2 }}
               />
             </Grid>
