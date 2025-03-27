@@ -35,6 +35,8 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import EditIcon from '@mui/icons-material/Edit';
+import { useRouter } from 'next/navigation';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000';
@@ -69,11 +71,18 @@ interface SubmittableType {
 }
 
 const DocumentSubmissionList: React.FC = () => {
-  const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const router = useRouter();
   const [submittables, setSubmittables] = useState<SubmittableType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newSubmittable, setNewSubmittable] = useState({
+    title: '',
+    description: '',
+    deadline: '',
+    opens_at: ''
+  });
   const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
     open: false,
     message: '',
@@ -144,52 +153,6 @@ const DocumentSubmissionList: React.FC = () => {
         headers: err.response?.headers
       });
       setError(`Failed to fetch submittables: ${err.response?.data?.detail || err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleUploadClick = (index: number) => {
-    if (fileInputRefs.current[index]) {
-      fileInputRefs.current[index]?.click();
-    }
-  };
-
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>, submittableId: number) => {
-    if (!event.target.files || event.target.files.length === 0) return;
-
-    const file = event.target.files[0];
-    const formData = new FormData();
-    formData.append('file', file);  // Changed from 'files' to 'file' to match backend
-
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        `/submittables/${submittableId}/submit`,
-        formData,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
-
-      // Refresh submittables to get updated status
-      await fetchSubmittables();
-      
-      setSnackbar({
-        open: true,
-        message: 'File submitted successfully!',
-        severity: 'success'
-      });
-    } catch (err) {
-      console.error('Error submitting file:', err);
-      setSnackbar({
-        open: true,
-        message: 'Failed to submit file. Please try again.',
-        severity: 'error'
-      });
     } finally {
       setLoading(false);
     }
@@ -403,6 +366,14 @@ const DocumentSubmissionList: React.FC = () => {
     }
   };
 
+  const handleUpdateSubmittable = (submittableId: number) => {
+    router.push(`/dashboard_test/project/submission/prof/update?id=${submittableId}`);
+  };
+
+  const handleCreateSubmittable = () => {
+    router.push('/dashboard_test/project/submission/prof/creation');
+  };
+
   // Render a single submittable item
   const renderSubmittableItem = (doc: SubmittableType, index: number) => {
     const isAllowed = isSubmissionAllowed(doc);
@@ -540,6 +511,15 @@ const DocumentSubmissionList: React.FC = () => {
                 </Button>
                 <Button
                   variant="outlined"
+                  color="primary"
+                  startIcon={<EditIcon />}
+                  onClick={() => handleUpdateSubmittable(doc.id)}
+                  sx={{ mr: 1 }}
+                >
+                  Update Submittable
+                </Button>
+                <Button
+                  variant="outlined"
                   color="error"
                   startIcon={<DeleteIcon />}
                   onClick={() => {
@@ -550,36 +530,6 @@ const DocumentSubmissionList: React.FC = () => {
                   Delete Submittable
                 </Button>
               </>
-            )}
-            
-            <input
-              type="file"
-              ref={(el) => { fileInputRefs.current[index] = el; }}
-              onChange={(e) => handleFileChange(e, doc.id)}
-              style={{ display: 'none' }}
-              accept=".pdf,.doc,.docx,.txt"
-            />
-            
-            {hasSubmitted ? (
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<DeleteIcon />}
-                onClick={() => handleDeleteSubmission(doc.submission_status!.submission_id!)}
-                disabled={!isAllowed}
-              >
-                Delete Submission
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<AttachFileIcon />}
-                onClick={() => handleUploadClick(index)}
-                disabled={!isAllowed}
-              >
-                Submit Document
-              </Button>
             )}
           </CardActions>
         </Collapse>
@@ -605,14 +555,22 @@ const DocumentSubmissionList: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%', p: 2 }}>
-      {/* Course navigation */}
-      <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+      {/* Course navigation and Create button */}
+      <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="body2" component="div">
           <span style={{ color: '#3f51b5', cursor: 'pointer' }}>Course Home</span> / 
           <span style={{ cursor: 'pointer' }}> Documents</span>
         </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<CloudUploadIcon />}
+          onClick={handleCreateSubmittable}
+        >
+          Create Submittable
+        </Button>
       </Box>
-      
+
       {/* Progress chart */}
       <Paper 
         elevation={3} 

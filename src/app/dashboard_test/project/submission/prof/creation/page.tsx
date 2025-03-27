@@ -60,10 +60,20 @@ interface Event {
 // Add axios interceptor for authentication
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
+  console.log('Axios Interceptor Debug:');
+  console.log('Request URL:', config.url);
+  console.log('Token exists:', !!token);
+  console.log('Token value:', token);
+  console.log('Request headers:', config.headers);
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('Updated headers:', config.headers);
   }
   return config;
+}, (error) => {
+  console.error('Axios Interceptor Error:', error);
+  return Promise.reject(error);
 });
 
 const EventCreationApp: React.FC = () => {
@@ -119,6 +129,35 @@ const EventCreationApp: React.FC = () => {
       return;
     }
 
+    // Check if user is logged in and has professor role
+    const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
+    
+    // Debug logging for authentication
+    console.log('Authentication Debug:');
+    console.log('Token exists:', !!token);
+    console.log('Token value:', token);
+    console.log('Role:', role);
+    console.log('Is professor:', role === 'prof');
+    
+    if (!token) {
+      setSnackbar({
+        open: true,
+        message: 'Please log in to create a submittable',
+        severity: 'error'
+      });
+      return;
+    }
+
+    if (role !== 'prof') {
+      setSnackbar({
+        open: true,
+        message: 'Only professors can create submittables',
+        severity: 'error'
+      });
+      return;
+    }
+
     setLoading(true);
     try {
       // Create FormData for file upload
@@ -133,12 +172,22 @@ const EventCreationApp: React.FC = () => {
         formData.append('file', referenceFile);
       }
 
+      // Debug logging for request
+      console.log('Request Debug:');
+      console.log('FormData entries:');
+      for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + pair[1]);
+      }
+
       // Make API call to create submittable
       const response = await axios.post('/submittables/create', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-        },
+          'Authorization': `Bearer ${token}`
+        }
       });
+
+      console.log('Response:', response);
 
       if (response.status === 201) {
         setSnackbar({
@@ -156,25 +205,38 @@ const EventCreationApp: React.FC = () => {
       }
     } catch (error: any) {
       console.error('Error creating submittable:', error);
+      console.error('Error response:', error.response);
+      console.error('Error config:', error.config);
+      console.error('Error headers:', error.config?.headers);
+      console.error('Error data:', error.response?.data);
+      
       let errorMessage = 'An error occurred while creating the submittable';
       
       if (error.response) {
         // Handle specific error messages from the backend
-        switch (error.response.status) {
-          case 400:
-            errorMessage = error.response.data.detail || 'Invalid input data';
-            break;
-          case 401:
-            errorMessage = 'You are not authorized to create submittables';
-            break;
-          case 404:
-            errorMessage = 'User not found';
-            break;
-          case 500:
-            errorMessage = 'Server error occurred';
-            break;
-          default:
-            errorMessage = error.response.data.detail || errorMessage;
+        if (error.response.status === 401) {
+          errorMessage = 'Your session has expired. Please log in again.';
+          // Show error message first
+          setSnackbar({
+            open: true,
+            message: errorMessage,
+            severity: 'error'
+          });
+          // Wait a bit before redirecting
+          setTimeout(() => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            window.location.href = '/login';
+          }, 3000); // Wait 3 seconds before redirecting
+        } else if (error.response.status === 403) {
+          errorMessage = 'You do not have permission to create submittables.';
+        } else {
+          const errorData = error.response.data;
+          if (typeof errorData === 'object' && errorData.detail) {
+            errorMessage = errorData.detail;
+          } else if (Array.isArray(errorData)) {
+            errorMessage = errorData.map(err => err.msg).join(', ');
+          }
         }
       } else if (error.request) {
         errorMessage = 'No response received from server';
@@ -309,12 +371,13 @@ const EventCreationApp: React.FC = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Description (Optional)"
+                label="Description"
                 multiline
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 variant="outlined"
+                required
                 sx={{ mb: 2 }}
               />
             </Grid>

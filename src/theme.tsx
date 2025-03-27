@@ -18,6 +18,11 @@ const theme = createTheme({
       },
     },
     components: {
+      MuiTypography: {
+        defaultProps: {
+          component: "div", // or "span" based on your need
+        },
+      },
         MuiButton: {
             styleOverrides: {
             root: {
