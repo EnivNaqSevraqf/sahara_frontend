@@ -212,7 +212,7 @@ const AnnouncementPage = () => {
 
   const handleDownload = async (announcement: Announcement) => {
     try {
-      const response = await axios.get(`/announcements/${announcementId}/download`, {
+      const response = await axios.get(`/announcements/${announcement.id}/download`, {
         responseType: 'blob',
         headers: {
           'Accept': '*/*'
@@ -470,26 +470,48 @@ const AnnouncementPage = () => {
               Posted on {formatDate(announcement.created_at)}
             </Typography>
             <Box sx={{ position: 'absolute', right: '48px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 1 }}>
-              <IconButton 
-                size="small" 
+              <Box
                 onClick={(e) => {
                   e.stopPropagation();
                   onEdit(announcement);
                 }}
-                sx={{ color: 'white' }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  }
+                }}
               >
-                <EditIcon />
-              </IconButton>
-              <IconButton 
-                size="small" 
+                <EditIcon fontSize="small" />
+              </Box>
+              <Box
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete(announcement.id);
                 }}
-                sx={{ color: 'white' }}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  color: 'white',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  }
+                }}
               >
-                <DeleteIcon />
-              </IconButton>
+                <DeleteIcon fontSize="small" />
+              </Box>
             </Box>
           </Box>
         </AccordionSummary>
@@ -531,7 +553,7 @@ const AnnouncementPage = () => {
                 variant="outlined"
                 size="small"
                 startIcon={<DownloadIcon />}
-                onClick={() => handleDownload(announcement.id)}
+                onClick={() => handleDownload(announcement)}
               >
                 Download
               </Button>

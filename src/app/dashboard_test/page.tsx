@@ -28,7 +28,29 @@ import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
 // Configure axios base URL
-axios.defaults.baseURL = 'http://localhost:8000';
+axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+// Add request interceptor to handle errors
+axios.interceptors.request.use(
+  (config) => {
+    // You can add auth headers here if needed
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle errors
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.code === 'ERR_NETWORK') {
+      console.error('Network error - Please check if the backend server is running');
+    }
+    return Promise.reject(error);
+  }
+);
 
 interface Announcement {
   id: number;
@@ -104,23 +126,29 @@ const StudentDashboard: React.FC = () => {
   const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await axios.get('/announcements');
+      // Sort announcements by created_at in descending order and take the latest 2
+      const sortedAnnouncements = response.data.sort((a: Announcement, b: Announcement) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setAnnouncements(sortedAnnouncements.slice(0, 2));
+    } catch (error: any) {
+      console.error('Error fetching announcements:', error);
+      if (error.code === 'ERR_NETWORK') {
+        setError('Unable to connect to the server. Please check if the backend is running.');
+      } else {
+        setError('Failed to fetch announcements. Please try again later.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        const response = await axios.get('/announcements');
-        // Sort announcements by created_at in descending order and take the latest 2
-        const sortedAnnouncements = response.data.sort((a: Announcement, b: Announcement) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        ).slice(0, 2);
-        setAnnouncements(sortedAnnouncements);
-      } catch (error) {
-        console.error('Error fetching announcements:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAnnouncements();
   }, []);
 
