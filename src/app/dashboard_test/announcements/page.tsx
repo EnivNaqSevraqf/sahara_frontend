@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { 
   Box, 
@@ -25,7 +25,11 @@ import {
   Divider,
   Card,
   CardContent,
-  CardActions
+  CardActions,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Avatar
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -33,7 +37,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TiptapEditor from '@/components/TiptapEditor';
+import { useTheme } from '@mui/material/styles';
+import { useMediaQuery } from '@mui/material';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000';
@@ -57,6 +64,9 @@ interface Announcement {
   created_at: string;
   url_name: string | null;
   creator_id: number;
+  created_by?: {
+    name?: string;
+  };
 }
 
 interface AnnouncementForm {
@@ -66,13 +76,11 @@ interface AnnouncementForm {
   attachment?: FormAttachment;
 }
 
-// Mock function to get user role
-const getUserRole = () => {
-  // Replace this with your actual role checking logic
-  return 'admin';
-};
-
 const AnnouncementPage = () => {
+  const searchParams = useSearchParams();
+  const expandedId = searchParams.get('expanded');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -88,22 +96,46 @@ const AnnouncementPage = () => {
     message: '',
     severity: 'success'
   });
-  const isAdmin = getUserRole() === 'admin';
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<{
     title?: boolean;
     content?: boolean;
   }>({});
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [expandedAnnouncementId, setExpandedAnnouncementId] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAnnouncements();
   }, []);
 
+  useEffect(() => {
+    // Check if user is professor from localStorage
+    const role = localStorage.getItem('role');
+    setUserRole(role);
+  }, []);
+
+  useEffect(() => {
+    // Set expanded announcement from URL parameter
+    if (expandedId) {
+      setExpandedAnnouncementId(parseInt(expandedId));
+    }
+  }, [expandedId]);
+
+  const isProfessor = userRole === 'prof';
+
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
       const response = await axios.get('/announcements');
+      console.log('Announcement data:', response.data);
       setAnnouncements(response.data);
     } catch (error: any) {
       console.error('Error fetching announcements:', error);
@@ -175,18 +207,38 @@ const AnnouncementPage = () => {
     }
   };
 
-  const handleDownload = async (announcementId: number) => {
+  const handleDownload = async (announcement: Announcement) => {
     try {
-      const response = await axios.get(`/announcements/${announcementId}/download`, {
-        responseType: 'blob'
+      const response = await axios.get(`/announcements/${announcement.id}/download`, {
+        responseType: 'blob',
+        headers: {
+          'Accept': '*/*'
+        }
       });
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Get the filename from the Content-Disposition header or use a default name
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'download';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+
+      // Create blob URL with the correct content type
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create temporary link and trigger download
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', response.headers['content-disposition']?.split('filename=')[1] || 'file');
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
       link.remove();
     } catch (error: any) {
       console.error('Error downloading file:', error);
@@ -371,45 +423,123 @@ const AnnouncementPage = () => {
     });
   };
 
-  const AnnouncementCard = ({ announcement, onEdit, onDelete }: { announcement: Announcement; onEdit: (announcement: Announcement) => void; onDelete: (id: number) => void }) => {
+  const AnnouncementCard = ({ announcement, onDelete, showDeleteButton }: { announcement: Announcement; onDelete: (id: number) => void; showDeleteButton: boolean }) => {
+    console.log('Announcement data:', announcement);
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-            <Typography variant="h6" component="h2">
+      <Accordion 
+        sx={{ 
+          mb: 1, 
+          borderRadius: '12px', 
+          '&:before': { display: 'none' }, 
+          overflow: 'hidden',
+          '&.Mui-expanded': {
+            borderRadius: '12px',
+          }
+        }}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon sx={{ color: 'white' }} />}
+          aria-controls={`announcement-${announcement.id}-content`}
+          id={`announcement-${announcement.id}-header`}
+          sx={{
+            backgroundColor: '#033076',
+            '&:hover': {
+              backgroundColor: '#022555',
+            },
+            '.MuiAccordionSummary-content': {
+              margin: '12px 0',
+            },
+            borderRadius: '12px',
+            '&.Mui-expanded': {
+              borderRadius: '12px 12px 0 0',
+            }
+          }}
+        >
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            width: '100%',
+            pr: 2 
+          }}>
+            <Typography variant="h6" sx={{ color: 'white' }}>
               {announcement.title}
             </Typography>
-            <Box>
-              <IconButton size="small" onClick={() => onEdit(announcement)}>
-                <EditIcon />
-              </IconButton>
-              <IconButton size="small" onClick={() => onDelete(announcement.id)}>
-                <DeleteIcon />
-              </IconButton>
-            </Box>
+            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+              Posted by {announcement.created_by?.name || `User ${announcement.creator_id}`} on {formatDate(announcement.created_at)}
+            </Typography>
+            {showDeleteButton && (
+              <Box sx={{ position: 'absolute', right: '48px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 1 }}>
+                <Box
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(announcement.id);
+                  }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </Box>
+              </Box>
+            )}
           </Box>
-          
+        </AccordionSummary>
+        <AccordionDetails sx={{ 
+          borderBottomLeftRadius: '12px', 
+          borderBottomRightRadius: '12px',
+          '&.Mui-expanded': {
+            borderRadius: '0 0 12px 12px',
+          }
+        }}>
           <div 
             className="rich-text-content"
-            dangerouslySetInnerHTML={{ __html: announcement.content }} 
+            dangerouslySetInnerHTML={{ 
+              __html: announcement.content.replace(
+                /href="([^"]*)"/g, 
+                (match, url) => {
+                  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:')) {
+                    return `href="${url}" target="_blank" rel="noopener noreferrer"`;
+                  }
+                  return `href="https://${url}" target="_blank" rel="noopener noreferrer"`;
+                }
+              )
+            }} 
           />
 
           {announcement.url_name && (
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
               <Button
                 variant="outlined"
                 size="small"
                 startIcon={<AttachFileIcon />}
-                href={`${process.env.NEXT_PUBLIC_API_URL}/uploads/${announcement.url_name}`}
+                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/${announcement.url_name}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 View Attachment
               </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DownloadIcon />}
+                onClick={() => handleDownload(announcement)}
+              >
+                Download
+              </Button>
             </Box>
           )}
-        </CardContent>
-      </Card>
+        </AccordionDetails>
+      </Accordion>
     );
   };
 
@@ -419,29 +549,45 @@ const AnnouncementPage = () => {
         <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
           Announcements
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleCreateAnnouncement}
-          sx={{ px: 3, py: 1 }}
-        >
-          Create Announcement
-        </Button>
+        {isProfessor && (
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleCreateAnnouncement}
+            sx={{ px: 3, py: 1, borderRadius: '24px', backgroundColor: '#033076', '&:hover': { backgroundColor: '#022555' } }}
+          >
+            Create Announcement
+          </Button>
+        )}
       </Box>
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
           <CircularProgress />
         </Box>
+      ) : announcements.length === 0 ? (
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            textAlign: 'center',
+            backgroundColor: 'background.default',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h6" color="text.secondary">
+            No announcements yet
+          </Typography>
+        </Paper>
       ) : (
         <Grid container spacing={3}>
           {announcements.map((announcement) => (
             <Grid item xs={12} key={announcement.id}>
               <AnnouncementCard
                 announcement={announcement}
-                onEdit={handleEditAnnouncement}
                 onDelete={handleDeleteClick}
+                showDeleteButton={isProfessor}
               />
             </Grid>
           ))}

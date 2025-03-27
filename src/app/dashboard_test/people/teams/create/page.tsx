@@ -1,9 +1,9 @@
-import TeamCreationForm from '../../TeamCreationForm';
+import TeamsCreationForm2 from '../../TeamsCreationForm2';
 
 export default function TeamCreationPage() {
   return (
     <main>
-      <TeamCreationForm />
+      <TeamsCreationForm2 />
     </main>
   );
-} 
+}
