@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import { 
   Box, 
@@ -25,7 +25,8 @@ import {
   Divider,
   Card,
   CardContent,
-  CardActions
+  CardActions,
+  Avatar
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -34,6 +35,8 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
 import TiptapEditor from '@/components/TiptapEditor';
+import { useTheme } from '@mui/material/styles';
+import { useMediaQuery } from '@mui/material';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000';
@@ -57,6 +60,9 @@ interface Announcement {
   created_at: string;
   url_name: string | null;
   creator_id: number;
+  created_by?: {
+    name?: string;
+  };
 }
 
 interface AnnouncementForm {
@@ -73,6 +79,10 @@ const getUserRole = () => {
 };
 
 const AnnouncementPage = () => {
+  const searchParams = useSearchParams();
+  const expandedId = searchParams.get('expanded');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const router = useRouter();
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -88,17 +98,38 @@ const AnnouncementPage = () => {
     message: '',
     severity: 'success'
   });
-  const isAdmin = getUserRole() === 'admin';
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<{
     title?: boolean;
     content?: boolean;
   }>({});
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
+  const [title, setTitle] = useState('');
+  const [content, setContent] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [expandedAnnouncementId, setExpandedAnnouncementId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAnnouncements();
   }, []);
+
+  useEffect(() => {
+    // Check if user is admin from localStorage
+    const userRole = localStorage.getItem('userRole');
+    setIsAdmin(userRole === 'admin');
+  }, []);
+
+  useEffect(() => {
+    // Set expanded announcement from URL parameter
+    if (expandedId) {
+      setExpandedAnnouncementId(parseInt(expandedId));
+    }
+  }, [expandedId]);
 
   const fetchAnnouncements = async () => {
     try {
@@ -175,9 +206,9 @@ const AnnouncementPage = () => {
     }
   };
 
-  const handleDownload = async (announcementId: number) => {
+  const handleDownload = async (announcement: Announcement) => {
     try {
-      const response = await axios.get(`/announcements/${announcementId}/download`, {
+      const response = await axios.get(`/announcements/${announcement.id}/download`, {
         responseType: 'blob'
       });
       
@@ -373,27 +404,88 @@ const AnnouncementPage = () => {
 
   const AnnouncementCard = ({ announcement, onEdit, onDelete }: { announcement: Announcement; onEdit: (announcement: Announcement) => void; onDelete: (id: number) => void }) => {
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
+      <Card 
+        elevation={0}
+        sx={{ 
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: 'divider',
+          '&:hover': {
+            borderColor: 'primary.main',
+            boxShadow: 1
+          }
+        }}
+      >
+        <CardContent sx={{ p: 3 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-            <Typography variant="h6" component="h2">
-              {announcement.title}
-            </Typography>
             <Box>
-              <IconButton size="small" onClick={() => onEdit(announcement)}>
-                <EditIcon />
-              </IconButton>
-              <IconButton size="small" onClick={() => onDelete(announcement.id)}>
-                <DeleteIcon />
-              </IconButton>
+              <Typography variant="h6" component="h2" sx={{ mb: 1, fontWeight: 600 }}>
+                {announcement.title}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                <Avatar 
+                  sx={{ 
+                    width: 32, 
+                    height: 32,
+                    bgcolor: 'primary.main'
+                  }}
+                >
+                  {announcement.created_by?.name?.charAt(0) || 'U'}
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {announcement.created_by?.name || 'Unknown User'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {formatDate(announcement.created_at)}
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
+            {isAdmin && (
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <IconButton 
+                  size="small" 
+                  onClick={() => onEdit(announcement)}
+                  sx={{ 
+                    color: 'primary.main',
+                    '&:hover': { backgroundColor: 'primary.lighter' }
+                  }}
+                >
+                  <EditIcon />
+                </IconButton>
+                <IconButton 
+                  size="small" 
+                  onClick={() => onDelete(announcement.id)}
+                  sx={{ 
+                    color: 'error.main',
+                    '&:hover': { backgroundColor: 'error.lighter' }
+                  }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </Box>
+            )}
           </Box>
           
-          <div 
-            className="rich-text-content"
-            dangerouslySetInnerHTML={{ __html: announcement.content }} 
-          />
-
+          {expandedAnnouncementId === announcement.id && (
+            <Typography 
+              variant="body1" 
+              color="text.primary"
+              sx={{ 
+                mb: 2,
+                '& a': {
+                  color: 'primary.main',
+                  textDecoration: 'none',
+                  '&:hover': {
+                    textDecoration: 'underline'
+                  }
+                }
+              }}
+              dangerouslySetInnerHTML={{ __html: announcement.content }}
+            />
+          )}
+          
           {announcement.url_name && (
             <Box sx={{ mt: 2 }}>
               <Button
@@ -431,9 +523,23 @@ const AnnouncementPage = () => {
       </Box>
 
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
           <CircularProgress />
         </Box>
+      ) : announcements.length === 0 ? (
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 4, 
+            textAlign: 'center',
+            backgroundColor: 'background.default',
+            borderRadius: 2
+          }}
+        >
+          <Typography variant="h6" color="text.secondary">
+            No announcements yet
+          </Typography>
+        </Paper>
       ) : (
         <Grid container spacing={3}>
           {announcements.map((announcement) => (
