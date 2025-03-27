@@ -27,6 +27,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import GradeIcon from '@mui/icons-material/Grade';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import TimelineIcon from '@mui/icons-material/Timeline';
 import { currentConfig } from '@/config';
 
 // Configure axios base URL
@@ -38,6 +42,7 @@ interface SubmittableType {
   description: string;
   opens_at?: string;
   deadline: string;
+  max_score: number;
   reference_files: Array<{
     id: number;
     original_filename: string;
@@ -47,6 +52,7 @@ interface SubmittableType {
     submission_id: number | null;
     submitted_on: string | null;
     original_filename: string | null;
+    score: number | null;
   };
 }
 
@@ -351,41 +357,85 @@ const DocumentSubmissionList: React.FC = () => {
         sx={{ 
           mb: 2,
           borderLeft: 4,
-          borderColor: hasSubmitted ? 'success.main' : isAllowed ? 'primary.main' : 'text.disabled'
+          borderColor: hasSubmitted ? 'success.main' : isAllowed ? 'primary.main' : 'text.disabled',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          },
+          maxWidth: '1200px',
+          mx: 'auto',
+          width: '100%'
         }}
       >
         <CardContent 
           sx={{ 
             cursor: 'pointer',
-            '&:hover': { bgcolor: 'action.hover' }
+            '&:hover': { bgcolor: 'action.hover' },
+            p: 3
           }}
           onClick={() => handleExpandClick(doc.id)}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Chip 
-                label="Document" 
+                label="Assignment" 
                 size="small" 
                 color="primary" 
                 variant="outlined" 
-                sx={{ mr: 2 }} 
+                sx={{ 
+                  borderRadius: 1,
+                  fontWeight: 600,
+                  bgcolor: 'background.paper',
+                  px: 1
+                }} 
               />
-              <Typography variant="h6" component="div">
+              <Typography 
+                variant="h6" 
+                component="div" 
+                sx={{ 
+                  fontWeight: 600, 
+                  fontSize: '1.25rem',
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}
+              >
                 {doc.title}
               </Typography>
             </Box>
             {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
           </Box>
           
-          <Box sx={{ mt: 1, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+          <Box sx={{ 
+            mt: 2, 
+            display: 'flex', 
+            flexDirection: { xs: 'column', sm: 'row' }, 
+            gap: 2,
+            flexWrap: 'wrap'
+          }}>
             {doc.opens_at && (
-              <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography 
+                variant="body2" 
+                color="text.secondary" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  fontSize: '0.875rem'
+                }}
+              >
                 <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
                 Opens at: {formatDate(doc.opens_at)}
               </Typography>
             )}
             
-            <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography 
+              variant="body2" 
+              color="text.secondary" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                fontSize: '0.875rem'
+              }}
+            >
               <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
               Due on: {formatDate(doc.deadline)}
             </Typography>
@@ -393,26 +443,87 @@ const DocumentSubmissionList: React.FC = () => {
         </CardContent>
 
         <Collapse in={isExpanded}>
-          <CardContent>
-            <Typography variant="body1" sx={{ mb: 2 }}>
-              {doc.description}
-            </Typography>
+          <CardContent sx={{ bgcolor: 'background.paper', p: 3 }}>
+            {/* Description Section */}
+            <Box sx={{ mb: 3 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontSize: '1.1rem', 
+                  fontWeight: 600, 
+                  mb: 1.5,
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}
+              >
+                Description
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: 'text.primary', 
+                  fontSize: '1rem',
+                  lineHeight: 1.7,
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  letterSpacing: '0.01em'
+                }}
+              >
+                {doc.description}
+              </Typography>
+            </Box>
 
-            {/* Reference Files Section */}
+            {/* System Instructions */}
+            <Box sx={{ mb: 3 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontSize: '1.1rem', 
+                  fontWeight: 600, 
+                  mb: 1.5,
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}
+              >
+                System Instructions
+              </Typography>
+              <Typography 
+                variant="body2" 
+                sx={{
+                  color: 'text.secondary',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.6,
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}
+              >
+                You are given an extra 10 minutes after due time to submit this assignment. However, please note that any submissions made after the due time are marked as late submissions.
+              </Typography>
+            </Box>
+
+            {/* Question Files */}
             {doc.reference_files && doc.reference_files.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Reference Files:
+              <Box sx={{ mb: 3 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '1.1rem', 
+                    fontWeight: 600, 
+                    mb: 1.5,
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }}
+                >
+                  Question Files
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                   {doc.reference_files.map((file) => (
                     <Button
                       key={file.id}
-                      variant="outlined"
+                      variant="text"
                       size="small"
                       startIcon={<AttachFileIcon />}
                       onClick={() => handleReferenceFileDownload(doc.id, file.original_filename)}
-                      sx={{ textTransform: 'none' }}
+                      sx={{ 
+                        textTransform: 'none',
+                        color: 'primary.main',
+                        fontSize: '0.875rem'
+                      }}
                     >
                       {file.original_filename}
                     </Button>
@@ -421,37 +532,87 @@ const DocumentSubmissionList: React.FC = () => {
               </Box>
             )}
             
+            {/* Uploaded Answer Files */}
             {hasSubmitted && doc.submission_status?.submitted_on && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" color="success.main" sx={{ display: 'flex', alignItems: 'center' }}>
-                  <CheckCircleIcon fontSize="small" sx={{ mr: 0.5 }} />
-                  Submitted: {formatDate(doc.submission_status.submitted_on)}
-                  {doc.submission_status.original_filename && (
-                    <>
-                      {' - '}
-                      <Button
-                        size="small"
-                        onClick={() => handleSubmissionDownload(doc.submission_status!.submission_id!, doc.submission_status!.original_filename!)}
-                        sx={{ textTransform: 'none', minWidth: 'auto', p: 0, ml: 0.5 }}
-                      >
-                        {doc.submission_status.original_filename}
-                      </Button>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleDeleteSubmission(doc.submission_status!.submission_id!)}
-                        sx={{ ml: 0.5, color: 'error.main' }}
-                        title="Delete submission"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </>
-                  )}
+              <Box sx={{ mb: 2.5 }}>
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontSize: '1.1rem', 
+                    fontWeight: 600, 
+                    mb: 1.5,
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }}
+                >
+                  Uploaded Answer Files
                 </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="text"
+                    startIcon={<AttachFileIcon />}
+                    onClick={() => handleSubmissionDownload(doc.submission_status!.submission_id!, doc.submission_status!.original_filename!)}
+                    sx={{ 
+                      textTransform: 'none',
+                      color: 'primary.main',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    {doc.submission_status.original_filename}
+                  </Button>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDeleteSubmission(doc.submission_status!.submission_id!)}
+                    sx={{ color: 'error.main' }}
+                    title="Delete submission"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </Box>
               </Box>
             )}
+
+            {/* Results Section */}
+            <Box sx={{ mb: 2.5 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontSize: '1.1rem', 
+                  fontWeight: 600, 
+                  mb: 1.5,
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}
+              >
+                Results
+              </Typography>
+              {doc.submission_status && doc.submission_status.score !== null ? (
+                <Typography 
+                  variant="body2" 
+                  sx={{ 
+                    color: 'primary.main',
+                    fontWeight: 500,
+                    fontSize: '1rem',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }}
+                >
+                  {doc.submission_status.score} / {doc.max_score} points
+                </Typography>
+              ) : (
+                <Typography 
+                  variant="body2" 
+                  sx={{
+                    color: 'text.secondary',
+                    fontSize: '0.95rem',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }}
+                >
+                  Results will be available after {formatDate(doc.deadline)}
+                </Typography>
+              )}
+            </Box>
           </CardContent>
 
-          <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          <CardActions sx={{ justifyContent: 'flex-end', p: 3, bgcolor: 'background.paper' }}>
             <input
               type="file"
               ref={(el) => { fileInputRefs.current[index] = el; }}
@@ -464,6 +625,7 @@ const DocumentSubmissionList: React.FC = () => {
               <Button
                 variant="outlined"
                 color="error"
+                size="small"
                 startIcon={<DeleteIcon />}
                 onClick={() => handleDeleteSubmission(doc.submission_status!.submission_id!)}
                 disabled={!isAllowed}
@@ -474,6 +636,7 @@ const DocumentSubmissionList: React.FC = () => {
               <Button
                 variant="contained"
                 color="primary"
+                size="small"
                 startIcon={<AttachFileIcon />}
                 onClick={() => handleUploadClick(index)}
                 disabled={!isAllowed}
@@ -504,28 +667,52 @@ const DocumentSubmissionList: React.FC = () => {
   }
 
   return (
-    <Box sx={{ width: '100%', p: 2 }}>
+    <Box sx={{ 
+      p: 3, 
+      maxWidth: '1200px', 
+      margin: '0 auto',
+      bgcolor: 'background.default'
+    }}>
       {/* Course navigation */}
-      <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+      <Box sx={{ 
+        mb: 4, 
+        pb: 2, 
+        borderBottom: '1px solid', 
+        borderColor: 'divider',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1
+      }}>
+        <AssignmentIcon color="primary" />
         <Typography variant="body2" component="div">
-          <span style={{ color: '#3f51b5', cursor: 'pointer' }}>Course Home</span> / 
-          <span style={{ cursor: 'pointer' }}> Documents</span>
+          <span style={{ color: '#3f51b5', cursor: 'pointer', fontWeight: 500 }}>Course Home</span> / 
+          <span style={{ cursor: 'pointer', color: 'text.secondary' }}> Submissions</span>
         </Typography>
       </Box>
       
       {/* Progress chart */}
       <Paper 
-        elevation={3} 
-        sx={{ p: 3, mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        elevation={0}
+        sx={{ 
+          p: 4, 
+          mb: 4, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+          color: 'white',
+          borderRadius: 2,
+          boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+        }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Box sx={{ position: 'relative', display: 'inline-flex', mr: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Box sx={{ position: 'relative', display: 'inline-flex' }}>
             <CircularProgress 
               variant="determinate" 
               value={completionPercentage} 
-              size={80} 
+              size={100} 
               thickness={4} 
-              color="primary" 
+              sx={{ color: 'white' }}
             />
             <Box
               sx={{
@@ -539,24 +726,32 @@ const DocumentSubmissionList: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Typography variant="h6" component="div" color="text.secondary">
+              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
                 {`${completionPercentage}%`}
               </Typography>
             </Box>
           </Box>
           
           <Box>
-            <Typography variant="h5" component="div" gutterBottom>
+            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
               Project Progress
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
               {submittables.filter(doc => doc.submission_status?.has_submitted).length} of {submittables.length} documents submitted
             </Typography>
           </Box>
         </Box>
         
-        <Box>
-          <Typography variant="body2" color={completionPercentage === 100 ? 'success.main' : 'info.main'}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          bgcolor: 'rgba(255, 255, 255, 0.1)',
+          p: 2,
+          borderRadius: 2
+        }}>
+          <TimelineIcon />
+          <Typography variant="h6" sx={{ fontWeight: 500 }}>
             {completionPercentage === 100 
               ? 'All documents submitted!' 
               : `${submittables.length - submittables.filter(doc => doc.submission_status?.has_submitted).length} documents remaining`}
@@ -567,23 +762,62 @@ const DocumentSubmissionList: React.FC = () => {
       {/* Ongoing/Upcoming Documents */}
       {(ongoingSubmittables.length > 0 || upcomingSubmittables.length > 0) && (
         <>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
-            Ongoing/Upcoming Documents
+          <Typography 
+            variant="h5" 
+            component="h2" 
+            sx={{ 
+              fontWeight: 'bold', 
+              mb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              color: 'primary.main'
+            }}
+          >
+            <AssignmentIcon /> Ongoing/Upcoming Documents
           </Typography>
           
-          {ongoingSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
-          {upcomingSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
+          <Grid container spacing={2}>
+            {ongoingSubmittables.map((doc, index) => (
+              <Grid item xs={12} key={doc.id}>
+                {renderSubmittableItem(doc, index)}
+              </Grid>
+            ))}
+            {upcomingSubmittables.map((doc, index) => (
+              <Grid item xs={12} key={doc.id}>
+                {renderSubmittableItem(doc, index)}
+              </Grid>
+            ))}
+          </Grid>
         </>
       )}
       
       {/* Previous Documents */}
       {previousSubmittables.length > 0 && (
         <>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mt: 4, mb: 2 }}>
-            Previous Documents
+          <Typography 
+            variant="h5" 
+            component="h2" 
+            sx={{ 
+              fontWeight: 'bold', 
+              mt: 6, 
+              mb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              color: 'text.secondary'
+            }}
+          >
+            <AssignmentIcon /> Previous Documents
           </Typography>
           
-          {previousSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
+          <Grid container spacing={2}>
+            {previousSubmittables.map((doc, index) => (
+              <Grid item xs={12} key={doc.id}>
+                {renderSubmittableItem(doc, index)}
+              </Grid>
+            ))}
+          </Grid>
         </>
       )}
 
@@ -592,8 +826,16 @@ const DocumentSubmissionList: React.FC = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
