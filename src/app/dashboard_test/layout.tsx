@@ -57,7 +57,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
     return [
       dashboardHeader,
       {
-        segment: '/dashboard_test',
+        segment: 'dashboard_test',
         title: 'Overview',
         icon: <DashboardIcon />,
       },
@@ -104,7 +104,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
     return [
       dashboardHeader,
       {
-        segment: '/dashboard_test',
+        segment: 'dashboard_test',
         title: 'Overview',
         icon: <DashboardIcon />,
       },
@@ -146,7 +146,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
     return [
       dashboardHeader,
       {
-        segment: '/dashboard_test',
+        segment: 'dashboard_test',
         title: 'Overview',
         icon: <DashboardIcon />,
       },
