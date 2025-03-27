@@ -17,7 +17,7 @@ import { ViewQuilt } from '@mui/icons-material';
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout as ToolpadDashboardLayout, DashboardLayoutProps } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
-import { getUserRole, setUserRole, normalizeRole, type UserRole } from '@/utils/roles';
+//import { getUserRole, normalizeRole, type UserRole } from '@/utils/roles';
 import { useEffect, useState } from 'react';
 import AuthWrapper from '@/components/AuthWrapper';
 import "../globals.css";
@@ -29,7 +29,44 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuButton from '@/components/MenuButton';
 import { green, purple } from '@mui/material/colors';
 
-// Define navigation items based on user role
+// Add these type definitions at the top of the file after imports
+type UserRole = 'admin' | 'ta' | 'student';
+
+const normalizeRole = (role: string): UserRole => {
+  switch (role) {
+    case 'admin':
+      return 'admin';
+    case 'ta':
+      return 'ta';
+    default:
+      return 'student';
+  }
+};
+
+// Update the getUserRole function to properly check for admin and ta roles
+const getUserRole = (): UserRole => {
+  if (typeof window !== 'undefined') {
+    const roleFromStorage = localStorage.getItem('role');
+    if (roleFromStorage) {
+      const normalizedRole = roleFromStorage.toLowerCase();
+      switch (normalizedRole) {
+        case 'admin':
+        case 'professor':
+        case 'prof':
+          return 'admin';
+        case 'ta':
+        case 'teaching assistant':
+          return 'ta';
+        case 'student':
+          return 'student';
+        default:
+          return 'student';
+      }
+    }
+  }
+  return 'student';
+};
+
 const getUserNavigation = (userRole: UserRole): Navigation => {
   const role = normalizeRole(userRole);
   
@@ -284,46 +321,37 @@ const DashboardWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// Update the useEffect hook in the DashboardLayout component
 export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const [role, setRole] = useState<UserRole>('student');
-  const [key, setKey] = useState<number>(0); // Key to force re-render
+  const [key, setKey] = useState<number>(0);
   const router = useDemoRouter();
   
-  // Listen for role changes
   useEffect(() => {
-    // Get initial role
-    const userRole = getUserRole();
-    setRole(userRole);
-    
-    // Function to handle role change events
-    const handleRoleChange = (event: CustomEvent<{role: UserRole}>) => {
-      setRole(event.detail.role);
-      setKey(prev => prev + 1); // Force re-render by changing key
+    const checkAndSetRole = () => {
+      const currentRole = getUserRole();
+      console.log('Current role from localStorage:', currentRole); // Debug log
+      setRole(currentRole);
     };
-    
-    // Add event listener for custom role change events
-    window.addEventListener('roleChange', handleRoleChange as EventListener);
-    
-    // Setup storage event listener to detect changes from other tabs/components
+
+    checkAndSetRole();
+
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'userRole' && event.newValue) {
-        const newRole = event.newValue as UserRole;
-        if (newRole !== role) {
-          setRole(newRole);
-          setKey(prev => prev + 1); // Force re-render by changing key
-        }
+      if (event.key === 'role' && event.newValue) {
+        const newRole = normalizeRole(event.newValue);
+        console.log('Role changed to:', newRole); // Debug log
+        setRole(newRole);
+        setKey(prev => prev + 1);
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     
-    // Cleanup
     return () => {
-      window.removeEventListener('roleChange', handleRoleChange as EventListener);
       window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
