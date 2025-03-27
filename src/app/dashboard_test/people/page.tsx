@@ -6,7 +6,6 @@ import {
   Typography,
   Paper,
   Button,
-  Stack,
   Table,
   TableBody,
   TableCell,
@@ -19,21 +18,17 @@ import {
   InputLabel,
   TableSortLabel,
   Toolbar,
-  IconButton,
-  Tooltip,
   CircularProgress,
   Alert,
+  Stack
 } from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import axios from 'axios';
-import Header from './components/Header';
-import { tableStyles } from './constants/theme';
-import type { Student } from './types';
-import { SelectChangeEvent } from '@mui/material/Select';
 import * as XLSX from 'xlsx';
 import { useRouter } from 'next/navigation';
 import { currentConfig } from '@/config';
-import Auth from '../../login/auth';
+import { tableStyles } from './constants/theme';
+import type { Student } from './types';
+import { SelectChangeEvent } from '@mui/material/Select';
 
 const PeoplePage = () => {
   const router = useRouter();
@@ -46,30 +41,33 @@ const PeoplePage = () => {
 
   useEffect(() => {
     const fetchStudents = async () => {
-      console.log("Fetching students");
-      setIsLoading(true);
-      setError(null);
-      try{
-        const response = await axios.get(`${currentConfig.apiBaseUrl}/people/`);
-        setIsLoading(false);
+      try {
+        setIsLoading(true);
+        const config = {
+          headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            'Content-Type': 'application/json',
+          }
+        };
+        const response = await axios.get(`${currentConfig.apiBaseUrl}/people/`, config);
         setStudents(response.data);
+        setError(null);
       }
       catch (error) {
-
         console.error('Error fetching students:', error);
         const status = (error as any).response?.status;
-        console.log('Status:', status);
         if(status === 401){
-          Auth.logOut();
-          const router = useRouter();
-          router.push('/login');
-          setIsLoading(false);
+          console.log("Unauthenticated");
+          setError('Authentication required. Please login again.');
         }
         else if(status === 403){
-          setIsLoading(false);
           setError('Access denied. You do not have permission to view this page.');
         }
-        // setError('Failed to fetch students data: ' + error.message);
+        else {
+          setError('Failed to load people data. Please try again later.');
+        }
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchStudents();
@@ -116,7 +114,7 @@ const PeoplePage = () => {
     XLSX.writeFile(workbook, 'People.xlsx');
   };
 
-if (isLoading) {
+  if (isLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
         <CircularProgress />
@@ -133,145 +131,170 @@ if (isLoading) {
   }
 
   return (
-    <Box sx={{ p: 3, position: 'relative', minHeight: '100vh' }}>
-      {error && <Typography color="error">{error}</Typography>}
-      <Header title="PEOPLE" />
-      <FormControl fullWidth sx={{ mb: 3 }}>
-        <InputLabel id="role-filter-label">Filter by Role</InputLabel>
-        <Select
-          labelId="role-filter-label"
-          value={filter}
-          label="Filter by Role"
-          onChange={handleFilterChange}
-        >
-          <MenuItem value="">All</MenuItem>
-          <MenuItem value="Professor">Professor</MenuItem>
-          <MenuItem value="Student">Student</MenuItem>
-          <MenuItem value="TA">TA</MenuItem>
-        </Select>
-      </FormControl>
-      <Button
-        variant="contained"
-        onClick={downloadExcel}
-        sx={{ mb: 3, backgroundColor: '#1a73e8', color: '#fff', '&:hover': { backgroundColor: '#1765c1' } }}
-      >
-        Export to Excel
-      </Button>
-      <Box sx={{ mb: 3, maxHeight: '40vh', overflowY: 'auto', border: '1px solid #e0e0e0', borderRadius: '8px' }}>
-        {!isLoading && (
-          <TableContainer component={Paper}>
-            <Toolbar sx={{ backgroundColor: '#f5f9ff' }}>
-              <Box flexGrow={1}>
-                <Typography variant="h6" component="div">
-                  Student Results
-                </Typography>
-              </Box>
-              <Tooltip title="Filter list">
-                <IconButton>
-                  <FilterListIcon />
-                </IconButton>
-              </Tooltip>
-            </Toolbar>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow sx={tableStyles.headerCell}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>
-                    <TableSortLabel
-                      active={orderBy === 'id'}
-                      direction={orderBy === 'id' ? order : 'asc'}
-                      onClick={createSortHandler('id')}
-                    >
-                      S. No.
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>
-                    <TableSortLabel
-                      active={orderBy === 'name'}
-                      direction={orderBy === 'name' ? order : 'asc'}
-                      onClick={createSortHandler('name')}
-                    >
-                      Name
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>
-                    <TableSortLabel
-                      active={orderBy === 'email'}
-                      direction={orderBy === 'email' ? order : 'asc'}
-                      onClick={createSortHandler('email')}
-                    >
-                      email
-                    </TableSortLabel>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>
-                    <TableSortLabel
-                      active={orderBy === 'role'}
-                      direction={orderBy === 'role' ? order : 'asc'}
-                      onClick={createSortHandler('role')}
-                    >
-                      Role
-                    </TableSortLabel>
-                  </TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filteredStudents.map((student) => (
-                  <TableRow key={student.id} sx={tableStyles.alternatingRow}>
-                    <TableCell>{student.id}</TableCell>
-                    <TableCell>{student.name}</TableCell>
-                    <TableCell>{student.email}</TableCell>
-                    <TableCell
-                      sx={{
-                        color: student.role === 'Student' ? '#4caf50' : '#f44336',
-                      }}
-                    >
-                      {student.role}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Box>
-      <Stack spacing={2} sx={{ position: 'fixed', bottom: 16, left: 16, right: 16 }}>
+    <Box p={3}>
+      {/* Header with title and action buttons */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
+          People
+        </Typography>
         <Button
           variant="contained"
+          color="primary"
           onClick={() => router.push('/dashboard_test/people/add')}
-          sx={{
-            backgroundColor: '#f0f0f0',
-            color: '#000',
-            '&:hover': {
-              backgroundColor: '#e0e0e0',
-            },
+        >
+          Add People
+        </Button>
+      </Box>
+      
+      {/* Filter and export controls */}
+      <Box display="flex" gap={2} mb={3}>
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel id="role-filter-label">Filter by Role</InputLabel>
+          <Select
+            labelId="role-filter-label"
+            value={filter}
+            label="Filter by Role"
+            onChange={handleFilterChange}
+            size="small"
+          >
+            <MenuItem value="">All</MenuItem>
+            <MenuItem value="Professor">Professor</MenuItem>
+            <MenuItem value="Student">Student</MenuItem>
+            <MenuItem value="TA">TA</MenuItem>
+          </Select>
+        </FormControl>
+        
+        <Button
+          variant="outlined"
+          onClick={downloadExcel}
+          sx={{ 
+            borderColor: '#1976d2', 
+            color: '#1976d2', 
+            '&:hover': { borderColor: '#1565c0', backgroundColor: '#f0f7ff' }
           }}
         >
-          ADD PEOPLE
+          Export to Excel
         </Button>
+      </Box>
+
+      {/* Table of people */}
+      <TableContainer component={Paper} sx={{ mb: 4 }}>
+        <Toolbar sx={{ backgroundColor: '#f5f9ff' }}>
+          <Typography variant="h6" component="div">
+            People List
+          </Typography>
+        </Toolbar>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
+              <TableCell sx={{ fontWeight: 'bold' }}>
+                <TableSortLabel
+                  active={orderBy === 'id'}
+                  direction={orderBy === 'id' ? order : 'asc'}
+                  onClick={createSortHandler('id')}
+                >
+                  ID
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>
+                <TableSortLabel
+                  active={orderBy === 'name'}
+                  direction={orderBy === 'name' ? order : 'asc'}
+                  onClick={createSortHandler('name')}
+                >
+                  Name
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>
+                <TableSortLabel
+                  active={orderBy === 'email'}
+                  direction={orderBy === 'email' ? order : 'asc'}
+                  onClick={createSortHandler('email')}
+                >
+                  Email
+                </TableSortLabel>
+              </TableCell>
+              <TableCell sx={{ fontWeight: 'bold' }}>
+                <TableSortLabel
+                  active={orderBy === 'role'}
+                  direction={orderBy === 'role' ? order : 'asc'}
+                  onClick={createSortHandler('role')}
+                >
+                  Role
+                </TableSortLabel>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredStudents.map((student) => (
+              <TableRow 
+                key={student.id} 
+                hover
+                sx={{ '&:hover': { backgroundColor: '#f0f7ff !important' } }}
+              >
+                <TableCell>{student.id}</TableCell>
+                <TableCell>{student.name}</TableCell>
+                <TableCell>{student.email}</TableCell>
+                <TableCell>
+                  <Box 
+                    component="span" 
+                    sx={{
+                      display: 'inline-block',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: '12px',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      backgroundColor: student.role === 'Student' 
+                        ? '#e8f5e9' 
+                        : student.role === 'Professor' 
+                          ? '#fff8e1' 
+                          : '#e3f2fd',
+                      color: student.role === 'Student' 
+                        ? '#2e7d32' 
+                        : student.role === 'Professor' 
+                          ? '#f57f17' 
+                          : '#1565c0',
+                    }}
+                  >
+                    {student.role}
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+            {filteredStudents.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                  No people found matching the current filter.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Action buttons */}
+      <Stack direction="row" spacing={2} justifyContent="center">
         <Button
           variant="contained"
           onClick={() => router.push('/dashboard_test/people/teams/create')}
           sx={{
-            backgroundColor: '#f0f0f0',
-            color: '#000',
-            '&:hover': {
-              backgroundColor: '#e0e0e0',
-            },
+            backgroundColor: '#1976d2',
+            '&:hover': { backgroundColor: '#1565c0' },
           }}
         >
-          CREATE TEAM
+          Create Team
         </Button>
         <Button
-          variant="contained"
+          variant="outlined"
           onClick={() => router.push('/dashboard_test/people/teams/details')}
           sx={{
-            backgroundColor: '#f0f0f0',
-            color: '#000',
-            '&:hover': {
-              backgroundColor: '#e0e0e0',
-            },
+            borderColor: '#1976d2',
+            color: '#1976d2',
+            '&:hover': { borderColor: '#1565c0', backgroundColor: '#f0f7ff' },
           }}
         >
-          VIEW TEAM DETAILS
+          View Team Details
         </Button>
       </Stack>
     </Box>

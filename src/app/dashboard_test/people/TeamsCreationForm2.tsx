@@ -10,31 +10,29 @@ import {
   Button,
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import Header from './components/Header';
-import { buttonStyles } from './constants/theme';
+import Header from '../people/components/Header';
+import { buttonStyles } from '../people/constants/theme';
 import axios from 'axios';
-import { currentConfig } from '@/config';
 
-const AddStudents = () => {
+const TeamsCreationForm2 = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [submitStatus, setSubmitStatus] = useState<{
     severity: 'success' | 'error';
     message: string;
   } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      if (file.type === 'text/csv' || file.name.endsWith('.csv')) {
-        setSelectedFile(file);
-      } else {
-        alert('Please select a CSV file');
-        event.target.value = ''; // Reset input
-      }
+      setSelectedFile(file);
     }
   };
+
+  const handleAttachClick = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleSubmit = async () => {
     if (!selectedFile) {
       setSubmitStatus({
@@ -44,44 +42,39 @@ const AddStudents = () => {
       return;
     }
 
-    setIsSubmitting(true);
     const formData = new FormData();
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post(`${currentConfig.apiBaseUrl}/upload-students/`, formData, {
+      const response = await axios.post('http://localhost:8000/teams/upload-csv/', formData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data',
         },
       });
 
       setSubmitStatus({
         severity: 'success',
-        message: 'File uploaded successfully!'
+        message: 'File uploaded successfully and data saved to the database!'
       });
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      let errorMessage = 'Failed to upload file. Please try again.';
+      if (axios.isAxiosError(error) && error.response) {
+        errorMessage = error.response.data?.detail || errorMessage;
+      }
       setSubmitStatus({
         severity: 'error',
-        message: 'Failed to upload file. Please try again.'
+        message: errorMessage
       });
-    } finally {
-      setIsSubmitting(false);
     }
-  };
-
-  const handleAttachClick = () => {
-    fileInputRef.current?.click();
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Header title="ADD STUDENTS" />
-
+      <Header title="TEAMS CREATION CSV UPLOAD" />
       <Typography
         variant="h4"
         component="h2"
@@ -93,9 +86,8 @@ const AddStudents = () => {
           borderRadius: '50px',
         }}
       >
-        ADD STUDENTS
+        TEAMS CREATION CSV UPLOAD
       </Typography>
-
       <Box
         sx={{
           display: 'flex',
@@ -139,7 +131,6 @@ const AddStudents = () => {
             <AttachFileIcon />
           </IconButton>
         </Paper>
-
         {selectedFile && (
           <Alert 
             severity="success" 
@@ -151,25 +142,26 @@ const AddStudents = () => {
             Successfully selected file: {selectedFile.name}
           </Alert>
         )}
-
+        <Typography variant="body2" color="textSecondary" align="center" sx={{ mt: 2 }}>
+          The CSV file should be in the format: team name - member1 - member2 - ... - member10
+        </Typography>
         <Button
           variant="contained"
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={!selectedFile}
           sx={{
-            mt: 2,
-            backgroundColor: '#1a73e8',
+            backgroundColor: selectedFile ? '#1a73e8' : '#e0e0e0',
             color: '#fff',
             '&:hover': {
-              backgroundColor: '#1765c1',
+              backgroundColor: selectedFile ? '#1765c1' : '#e0e0e0',
             },
             px: 4,
             borderRadius: '4px',
+            mt: 2,
           }}
         >
-          {isSubmitting ? 'Uploading...' : 'Upload'}
+          Submit
         </Button>
-
         {submitStatus && (
           <Alert 
             severity={submitStatus.severity} 
@@ -187,4 +179,4 @@ const AddStudents = () => {
   );
 };
 
-export default AddStudents;
+export default TeamsCreationForm2;
