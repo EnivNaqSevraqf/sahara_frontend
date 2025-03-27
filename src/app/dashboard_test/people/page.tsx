@@ -51,6 +51,7 @@ const PeoplePage = () => {
       setError(null);
       try{
         const response = await axios.get(`${currentConfig.apiBaseUrl}/people/`);
+        setIsLoading(false);
         setStudents(response.data);
       }
       catch (error) {

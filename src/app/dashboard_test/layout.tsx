@@ -21,7 +21,7 @@ import { getUserRole, setUserRole, normalizeRole, type UserRole } from '@/utils/
 import { useEffect, useState } from 'react';
 import AuthWrapper from '@/components/AuthWrapper';
 import "../globals.css";
-import { Typography } from '@mui/material';
+import { Chip, Stack, Tooltip, Typography } from '@mui/material';
 import LogoutButton from '@/components/logout';
 import Header from '@/components/Header';
 //import toolbaritems from '@/components/toolbaritems';
@@ -62,35 +62,39 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <DashboardIcon />,
       },
       {
-        segment: 'announcements',
+        segment: 'dashboard_test/announcements',
         title: 'Announcements',
         icon: <AnnouncementIcon />,
       },
       {
-        segment: 'gradeables',
+        segment: 'dashboard_test/gradeables',
         title: 'Gradeables',
         icon: <AssignmentRoundedIcon />,
       },
       {
-        segment: 'forms',
+        segment: 'dashboard_test/forms',
         title: 'Form Management',
         icon: <ViewQuilt />,
       },
       {
-        segment: 'people',
+        segment: 'dashboard_test/people',
         title: 'People',
         icon: <PeopleIcon />,
       },
       {
-        segment: 'discussions',
+        segment: 'dashboard_test/discussions',
         title: 'Discussions',
         icon: <ForumIcon />,
+      },
+      {
+        segment: 'dashboard_test/quizzes',
+        title: 'Quizzes',
+        icon: <QuizIcon />,
       },
       {
         segment: 'dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
-        // path: '/calendar',
       },
       ...footerItems
     ];
@@ -105,22 +109,32 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <DashboardIcon />,
       },
       {
-        segment: 'gradeables',
+        segment: 'dashboard_test/announcements',
+        title: 'Announcements',
+        icon: <AnnouncementIcon />,
+      },
+      {
+        segment: 'dashboard_test/scores',
         title: 'Gradeables',
         icon: <AssignmentRoundedIcon />,
       },
       {
-        segment: 'courses',
-        title: 'Courses',
-        icon: <SchoolIcon />,
-      },
-      {
-        segment: 'users',
-        title: 'Users',
+        segment: 'dashboard_test/people',
+        title: 'People',
         icon: <PeopleIcon />,
       },
       {
-        segment: '/dashboard_test/calendar',
+        segment: 'dashboard_test/discussions',
+        title: 'Discussions',
+        icon: <ForumIcon />,
+      },
+      {
+        segment: 'dashboard_test/quizzes',
+        title: 'Quizzes',
+        icon: <QuizIcon />,
+      },
+      {
+        segment: 'dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
       },
@@ -137,35 +151,34 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <DashboardIcon />,
       },
       {
-        segment: 'announcements',
+        segment: 'dashboard_test/announcements',
         title: 'Announcements',
         icon: <AnnouncementIcon />,
       },
       {
-        segment: 'project',
+        segment: 'dashboard_test/project',
         title: 'Project',
         icon: <SchoolIcon />,
       },
       {
-        segment: 'quizzes',
+        segment: 'dashboard_test/quizzes',
         title: 'Quizzes',
         icon: <QuizIcon />,
       },
       {
-        segment: 'discussions',
+        segment: 'dashboard_test/forms',
+        title: 'Forms',
+        icon: <ViewQuilt />,
+      },
+      {
+        segment: 'dashboard_test/discussions',
         title: 'Discussions', 
         icon: <ForumIcon />,
       },
       {
-        segment: '/dashboard_test/calendar',
+        segment: 'dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
-        // path: '/calendar',
-      },
-      {
-        segment: 'forms',
-        title: 'Forms',
-        icon: <ViewQuilt />,
       },
       ...footerItems
     ];
@@ -177,7 +190,7 @@ const dashboardTheme = createTheme({
   cssVariables: {
     colorSchemeSelector: 'data-toolpad-color-scheme',
   },
-  colorSchemes: { light: true, dark: false },
+  colorSchemes: { light: true, dark: true },
   breakpoints: {
     values: {
       xs: 0,
@@ -278,8 +291,7 @@ export default function DashboardLayout({
 }>) {
   const [role, setRole] = useState<UserRole>('student');
   const [key, setKey] = useState<number>(0); // Key to force re-render
-  const router = useDemoRouter('/dashboard_test');
-  // const router = useRouter();
+  const router = useDemoRouter();
   
   // Listen for role changes
   useEffect(() => {
@@ -319,6 +331,27 @@ export default function DashboardLayout({
   // Generate navigation based on user role
   const navigation = getUserNavigation(role);
 
+  function CustomToolbarActions(){
+    return (
+      <LogoutButton>
+        <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
+        Logout
+      </LogoutButton>
+    )
+  }
+
+  function CustomAppTitle() {
+  return (
+    <Stack direction="row" alignItems="center" spacing={2}>
+      <Typography variant="h6">Sahara</Typography>
+      <Chip size="small" label="BETA" color="info" />
+      {/* <Tooltip title="Connected to production">
+        
+      </Tooltip> */}
+    </Stack>
+  );
+  }
+
   return (
     <AuthWrapper>
       <Box sx={{ height: '100vh' }} key={key}>
@@ -327,25 +360,12 @@ export default function DashboardLayout({
           theme={dashboardTheme}
         >
           <ToolpadDashboardLayout
-            toolbarItems={
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <MenuButton 
-                  showBadge 
-                  aria-label="Open notifications"
-                  sx={{ p: 1 }}
-                >
-                  <NotificationsIcon fontSize="small" />
-                </MenuButton>
-                <LogoutButton 
-                  size="small"
-                  sx={{ 
-                    minWidth: 'auto',
-                    px: 2,
-                    py: 0.5
-                  }} 
-                />
-              </Box>
-            }
+            slots={{
+              appTitle: CustomAppTitle,
+              toolbarActions: CustomToolbarActions,
+            }}
+            
+            
           >
             <DashboardWrapper>
               {children}

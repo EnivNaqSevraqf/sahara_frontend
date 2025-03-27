@@ -35,15 +35,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <NextAppProvider>
+
         <AppRouterCacheProvider>
+        <NextAppProvider>
         <MyThemeProvider>
           {/* <CssBaseline/> */}
           {/* <Sidebar /> */}
         {children}
         </MyThemeProvider>
-        </AppRouterCacheProvider>
         </NextAppProvider>
+        </AppRouterCacheProvider>
       </body>
     </html>
   );

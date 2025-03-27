@@ -21,7 +21,6 @@ import {
 } from '@mui/material';
 //import FilterListIcon from '@mui/icons-material/FilterList';
 import { useParams } from 'next/navigation';
-import { currentConfig } from '@/config';
 
 interface StudentScore {
   user_id: number;
@@ -95,8 +94,8 @@ const GradeableScoresPage: React.FC = () => {
         };
 
         const [gradeableResponse, scoresResponse] = await Promise.all([
-          axios.get(`${currentConfig.apiBaseUrl}/gradeables/${id}`, config),
-          axios.get(`${currentConfig.apiBaseUrl}/gradeables/${id}/scores`, config)
+          axios.get(`http://localhost:8000/gradeables/${id}`, config),
+          axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)//axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)
         ]);
         
         setGradeableName(gradeableResponse.data.title || 'Untitled Assignment');
