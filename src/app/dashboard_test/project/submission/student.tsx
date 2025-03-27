@@ -56,7 +56,7 @@ interface SubmittableType {
   };
 }
 
-const DocumentSubmissionList: React.FC = () => {
+export default function StudentSubmissionList() {
   const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
   const [submittables, setSubmittables] = useState<SubmittableType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -842,5 +842,3 @@ const DocumentSubmissionList: React.FC = () => {
     </Box>
   );
 };
-
-export default DocumentSubmissionList;

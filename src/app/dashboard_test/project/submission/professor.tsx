@@ -73,7 +73,7 @@ interface SubmittableType {
   submission_count?: number;  // Add this field
 }
 
-const DocumentSubmissionList: React.FC = () => {
+export default function ProfessorSubmissionList() {
   const router = useRouter();
   const [submittables, setSubmittables] = useState<SubmittableType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1119,5 +1119,3 @@ const DocumentSubmissionList: React.FC = () => {
     </Box>
   );
 };
-
-export default DocumentSubmissionList;
