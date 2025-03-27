@@ -25,7 +25,10 @@ import {
   Divider,
   Card,
   CardContent,
-  CardActions
+  CardActions,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -33,6 +36,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import TiptapEditor from '@/components/TiptapEditor';
 
 // Configure axios base URL
@@ -178,15 +182,35 @@ const AnnouncementPage = () => {
   const handleDownload = async (announcementId: number) => {
     try {
       const response = await axios.get(`/announcements/${announcementId}/download`, {
-        responseType: 'blob'
+        responseType: 'blob',
+        headers: {
+          'Accept': '*/*'
+        }
       });
       
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      // Get the filename from the Content-Disposition header or use a default name
+      const contentDisposition = response.headers['content-disposition'];
+      let filename = 'download';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        if (filenameMatch && filenameMatch[1]) {
+          filename = filenameMatch[1].replace(/['"]/g, '');
+        }
+      }
+
+      // Create blob URL with the correct content type
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Create temporary link and trigger download
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', response.headers['content-disposition']?.split('filename=')[1] || 'file');
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
+      
+      // Cleanup
+      window.URL.revokeObjectURL(url);
       link.remove();
     } catch (error: any) {
       console.error('Error downloading file:', error);
@@ -373,43 +397,117 @@ const AnnouncementPage = () => {
 
   const AnnouncementCard = ({ announcement, onEdit, onDelete }: { announcement: Announcement; onEdit: (announcement: Announcement) => void; onDelete: (id: number) => void }) => {
     return (
-      <Card sx={{ mb: 2 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-            <Typography variant="h6" component="h2">
+      <Accordion 
+        sx={{ 
+          mb: 1, 
+          borderRadius: '12px', 
+          '&:before': { display: 'none' }, 
+          overflow: 'hidden',
+          '&.Mui-expanded': {
+            borderRadius: '12px',
+          }
+        }}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon sx={{ color: 'white' }} />}
+          aria-controls={`announcement-${announcement.id}-content`}
+          id={`announcement-${announcement.id}-header`}
+          sx={{
+            backgroundColor: '#033076',
+            '&:hover': {
+              backgroundColor: '#022555',
+            },
+            '.MuiAccordionSummary-content': {
+              margin: '12px 0',
+            },
+            borderRadius: '12px',
+            '&.Mui-expanded': {
+              borderRadius: '12px 12px 0 0',
+            }
+          }}
+        >
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column',
+            width: '100%',
+            pr: 2 
+          }}>
+            <Typography variant="h6" sx={{ color: 'white' }}>
               {announcement.title}
             </Typography>
-            <Box>
-              <IconButton size="small" onClick={() => onEdit(announcement)}>
+            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+              Posted on {formatDate(announcement.created_at)}
+            </Typography>
+            <Box sx={{ position: 'absolute', right: '48px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 1 }}>
+              <IconButton 
+                size="small" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(announcement);
+                }}
+                sx={{ color: 'white' }}
+              >
                 <EditIcon />
               </IconButton>
-              <IconButton size="small" onClick={() => onDelete(announcement.id)}>
+              <IconButton 
+                size="small" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(announcement.id);
+                }}
+                sx={{ color: 'white' }}
+              >
                 <DeleteIcon />
               </IconButton>
             </Box>
           </Box>
-          
+        </AccordionSummary>
+        <AccordionDetails sx={{ 
+          borderBottomLeftRadius: '12px', 
+          borderBottomRightRadius: '12px',
+          '&.Mui-expanded': {
+            borderRadius: '0 0 12px 12px',
+          }
+        }}>
           <div 
             className="rich-text-content"
-            dangerouslySetInnerHTML={{ __html: announcement.content }} 
+            dangerouslySetInnerHTML={{ 
+              __html: announcement.content.replace(
+                /href="([^"]*)"/g, 
+                (match, url) => {
+                  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:')) {
+                    return `href="${url}" target="_blank" rel="noopener noreferrer"`;
+                  }
+                  return `href="https://${url}" target="_blank" rel="noopener noreferrer"`;
+                }
+              )
+            }} 
           />
 
           {announcement.url_name && (
-            <Box sx={{ mt: 2 }}>
+            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
               <Button
                 variant="outlined"
                 size="small"
                 startIcon={<AttachFileIcon />}
-                href={`${process.env.NEXT_PUBLIC_API_URL}/uploads/${announcement.url_name}`}
+                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/${announcement.url_name}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 View Attachment
               </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<DownloadIcon />}
+                onClick={() => handleDownload(announcement.id)}
+              >
+                Download
+              </Button>
             </Box>
           )}
-        </CardContent>
-      </Card>
+        </AccordionDetails>
+      </Accordion>
     );
   };
 
@@ -424,7 +522,7 @@ const AnnouncementPage = () => {
           color="primary"
           startIcon={<AddIcon />}
           onClick={handleCreateAnnouncement}
-          sx={{ px: 3, py: 1 }}
+          sx={{ px: 3, py: 1, borderRadius: '24px', backgroundColor: '#033076', '&:hover': { backgroundColor: '#022555' } }}
         >
           Create Announcement
         </Button>

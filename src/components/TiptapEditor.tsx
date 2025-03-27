@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Link from '@tiptap/extension-link';
@@ -87,9 +87,9 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
     }
   }, [content, editor]);
 
-  const setLink = () => {
+  const setLink = useCallback(() => {
     if (!editor) return;
-    
+
     const previousUrl = editor.getAttributes('link').href;
     const url = window.prompt('URL', previousUrl);
 
@@ -97,13 +97,25 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
       return;
     }
 
+    let processedUrl = url;
+    // If URL doesn't start with http:// or https:// or mailto:, prepend https://
+    if (!url.startsWith('http://') && !url.startsWith('https://') && !url.startsWith('mailto:')) {
+      processedUrl = `https://${url}`;
+    }
+
+    // if the selection is empty, remove the link
     if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
       return;
     }
 
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  };
+    // update the link with the new URL and add target="_blank" and rel="noopener noreferrer"
+    editor.chain().focus().extendMarkRange('link').setLink({
+      href: processedUrl,
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    }).run();
+  }, [editor]);
 
   const unsetLink = () => {
     if (!editor) return;
