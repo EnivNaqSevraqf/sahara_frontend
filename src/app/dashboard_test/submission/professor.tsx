@@ -435,11 +435,11 @@ export default function ProfessorSubmissionList() {
   };
 
   const handleUpdateSubmittable = (submittableId: number) => {
-    router.push(`/dashboard_test/project/submission/update?id=${submittableId}`);
+    router.push(`/dashboard_test/submission/update?id=${submittableId}`);
   };
 
   const handleCreateSubmittable = () => {
-    router.push('/dashboard_test/project/submission/creation');
+    router.push('/dashboard_test/submission/creation');
   };
 
   // Render a single submittable item

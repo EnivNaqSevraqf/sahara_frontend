@@ -109,7 +109,7 @@ const UpdateSubmittable: React.FC = () => {
 
       // Redirect back to the submission page after a short delay
       setTimeout(() => {
-        router.push('/dashboard_test/project/submission/prof');
+        router.push('/dashboard_test/submission');
       }, 1500);
     } catch (err: any) {
       console.error('Error updating submittable:', err);
@@ -143,7 +143,7 @@ const UpdateSubmittable: React.FC = () => {
         <Alert severity="error">{error}</Alert>
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.push('/dashboard_test/project/submission_prof')}
+          onClick={() => router.push('/dashboard_test/submission')}
           sx={{ mt: 2 }}
         >
           Back to Submissions
@@ -265,7 +265,7 @@ const UpdateSubmittable: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => router.push('/dashboard_test/project/submission/prof')}
+                  onClick={() => router.push('/dashboard_test/submission')}
                   disabled={saving}
                 >
                   Cancel
