@@ -50,7 +50,13 @@ const PeoplePage = () => {
       setIsLoading(true);
       setError(null);
       try{
-        const response = await axios.get(`${currentConfig.apiBaseUrl}/people/`);
+        const config = {
+          headers: {
+            'Authorization': 'Bearer ' + localStorage.getItem('token'),
+            'Content-Type': 'application/json',
+          }
+        };
+        const response = await axios.get(`${currentConfig.apiBaseUrl}/people/`, config);
         setIsLoading(false);
         setStudents(response.data);
       }
@@ -60,9 +66,10 @@ const PeoplePage = () => {
         const status = (error as any).response?.status;
         console.log('Status:', status);
         if(status === 401){
-          Auth.logOut();
+          console.log("Aunauthenticated");
+          // Auth.logOut();
           const router = useRouter();
-          router.push('/login');
+          // router.push('/login');
           setIsLoading(false);
         }
         else if(status === 403){

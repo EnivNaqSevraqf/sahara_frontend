@@ -49,8 +49,9 @@ const AddStudents = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post(`${currentConfig.apiBaseUrl}/people/upload-csv/`, formData, {
+      const response = await axios.post(`${currentConfig.apiBaseUrl}/upload-students/`, formData, {
         headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data',
         },
       });
