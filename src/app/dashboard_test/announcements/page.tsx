@@ -76,12 +76,6 @@ interface AnnouncementForm {
   attachment?: FormAttachment;
 }
 
-// Mock function to get user role
-const getUserRole = () => {
-  // Replace this with your actual role checking logic
-  return 'admin';
-};
-
 const AnnouncementPage = () => {
   const searchParams = useSearchParams();
   const expandedId = searchParams.get('expanded');
@@ -102,7 +96,6 @@ const AnnouncementPage = () => {
     message: '',
     severity: 'success'
   });
-  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formErrors, setFormErrors] = useState<{
@@ -117,15 +110,16 @@ const AnnouncementPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [expandedAnnouncementId, setExpandedAnnouncementId] = useState<number | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAnnouncements();
   }, []);
 
   useEffect(() => {
-    // Check if user is admin from localStorage
-    const userRole = localStorage.getItem('userRole');
-    setIsAdmin(userRole === 'admin');
+    // Check if user is professor from localStorage
+    const role = localStorage.getItem('role');
+    setUserRole(role);
   }, []);
 
   useEffect(() => {
@@ -135,10 +129,13 @@ const AnnouncementPage = () => {
     }
   }, [expandedId]);
 
+  const isProfessor = userRole === 'prof';
+
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
       const response = await axios.get('/announcements');
+      console.log('Announcement data:', response.data);
       setAnnouncements(response.data);
     } catch (error: any) {
       console.error('Error fetching announcements:', error);
@@ -426,7 +423,8 @@ const AnnouncementPage = () => {
     });
   };
 
-  const AnnouncementCard = ({ announcement, onEdit, onDelete }: { announcement: Announcement; onEdit: (announcement: Announcement) => void; onDelete: (id: number) => void }) => {
+  const AnnouncementCard = ({ announcement, onDelete, showDeleteButton }: { announcement: Announcement; onDelete: (id: number) => void; showDeleteButton: boolean }) => {
+    console.log('Announcement data:', announcement);
     return (
       <Accordion 
         sx={{ 
@@ -467,52 +465,33 @@ const AnnouncementPage = () => {
               {announcement.title}
             </Typography>
             <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-              Posted on {formatDate(announcement.created_at)}
+              Posted by {announcement.created_by?.name || `User ${announcement.creator_id}`} on {formatDate(announcement.created_at)}
             </Typography>
-            <Box sx={{ position: 'absolute', right: '48px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 1 }}>
-              <Box
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(announcement);
-                }}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  }
-                }}
-              >
-                <EditIcon fontSize="small" />
+            {showDeleteButton && (
+              <Box sx={{ position: 'absolute', right: '48px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 1 }}>
+                <Box
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(announcement.id);
+                  }}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 32,
+                    height: 32,
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    }
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </Box>
               </Box>
-              <Box
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(announcement.id);
-                }}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  color: 'white',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  }
-                }}
-              >
-                <DeleteIcon fontSize="small" />
-              </Box>
-            </Box>
+            )}
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ 
@@ -570,15 +549,17 @@ const AnnouncementPage = () => {
         <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
           Announcements
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          onClick={handleCreateAnnouncement}
-          sx={{ px: 3, py: 1, borderRadius: '24px', backgroundColor: '#033076', '&:hover': { backgroundColor: '#022555' } }}
-        >
-          Create Announcement
-        </Button>
+        {isProfessor && (
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            onClick={handleCreateAnnouncement}
+            sx={{ px: 3, py: 1, borderRadius: '24px', backgroundColor: '#033076', '&:hover': { backgroundColor: '#022555' } }}
+          >
+            Create Announcement
+          </Button>
+        )}
       </Box>
 
       {loading ? (
@@ -605,8 +586,8 @@ const AnnouncementPage = () => {
             <Grid item xs={12} key={announcement.id}>
               <AnnouncementCard
                 announcement={announcement}
-                onEdit={handleEditAnnouncement}
                 onDelete={handleDeleteClick}
+                showDeleteButton={isProfessor}
               />
             </Grid>
           ))}

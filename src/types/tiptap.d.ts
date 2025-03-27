@@ -18,7 +18,11 @@ declare module '@tiptap/core' {
       toggleBlockquote: () => ReturnType;
     };
     link: {
-      setLink: (attributes: { href: string }) => ReturnType;
+      setLink: (attributes: { 
+        href: string;
+        target?: string;
+        rel?: string;
+      }) => ReturnType;
       unsetLink: () => ReturnType;
     };
     undo: {

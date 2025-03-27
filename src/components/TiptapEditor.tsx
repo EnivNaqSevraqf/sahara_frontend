@@ -58,6 +58,11 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
             class: 'tiptap-blockquote',
           },
         },
+        paragraph: {
+          HTMLAttributes: {
+            class: 'tiptap-paragraph',
+          },
+        },
       }),
       Link.configure({
         openOnClick: false,
@@ -68,9 +73,10 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
         },
       }),
     ],
-    content: content,
+    content: content || '',
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const html = editor.getHTML();
+      onChange(html === '<p></p>' ? '' : html);
     },
     editorProps: {
       attributes: {
@@ -83,7 +89,7 @@ const TiptapEditor: React.FC<TiptapEditorProps> = ({
   // Update editor content when external content changes
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+      editor.commands.setContent(content || '');
     }
   }, [content, editor]);
 

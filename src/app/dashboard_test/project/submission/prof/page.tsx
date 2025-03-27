@@ -37,6 +37,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import EditIcon from '@mui/icons-material/Edit';
 import { useRouter } from 'next/navigation';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import TimelineIcon from '@mui/icons-material/Timeline';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000';
@@ -68,6 +70,7 @@ interface SubmittableType {
     original_filename: string | null;
   };
   creator_id: number;  // Added to check if current user is creator
+  submission_count?: number;  // Add this field
 }
 
 const DocumentSubmissionList: React.FC = () => {
@@ -128,31 +131,96 @@ const DocumentSubmissionList: React.FC = () => {
       setLoading(true);
       console.log('Fetching submittables...');
       
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      console.log('Using token:', token.substring(0, 20) + '...');
+      
       const response = await axios.get('/submittables/', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
       
       console.log('Submittables response:', response.data);
       
-      // Combine all submittables from different categories
-      const allSubmittables = [
-        ...response.data.upcoming,
-        ...response.data.open,
-        ...response.data.closed
-      ];
-      
-      setSubmittables(allSubmittables);
-      setError(null);
+      // Handle the response format with upcoming, open, and closed arrays
+      if (typeof response.data === 'object' && response.data !== null) {
+        // Combine all submittables from different categories
+        const allSubmittables = [
+          ...(response.data.upcoming || []),
+          ...(response.data.open || []),
+          ...(response.data.closed || [])
+        ].map((submittable: any) => ({
+          ...submittable,
+          submission_count: 0 // Default to 0 for now until backend endpoint is ready
+        }));
+        
+        setSubmittables(allSubmittables);
+        setError(null);
+      } else {
+        console.error('Unexpected response format:', response.data);
+        throw new Error('Invalid response format from server');
+      }
     } catch (err: any) {
       console.error('Error fetching submittables:', {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
-        headers: err.response?.headers
+        headers: err.response?.headers,
+        config: {
+          url: err.config?.url,
+          method: err.config?.method,
+          headers: err.config?.headers
+        }
       });
-      setError(`Failed to fetch submittables: ${err.response?.data?.detail || err.message}`);
+      
+      let errorMessage = 'Failed to fetch submittables';
+      if (err.message === 'No authentication token found') {
+        errorMessage = 'Please log in to view submittables';
+        // Redirect to login page
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else if (err.response?.status === 401) {
+        errorMessage = 'Your session has expired. Please log in again.';
+        // Redirect to login page
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
+      } else if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errorMessage = err.response.data;
+        } else if (err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (Array.isArray(err.response.data)) {
+          errorMessage = err.response.data.map((err: { msg?: string; message?: string; loc?: string[] }) => {
+            if (err.loc) {
+              return `${err.loc.join('.')}: ${err.msg || err.message}`;
+            }
+            return err.msg || err.message;
+          }).join('\n');
+        } else if (typeof err.response.data === 'object') {
+          // Handle FastAPI validation errors
+          if (err.response.data.loc) {
+            errorMessage = `${err.response.data.loc.join('.')}: ${err.response.data.msg}`;
+          } else if (err.response.data.msg) {
+            errorMessage = err.response.data.msg;
+          } else if (err.response.data.message) {
+            errorMessage = err.response.data.message;
+          } else if (err.response.data.type) {
+            errorMessage = `${err.response.data.type}: ${err.response.data.msg || 'Validation error'}`;
+          } else {
+            errorMessage = Object.entries(err.response.data)
+              .map(([key, value]: [string, any]) => `${key}: ${value}`)
+              .join('\n');
+          }
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -392,70 +460,213 @@ const DocumentSubmissionList: React.FC = () => {
       <Card 
         key={doc.id} 
         sx={{ 
-          mb: 2,
-          borderLeft: 4,
-          borderColor: hasSubmitted ? 'success.main' : isAllowed ? 'primary.main' : 'text.disabled'
+          mb: 3,
+          bgcolor: 'background.paper',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+          '&:hover': {
+            transform: 'translateY(-1px)',
+            boxShadow: '0 3px 6px rgba(0,0,0,0.08)'
+          }
         }}
       >
         <CardContent 
           sx={{ 
             cursor: 'pointer',
-            '&:hover': { bgcolor: 'action.hover' }
+            '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.01)' },
+            p: 3,
+            '&:last-child': { pb: 3 },
+            transition: 'background-color 0.2s ease'
           }}
           onClick={() => handleExpandClick(doc.id)}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Chip 
-                label="Document" 
+                label="Assignment" 
                 size="small" 
                 color="primary" 
                 variant="outlined" 
-                sx={{ mr: 2 }} 
+                sx={{ 
+                  mr: 2,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  height: '28px',
+                  borderRadius: '14px',
+                  px: 1
+                }} 
               />
-              <Typography variant="h6" component="div">
+              <Typography 
+                variant="h6" 
+                component="div" 
+                sx={{ 
+                  fontWeight: 600,
+                  fontSize: '1.1rem',
+                  color: 'text.primary',
+                  letterSpacing: '-0.01em'
+                }}
+              >
                 {doc.title}
               </Typography>
             </Box>
-            {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+            {isExpanded ? 
+              <ExpandLessIcon sx={{ color: 'text.secondary', fontSize: '1.5rem' }} /> : 
+              <ExpandMoreIcon sx={{ color: 'text.secondary', fontSize: '1.5rem' }} />
+            }
           </Box>
           
-          <Box sx={{ mt: 1, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+          <Box sx={{ mt: 2, display: 'flex', gap: 4 }}>
             {doc.opens_at && (
-              <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
-                <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
+              <Typography 
+                variant="body1" 
+                color="text.secondary" 
+                sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center',
+                  fontSize: '0.95rem'
+                }}
+              >
+                <AccessTimeIcon sx={{ mr: 1, fontSize: '1.2rem', color: 'primary.main', opacity: 0.8 }} />
                 Opens at: {formatDate(doc.opens_at)}
               </Typography>
             )}
             
-            <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
-              <AccessTimeIcon fontSize="small" sx={{ mr: 0.5 }} />
+            <Typography 
+              variant="body1" 
+              color="text.secondary" 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                fontSize: '0.95rem'
+              }}
+            >
+              <AccessTimeIcon sx={{ mr: 1, fontSize: '1.2rem', color: 'primary.main', opacity: 0.8 }} />
               Due on: {formatDate(doc.deadline)}
             </Typography>
           </Box>
         </CardContent>
 
         <Collapse in={isExpanded}>
-          <CardContent>
-            <Typography variant="body1" sx={{ mb: 2 }}>
-              {doc.description}
-            </Typography>
+          <CardContent sx={{ p: 3, pt: 0 }}>
+            <Box sx={{ mt: 3 }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  color: 'text.primary',
+                  mb: 1.5
+                }}
+              >
+                Description
+              </Typography>
+              <Typography 
+                variant="body1" 
+                color="text.secondary" 
+                sx={{ 
+                  mb: 4,
+                  fontSize: '0.95rem',
+                  lineHeight: 1.7
+                }}
+              >
+                {doc.description}
+              </Typography>
+            </Box>
+
+            {/* System Instructions */}
+            <Box sx={{ mt: 4 }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  color: 'text.primary',
+                  mb: 1.5
+                }}
+              >
+                System Instructions
+              </Typography>
+              <Typography 
+                variant="body1" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: '0.95rem',
+                  lineHeight: 1.7
+                }}
+              >
+                You are given an extra 10 minutes after due time to submit this assignment. However, please note that any submissions made after the due time are marked as late submissions.
+              </Typography>
+            </Box>
+
+            {/* Results Section */}
+            <Box sx={{ mt: 4 }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom 
+                sx={{ 
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  color: 'text.primary',
+                  mb: 1.5
+                }}
+              >
+                Results
+              </Typography>
+              <Typography 
+                variant="body1" 
+                color="text.secondary"
+                sx={{ 
+                  fontSize: '0.95rem',
+                  lineHeight: 1.7
+                }}
+              >
+                Results will be available after {formatDate(doc.deadline)}
+              </Typography>
+            </Box>
 
             {/* Reference Files Section */}
             {doc.reference_files && doc.reference_files.length > 0 && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Reference Files:
+              <Box sx={{ mt: 4 }}>
+                <Typography 
+                  variant="h6" 
+                  gutterBottom 
+                  sx={{ 
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    color: 'text.primary',
+                    mb: 1.5
+                  }}
+                >
+                  Reference Files
                 </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
                   {doc.reference_files.map((file) => (
                     <Button
                       key={file.id}
                       variant="outlined"
-                      size="small"
-                      startIcon={<AttachFileIcon />}
+                      size="medium"
+                      startIcon={<AttachFileIcon sx={{ fontSize: '1.2rem' }} />}
                       onClick={() => handleReferenceFileDownload(doc.id, file.original_filename)}
-                      sx={{ textTransform: 'none' }}
+                      sx={{ 
+                        textTransform: 'none',
+                        fontSize: '0.95rem',
+                        fontWeight: 500,
+                        py: 1,
+                        px: 2,
+                        borderRadius: 1.5,
+                        borderColor: 'primary.main',
+                        color: 'primary.main',
+                        '&:hover': {
+                          borderColor: 'primary.dark',
+                          bgcolor: 'primary.50'
+                        }
+                      }}
                     >
                       {file.original_filename}
                     </Button>
@@ -465,27 +676,55 @@ const DocumentSubmissionList: React.FC = () => {
             )}
             
             {hasSubmitted && doc.submission_status?.submitted_on && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="body2" color="success.main" sx={{ display: 'flex', alignItems: 'center' }}>
-                  <CheckCircleIcon fontSize="small" sx={{ mr: 0.5 }} />
+              <Box sx={{ mt: 4 }}>
+                <Typography 
+                  variant="body1" 
+                  color="success.main" 
+                  sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center',
+                    fontSize: '0.95rem',
+                    fontWeight: 500
+                  }}
+                >
+                  <CheckCircleIcon sx={{ mr: 1, fontSize: '1.2rem' }} />
                   Submitted: {formatDate(doc.submission_status.submitted_on)}
                   {doc.submission_status.original_filename && (
                     <>
                       {' - '}
                       <Button
-                        size="small"
+                        size="medium"
                         onClick={() => handleSubmissionDownload(doc.submission_status!.submission_id!, doc.submission_status!.original_filename!)}
-                        sx={{ textTransform: 'none', minWidth: 'auto', p: 0, ml: 0.5 }}
+                        sx={{ 
+                          textTransform: 'none',
+                          minWidth: 'auto',
+                          p: 0,
+                          ml: 1,
+                          fontSize: '0.95rem',
+                          fontWeight: 500,
+                          color: 'primary.main',
+                          '&:hover': {
+                            color: 'primary.dark',
+                            bgcolor: 'transparent'
+                          }
+                        }}
                       >
                         {doc.submission_status.original_filename}
                       </Button>
                       <IconButton
-                        size="small"
+                        size="medium"
                         onClick={() => handleDeleteSubmission(doc.submission_status!.submission_id!)}
-                        sx={{ ml: 0.5, color: 'error.main' }}
+                        sx={{ 
+                          ml: 0.5, 
+                          color: 'error.main',
+                          padding: 1,
+                          '&:hover': {
+                            bgcolor: 'error.50'
+                          }
+                        }}
                         title="Delete submission"
                       >
-                        <DeleteIcon fontSize="small" />
+                        <DeleteIcon sx={{ fontSize: '1.3rem' }} />
                       </IconButton>
                     </>
                   )}
@@ -494,37 +733,64 @@ const DocumentSubmissionList: React.FC = () => {
             )}
           </CardContent>
 
-          <CardActions sx={{ justifyContent: 'flex-end', p: 2 }}>
+          <CardActions sx={{ justifyContent: 'flex-end', p: 3, pt: 0 }}>
             {isCreator && (
               <>
                 <Button
                   variant="outlined"
                   color="info"
-                  startIcon={<AttachFileIcon />}
-                  onClick={() => {
-                    console.log('Fetching submissions for:', doc.id);
-                    fetchSubmissions(doc.id);
+                  startIcon={<AttachFileIcon sx={{ fontSize: '1.2rem' }} />}
+                  onClick={() => fetchSubmissions(doc.id)}
+                  sx={{ 
+                    mr: 2,
+                    textTransform: 'none',
+                    fontSize: '0.95rem',
+                    fontWeight: 500,
+                    borderRadius: 1.5,
+                    px: 3,
+                    py: 1,
+                    '&:hover': {
+                      bgcolor: 'info.50'
+                    }
                   }}
-                  sx={{ mr: 1 }}
                 >
                   View All Submissions
                 </Button>
                 <Button
                   variant="outlined"
                   color="primary"
-                  startIcon={<EditIcon />}
+                  startIcon={<EditIcon sx={{ fontSize: '1.2rem' }} />}
                   onClick={() => handleUpdateSubmittable(doc.id)}
-                  sx={{ mr: 1 }}
+                  sx={{ 
+                    mr: 2,
+                    textTransform: 'none',
+                    fontSize: '0.95rem',
+                    fontWeight: 500,
+                    borderRadius: 1.5,
+                    px: 3,
+                    py: 1,
+                    '&:hover': {
+                      bgcolor: 'primary.50'
+                    }
+                  }}
                 >
                   Update Submittable
                 </Button>
                 <Button
                   variant="outlined"
                   color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={() => {
-                    console.log('Deleting submittable:', doc.id);
-                    handleDeleteSubmittable(doc.id);
+                  startIcon={<DeleteIcon sx={{ fontSize: '1.2rem' }} />}
+                  onClick={() => handleDeleteSubmittable(doc.id)}
+                  sx={{ 
+                    textTransform: 'none',
+                    fontSize: '0.95rem',
+                    fontWeight: 500,
+                    borderRadius: 1.5,
+                    px: 3,
+                    py: 1,
+                    '&:hover': {
+                      bgcolor: 'error.50'
+                    }
                   }}
                 >
                   Delete Submittable
@@ -554,36 +820,68 @@ const DocumentSubmissionList: React.FC = () => {
   }
 
   return (
-    <Box sx={{ width: '100%', p: 2 }}>
-      {/* Course navigation and Create button */}
-      <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="body2" component="div">
-          <span style={{ color: '#3f51b5', cursor: 'pointer' }}>Course Home</span> / 
-          <span style={{ cursor: 'pointer' }}> Documents</span>
-        </Typography>
+    <Box sx={{ 
+      p: 3, 
+      maxWidth: '1200px', 
+      margin: '0 auto',
+      bgcolor: 'background.default'
+    }}>
+      {/* Course navigation */}
+      <Box sx={{ 
+        mb: 4, 
+        pb: 2, 
+        borderBottom: '1px solid', 
+        borderColor: 'divider',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AssignmentIcon color="primary" />
+          <Typography variant="body2" component="div">
+            <span style={{ color: '#3f51b5', cursor: 'pointer', fontWeight: 500 }}>Course Home</span> / 
+            <span style={{ cursor: 'pointer', color: 'text.secondary' }}> Submissions</span>
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           color="primary"
           startIcon={<CloudUploadIcon />}
           onClick={handleCreateSubmittable}
+          sx={{
+            borderRadius: 1,
+            textTransform: 'none',
+            fontWeight: 600,
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+          }}
         >
           Create Submittable
         </Button>
       </Box>
-
+      
       {/* Progress chart */}
       <Paper 
-        elevation={3} 
-        sx={{ p: 3, mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        elevation={0}
+        sx={{ 
+          p: 4, 
+          mb: 4, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+          color: 'white',
+          borderRadius: 2,
+          boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+        }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Box sx={{ position: 'relative', display: 'inline-flex', mr: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <Box sx={{ position: 'relative', display: 'inline-flex' }}>
             <CircularProgress 
               variant="determinate" 
               value={completionPercentage} 
-              size={80} 
+              size={100} 
               thickness={4} 
-              color="primary" 
+              sx={{ color: 'white' }}
             />
             <Box
               sx={{
@@ -597,24 +895,32 @@ const DocumentSubmissionList: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Typography variant="h6" component="div" color="text.secondary">
+              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
                 {`${completionPercentage}%`}
               </Typography>
             </Box>
           </Box>
           
           <Box>
-            <Typography variant="h5" component="div" gutterBottom>
+            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
               Project Progress
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
               {submittables.filter(doc => doc.submission_status?.has_submitted).length} of {submittables.length} documents submitted
             </Typography>
           </Box>
         </Box>
         
-        <Box>
-          <Typography variant="body2" color={completionPercentage === 100 ? 'success.main' : 'info.main'}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          bgcolor: 'rgba(255, 255, 255, 0.1)',
+          p: 2,
+          borderRadius: 2
+        }}>
+          <TimelineIcon />
+          <Typography variant="h6" sx={{ fontWeight: 500 }}>
             {completionPercentage === 100 
               ? 'All documents submitted!' 
               : `${submittables.length - submittables.filter(doc => doc.submission_status?.has_submitted).length} documents remaining`}
@@ -625,23 +931,62 @@ const DocumentSubmissionList: React.FC = () => {
       {/* Ongoing/Upcoming Documents */}
       {(ongoingSubmittables.length > 0 || upcomingSubmittables.length > 0) && (
         <>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mb: 2 }}>
-            Ongoing/Upcoming Documents
+          <Typography 
+            variant="h5" 
+            component="h2" 
+            sx={{ 
+              fontWeight: 'bold', 
+              mb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              color: 'primary.main'
+            }}
+          >
+            <AssignmentIcon /> Ongoing/Upcoming Documents
           </Typography>
           
-          {ongoingSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
-          {upcomingSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
+          <Grid container spacing={2}>
+            {ongoingSubmittables.map((doc, index) => (
+              <Grid item xs={12} key={doc.id}>
+                {renderSubmittableItem(doc, index)}
+              </Grid>
+            ))}
+            {upcomingSubmittables.map((doc, index) => (
+              <Grid item xs={12} key={doc.id}>
+                {renderSubmittableItem(doc, index)}
+              </Grid>
+            ))}
+          </Grid>
         </>
       )}
       
       {/* Previous Documents */}
       {previousSubmittables.length > 0 && (
         <>
-          <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 'bold', mt: 4, mb: 2 }}>
-            Previous Documents
+          <Typography 
+            variant="h5" 
+            component="h2" 
+            sx={{ 
+              fontWeight: 'bold', 
+              mt: 6, 
+              mb: 3,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              color: 'text.secondary'
+            }}
+          >
+            <AssignmentIcon /> Previous Documents
           </Typography>
           
-          {previousSubmittables.map((doc, index) => renderSubmittableItem(doc, index))}
+          <Grid container spacing={2}>
+            {previousSubmittables.map((doc, index) => (
+              <Grid item xs={12} key={doc.id}>
+                {renderSubmittableItem(doc, index)}
+              </Grid>
+            ))}
+          </Grid>
         </>
       )}
 
@@ -654,28 +999,79 @@ const DocumentSubmissionList: React.FC = () => {
         }}
         maxWidth="md"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          }
+        }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ 
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          fontWeight: 600,
+          fontSize: '1.25rem',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          pb: 2
+        }}>
           All Submissions for {selectedSubmittable?.title}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ mt: 2 }}>
           {submissions.length === 0 ? (
-            <Typography color="text.secondary" align="center">
+            <Typography 
+              color="text.secondary" 
+              align="center"
+              sx={{ 
+                py: 4,
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}
+            >
               No submissions yet
             </Typography>
           ) : (
             <List>
               {submissions.map((submission) => (
-                <ListItem key={submission.id}>
+                <ListItem 
+                  key={submission.id}
+                  sx={{
+                    borderBottom: '1px solid',
+                    borderColor: 'divider',
+                    '&:last-child': {
+                      borderBottom: 'none'
+                    }
+                  }}
+                >
                   <ListItemText
-                    primary={submission.original_filename}
-                    secondary={`Team: ${submission.team.name} | Submitted: ${formatDate(submission.submitted_on)}`}
+                    primary={
+                      <Typography sx={{ 
+                        fontWeight: 500,
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }}>
+                        {submission.original_filename}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography 
+                        variant="body2" 
+                        color="text.secondary"
+                        sx={{ 
+                          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                        }}
+                      >
+                        Team: {submission.team.name} | Submitted: {formatDate(submission.submitted_on)}
+                      </Typography>
+                    }
                   />
                   <ListItemSecondaryAction>
                     <Button
                       variant="outlined"
                       size="small"
+                      startIcon={<AttachFileIcon />}
                       onClick={() => handleSubmissionDownload(submission.id, submission.original_filename)}
+                      sx={{ 
+                        textTransform: 'none',
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }}
                     >
                       Download
                     </Button>
@@ -685,11 +1081,18 @@ const DocumentSubmissionList: React.FC = () => {
             </List>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => {
-            setSubmissionsDialogOpen(false);
-            setSelectedSubmittable(null);
-          }}>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Button 
+            onClick={() => {
+              setSubmissionsDialogOpen(false);
+              setSelectedSubmittable(null);
+            }}
+            sx={{ 
+              textTransform: 'none',
+              fontWeight: 500,
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}
+          >
             Close
           </Button>
         </DialogActions>
@@ -700,8 +1103,16 @@ const DocumentSubmissionList: React.FC = () => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
-        <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
