@@ -64,16 +64,21 @@ export default function FormViewer({ id }: { id: string }) {
     // useEffect(() => {
     const payload = {
       form_id: id,
-      response_data: survey.data,
-      user_id: "123"
+      response_data: JSON.stringify(survey.data),
     }
-    axios.post(`${currentConfig.apiBaseUrl}/api/forms/submit`, payload)
+    const config = {
+      headers: {
+        'Authorization': 'Bearer ' + localStorage.getItem('token'),
+        'Content-Type': 'application/json',
+      }
+    };
+    axios.post(`${currentConfig.apiBaseUrl}/api/forms/submit`, payload, config)
       .then(response => {
         options.showSaveSuccess();
       })
       .catch(error => {
         options.showSaveError();
-        console.error('Error fetching Formzes:', error);
+        console.error('Error submitting form response:', error);
       });
     // }, []);
     // axios.post(`${currentConfig.apiBaseUrl}/api/forms/submit`);
