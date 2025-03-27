@@ -264,7 +264,7 @@ const dashboardTheme = createTheme({
   cssVariables: {
     colorSchemeSelector: 'data-toolpad-color-scheme',
   },
-  colorSchemes: { light: true, dark: true },
+  colorSchemes: { light: false, dark: true },
   breakpoints: {
     values: {
       xs: 0,
