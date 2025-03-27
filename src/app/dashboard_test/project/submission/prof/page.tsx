@@ -367,11 +367,11 @@ const DocumentSubmissionList: React.FC = () => {
   };
 
   const handleUpdateSubmittable = (submittableId: number) => {
-    router.push(`/dashboard_test/submittable_update?id=${submittableId}`);
+    router.push(`/dashboard_test/project/submission/prof/update?id=${submittableId}`);
   };
 
   const handleCreateSubmittable = () => {
-    router.push('/dashboard_test/submittable_creation');
+    router.push('/dashboard_test/project/submission/prof/creation');
   };
 
   // Render a single submittable item
