@@ -73,7 +73,7 @@ interface SubmittableType {
   submission_count?: number;  // Add this field
 }
 
-const DocumentSubmissionList: React.FC = () => {
+export default function ProfessorSubmissionList() {
   const router = useRouter();
   const [submittables, setSubmittables] = useState<SubmittableType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -435,11 +435,11 @@ const DocumentSubmissionList: React.FC = () => {
   };
 
   const handleUpdateSubmittable = (submittableId: number) => {
-    router.push(`/dashboard_test/project/submission/prof/update?id=${submittableId}`);
+    router.push(`/dashboard_test/project/submission/update?id=${submittableId}`);
   };
 
   const handleCreateSubmittable = () => {
-    router.push('/dashboard_test/project/submission/prof/creation');
+    router.push('/dashboard_test/project/submission/creation');
   };
 
   // Render a single submittable item
@@ -1119,5 +1119,3 @@ const DocumentSubmissionList: React.FC = () => {
     </Box>
   );
 };
-
-export default DocumentSubmissionList;
