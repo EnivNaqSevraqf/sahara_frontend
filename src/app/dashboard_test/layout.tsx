@@ -57,7 +57,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
     return [
       dashboardHeader,
       {
-        segment: 'dashboard_test',
+        segment: '/dashboard_test',
         title: 'Overview',
         icon: <DashboardIcon />,
       },
@@ -92,15 +92,9 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <QuizIcon />,
       },
       {
-        segment: 'dashboard_test/quizzes',
-        title: 'Quizzes',
-        icon: <QuizIcon />,
-      },
-      {
-        segment: '/dashboard_test/calendar',
+        segment: 'dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
-        // path: '/calendar',
       },
       ...footerItems
     ];
@@ -110,19 +104,19 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
     return [
       dashboardHeader,
       {
-        segment: 'dashboard_test',
+        segment: '/dashboard_test',
         title: 'Overview',
         icon: <DashboardIcon />,
       },
       {
-        segment: 'dashboard_test/gradeables',
-        title: 'Gradeables',
-        icon: <AssignmentRoundedIcon />,
+        segment: 'dashboard_test/announcements',
+        title: 'Announcements',
+        icon: <AnnouncementIcon />,
       },
       {
-        segment: 'dashboard_test/courses',
-        title: 'Courses',
-        icon: <SchoolIcon />,
+        segment: 'dashboard_test/scores',
+        title: 'Gradeables',
+        icon: <AssignmentRoundedIcon />,
       },
       {
         segment: 'dashboard_test/people',
@@ -130,7 +124,17 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <PeopleIcon />,
       },
       {
-        segment: '/dashboard_test/calendar',
+        segment: 'dashboard_test/discussions',
+        title: 'Discussions',
+        icon: <ForumIcon />,
+      },
+      {
+        segment: 'dashboard_test/quizzes',
+        title: 'Quizzes',
+        icon: <QuizIcon />,
+      },
+      {
+        segment: 'dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
       },
@@ -142,7 +146,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
     return [
       dashboardHeader,
       {
-        segment: 'dashboard_test',
+        segment: '/dashboard_test',
         title: 'Overview',
         icon: <DashboardIcon />,
       },
@@ -162,20 +166,19 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <QuizIcon />,
       },
       {
+        segment: 'dashboard_test/forms',
+        title: 'Forms',
+        icon: <ViewQuilt />,
+      },
+      {
         segment: 'dashboard_test/discussions',
         title: 'Discussions', 
         icon: <ForumIcon />,
       },
       {
-        segment: '/dashboard_test/calendar',
+        segment: 'dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
-        // path: '/calendar',
-      },
-      {
-        segment: 'dashboard_test/forms',
-        title: 'Forms',
-        icon: <ViewQuilt />,
       },
       ...footerItems
     ];
@@ -288,7 +291,7 @@ export default function DashboardLayout({
 }>) {
   const [role, setRole] = useState<UserRole>('student');
   const [key, setKey] = useState<number>(0); // Key to force re-render
-  const router = useRouter();
+  const router = useDemoRouter();
   
   // Listen for role changes
   useEffect(() => {
@@ -355,7 +358,6 @@ export default function DashboardLayout({
         <AppProvider
           navigation={navigation}
           theme={dashboardTheme}
-          router={router}
         >
           <ToolpadDashboardLayout
             slots={{
