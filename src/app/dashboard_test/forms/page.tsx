@@ -89,7 +89,7 @@ export default function FormPage() {
   };
 
   const handleFormClick = (formId: string) => {
-    router.push(`/dashboard_test/form/${formId}`);
+    router.push(`/dashboard_test/forms/${formId}`);
   };
 
   const handleExpandClick = (id: string) => {
@@ -190,7 +190,7 @@ export default function FormPage() {
             {(!isDeadlinePassed && !isAttempted) && (
               <Button
                 variant="contained"
-                color="primary"
+                // color="primary"
                 startIcon={<AssignmentIcon />}
                 onClick={() => handleFormClick(form.id)}
               >

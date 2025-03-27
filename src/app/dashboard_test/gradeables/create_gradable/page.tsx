@@ -171,7 +171,7 @@ const CreateGradeable: React.FC = () => {
       });
 
       setTimeout(() => {
-        router.push('/dashboard_test/scores');
+        router.push('/dashboard_test/gradeables');
       }, 1500);
 
     } catch (error: any) {
