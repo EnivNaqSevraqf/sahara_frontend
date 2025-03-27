@@ -15,7 +15,6 @@ import {
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
-import { currentConfig } from '@/config';
 
 interface SubmitStatus {
   severity: 'success' | 'error';
@@ -123,55 +122,69 @@ const CreateGradeable: React.FC = () => {
       const axiosConfig = {
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
         },
         withCredentials: true
       };
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('max_points', maxPoints.toString());
+      formData.append('file', selectedFile); // Append the CSV file
+  
 
       // Create gradeable
       const gradeableResponse = await axios.post(
         'http://localhost:8000/gradeables/create',
-        {
-          title: title.trim(),
-          max_points: maxPoints
-        },
-        axiosConfig
-      );
-
-      const gradeableId = gradeableResponse.data.id;
-
-      // Upload scores
-      const formData = new FormData();
-      formData.append('file', selectedFile);
-
-      await axios.post(
-        `http://localhost:8000/gradeables/${gradeableId}/upload-scores`,
         formData,
         {
-          ...axiosConfig,
           headers: {
-            ...axiosConfig.headers,
+            'Authorization': 'Bearer ' + token,
             'Content-Type': 'multipart/form-data',
           }
         }
       );
+
+      if (!gradeableResponse.data.id) {
+        throw new Error('Failed to create gradeable: No ID returned');
+      }
+
+      const gradeableId = gradeableResponse.data.id;
+
+      // Upload scores
+      // const formData = new FormData();
+      // formData.append('file', selectedFile);
+
+      // await axios.post(
+      //   `http://localhost:8000/gradeables/${gradeableId}/upload-scores`,
+      //   formData,
+      //   {
+      //     ...axiosConfig,
+      //     headers: {
+      //       ...axiosConfig.headers,
+      //       'Content-Type': 'multipart/form-data',
+      //     }
+      //   }
+      // );
 
       setSubmitStatus({
         severity: 'success',
         message: 'Gradeable created and scores uploaded successfully!'
       });
 
-      // Navigate after successful upload
       setTimeout(() => {
         router.push('/dashboard_test/scores');
       }, 1500);
 
     } catch (error: any) {
-      console.error('Submission error:', error.response || error);
+      console.error('Submission error:', error);
       
-      const errorMessage = error.response?.data?.detail 
-        || error.message 
-        || 'Failed to create gradeable and upload scores';
+      // Handle error message properly
+      let errorMessage = 'Failed to create gradeable and upload scores';
+      
+      if (error.response?.data?.detail && typeof error.response.data.detail === 'string') {
+        errorMessage = error.response.data.detail;
+      } else if (error.message && typeof error.message === 'string') {
+        errorMessage = error.message;
+      }
       
       setSubmitStatus({
         severity: 'error',

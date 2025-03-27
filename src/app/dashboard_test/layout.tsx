@@ -62,29 +62,34 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <DashboardIcon />,
       },
       {
-        segment: 'announcements',
+        segment: 'dashboard_test/announcements',
         title: 'Announcements',
         icon: <AnnouncementIcon />,
       },
       {
-        segment: 'gradeables',
+        segment: 'dashboard_test/gradeables',
         title: 'Gradeables',
         icon: <AssignmentRoundedIcon />,
       },
       {
-        segment: 'forms',
+        segment: 'dashboard_test/forms',
         title: 'Form Management',
         icon: <ViewQuilt />,
       },
       {
-        segment: 'people',
+        segment: 'dashboard_test/people',
         title: 'People',
         icon: <PeopleIcon />,
       },
       {
-        segment: 'discussions',
+        segment: 'dashboard_test/discussions',
         title: 'Discussions',
         icon: <ForumIcon />,
+      },
+      {
+        segment: 'dashboard_test/quizzes',
+        title: 'Quizzes',
+        icon: <QuizIcon />,
       },
       {
         segment: 'dashboard_test/calendar',
@@ -105,18 +110,18 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <DashboardIcon />,
       },
       {
-        segment: 'gradeables',
+        segment: 'dashboard_test/gradeables',
         title: 'Gradeables',
         icon: <AssignmentRoundedIcon />,
       },
       {
-        segment: 'courses',
+        segment: 'dashboard_test/courses',
         title: 'Courses',
         icon: <SchoolIcon />,
       },
       {
-        segment: 'users',
-        title: 'Users',
+        segment: 'dashboard_test/people',
+        title: 'People',
         icon: <PeopleIcon />,
       },
       {
@@ -137,22 +142,22 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <DashboardIcon />,
       },
       {
-        segment: 'announcements',
+        segment: 'dashboard_test/announcements',
         title: 'Announcements',
         icon: <AnnouncementIcon />,
       },
       {
-        segment: 'project',
+        segment: 'dashboard_test/project',
         title: 'Project',
         icon: <SchoolIcon />,
       },
       {
-        segment: 'quizzes',
+        segment: 'dashboard_test/quizzes',
         title: 'Quizzes',
         icon: <QuizIcon />,
       },
       {
-        segment: 'discussions',
+        segment: 'dashboard_test/discussions',
         title: 'Discussions', 
         icon: <ForumIcon />,
       },
@@ -163,7 +168,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         // path: '/calendar',
       },
       {
-        segment: 'forms',
+        segment: 'dashboard_test/forms',
         title: 'Forms',
         icon: <ViewQuilt />,
       },
