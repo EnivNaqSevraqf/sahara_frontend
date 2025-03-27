@@ -21,7 +21,7 @@ import { getUserRole, setUserRole, normalizeRole, type UserRole } from '@/utils/
 import { useEffect, useState } from 'react';
 import AuthWrapper from '@/components/AuthWrapper';
 import "../globals.css";
-import { Typography } from '@mui/material';
+import { Chip, Stack, Tooltip, Typography } from '@mui/material';
 import LogoutButton from '@/components/logout';
 import Header from '@/components/Header';
 //import toolbaritems from '@/components/toolbaritems';
@@ -87,7 +87,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <ForumIcon />,
       },
       {
-        segment: 'dashboard_test/calendar',
+        segment: '/dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
         // path: '/calendar',
@@ -177,7 +177,7 @@ const dashboardTheme = createTheme({
   cssVariables: {
     colorSchemeSelector: 'data-toolpad-color-scheme',
   },
-  colorSchemes: { light: true, dark: false },
+  colorSchemes: { light: true, dark: true },
   breakpoints: {
     values: {
       xs: 0,
@@ -278,8 +278,7 @@ export default function DashboardLayout({
 }>) {
   const [role, setRole] = useState<UserRole>('student');
   const [key, setKey] = useState<number>(0); // Key to force re-render
-  const router = useDemoRouter('/dashboard_test');
-  // const router = useRouter();
+  const router = useRouter();
   
   // Listen for role changes
   useEffect(() => {
@@ -319,33 +318,42 @@ export default function DashboardLayout({
   // Generate navigation based on user role
   const navigation = getUserNavigation(role);
 
+  function CustomToolbarActions(){
+    return (
+      <LogoutButton>
+        <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
+        Logout
+      </LogoutButton>
+    )
+  }
+
+  function CustomAppTitle() {
+  return (
+    <Stack direction="row" alignItems="center" spacing={2}>
+      <Typography variant="h6">Sahara</Typography>
+      <Chip size="small" label="BETA" color="info" />
+      {/* <Tooltip title="Connected to production">
+        
+      </Tooltip> */}
+    </Stack>
+  );
+  }
+
   return (
     <AuthWrapper>
       <Box sx={{ height: '100vh' }} key={key}>
         <AppProvider
           navigation={navigation}
           theme={dashboardTheme}
+          router={router}
         >
           <ToolpadDashboardLayout
-            toolbarItems={
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <MenuButton 
-                  showBadge 
-                  aria-label="Open notifications"
-                  sx={{ p: 1 }}
-                >
-                  <NotificationsIcon fontSize="small" />
-                </MenuButton>
-                <LogoutButton 
-                  size="small"
-                  sx={{ 
-                    minWidth: 'auto',
-                    px: 2,
-                    py: 0.5
-                  }} 
-                />
-              </Box>
-            }
+            slots={{
+              appTitle: CustomAppTitle,
+              toolbarActions: CustomToolbarActions,
+            }}
+            
+            
           >
             <DashboardWrapper>
               {children}
