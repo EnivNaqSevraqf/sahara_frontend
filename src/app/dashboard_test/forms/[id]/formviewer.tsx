@@ -8,6 +8,7 @@ import Sidebar from "@/components/Sidebar";
 import "survey-core/survey-core.css";
 import { LayeredDarkPanelless } from "survey-core/themes";
 import { ContrastLight } from "survey-core/themes";
+import { currentConfig } from '@/config';
 
 
 interface FormViewerProps {
@@ -25,7 +26,7 @@ export default function FormViewer({ id }: { id: string }) {
     const fetchSurveyJson = async () => {
       try {
         console.log("Fetching the survey JSON");
-        const response = await axios.get(`http://localhost:8000/api/forms/${id}`);
+        const response = await axios.get(`${currentConfig.apiBaseUrl}/api/forms/${id}`);
         setSurveyJson(response.data);
       } catch (error) {
         console.error('Error fetching survey JSON:', error);
@@ -46,7 +47,7 @@ export default function FormViewer({ id }: { id: string }) {
   // Handle survey completion
   survey.onComplete.add((survey, options) => {
     options.showSaveInProgress();
-    const surveyServiceUrl = "http://localhost:8000";
+    const surveyServiceUrl = currentConfig.apiBaseUrl;
     const dataObj = { form_id: id, response: survey.data, user_id: "123" };
     const dataStr = JSON.stringify(dataObj);
     const headers = new Headers({ "Content-Type": "application/json; charset=utf-8" });
@@ -60,7 +61,7 @@ export default function FormViewer({ id }: { id: string }) {
       response_data: survey.data,
       user_id: "123"
     }
-    axios.post('http://localhost:8000/api/forms/submit', payload)
+    axios.post(`${currentConfig.apiBaseUrl}/api/forms/submit`, payload)
       .then(response => {
         options.showSaveSuccess();
       })
@@ -69,7 +70,7 @@ export default function FormViewer({ id }: { id: string }) {
         console.error('Error fetching Formzes:', error);
       });
     // }, []);
-    // axios.post('http://localhost:8000/api/forms/submit');
+    // axios.post(`${currentConfig.apiBaseUrl}/api/forms/submit`);
     
     // fetch(surveyServiceUrl + "/api/forms/submit", {
     //   method: "POST",

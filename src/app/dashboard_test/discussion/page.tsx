@@ -16,6 +16,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Send as SendIcon, AttachFile as AttachFileIcon, KeyboardArrowDown } from '@mui/icons-material';
+import { currentConfig } from '@/config';
 
 interface Channel {
   id: number;
@@ -149,7 +150,7 @@ export default function DiscussionPage() {
     try {
       const token = localStorage.getItem('token');
       const payload = {}
-      const response = await axios.post("http://localhost:8000/discussions/", 
+      const response = await axios.post(`${currentConfig.apiBaseUrl}/discussions/`, 
         payload,
         { headers: {
           'Authorization' : `Bearer ${token}`,
@@ -175,7 +176,7 @@ export default function DiscussionPage() {
     try {
       const token = localStorage.getItem('token');
       const payload = {}
-      const response = await axios.get(`http://localhost:8000/discussions/channels/${selectedChannel.id}/messages`,
+      const response = await axios.get(`${currentConfig.apiBaseUrl}/discussions/channels/${selectedChannel.id}/messages`,
         { headers: {
           'Authorization' : `Bearer ${token}`,
           'accept': 'application/json'
@@ -206,7 +207,7 @@ export default function DiscussionPage() {
 
     try {
       console.log(`Connecting WebSocket to channel ${selectedChannel.id}`);
-      const ws = new WebSocket(`ws://localhost:8000/discussions/ws/${selectedChannel.id}/${localStorage.getItem('token')}`);
+      const ws = new WebSocket(`${currentConfig.wsBaseUrl}/discussions/ws/${selectedChannel.id}/${localStorage.getItem('token')}`);
       
       ws.onopen = () => {
         // Verify this is still the current channel
@@ -268,24 +269,21 @@ export default function DiscussionPage() {
   
     try {
       const token = localStorage.getItem('token');
-      // console.log("Token: ", token);
       const payload = {
         content: newMessage,
         channel_id: selectedChannel.id,
         sender_id: userData.id,
         message_type: 'text'
       }
-      const response = await axios.post('http://localhost:8000/discussions/messages',
+      await axios.post(`${currentConfig.apiBaseUrl}/discussions/messages`,
          payload,
          { headers: {
           'Authorization' : `Bearer ${token}`,
           'accept': 'application/json'
           },
-          
         }
       );
       
-  
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
@@ -311,7 +309,7 @@ export default function DiscussionPage() {
           file_data: base64Data,
           file_name: file.name
         }
-        await axios.post('http://localhost:8000/discussions/messages',
+        await axios.post(`${currentConfig.apiBaseUrl}/discussions/messages`,
           payload,
           { headers: {
             'Authorization' : `Bearer ${token}`,
@@ -333,7 +331,7 @@ export default function DiscussionPage() {
     try {
       const token = localStorage.getItem('token');
       const response = await axios.get(
-        `http://localhost:8000/discussions/download/${fileName}`,
+        `${currentConfig.apiBaseUrl}/discussions/download/${fileName}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -17,6 +17,7 @@ import {
 import { useRouter } from 'next/navigation';
 import Header from '../components/Header';
 import axios from 'axios';
+import { currentConfig } from '@/config';
 
 interface Student {
   id: number;
@@ -32,7 +33,7 @@ const StudentPage = () => {
   // Add fetch students logic here if needed
   useEffect(() => {
     const fetchStudents = async () => {
-      const response = await axios.get("http://localhost:8000/student/");
+      const response = await axios.get(`${currentConfig.apiBaseUrl}/student/`);
       // console.log(response.data);
       setStudents(response.data);
     };

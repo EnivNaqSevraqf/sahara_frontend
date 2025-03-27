@@ -15,6 +15,7 @@ import {
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { currentConfig } from '@/config';
 
 interface SubmitStatus {
   severity: 'success' | 'error';
