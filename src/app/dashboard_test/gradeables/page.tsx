@@ -81,7 +81,7 @@ export default function GradeablesListPage() {
         <Button
           variant="contained"
           color="primary"
-          onClick={() => window.location.href = '/dashboard_test/scores/create_gradable'}
+          onClick={() => window.location.href = '/dashboard_test/gradeables/create_gradable'}
           sx={{ mb: 2 }}
         >
           Create New Gradeable
@@ -101,7 +101,7 @@ export default function GradeablesListPage() {
               <TableRow 
                 key={gradeable.id}
                 hover
-                onClick={() => window.location.href = `/dashboard_test/scores/${gradeable.id}`}
+                onClick={() => window.location.href = `/dashboard_test/gradeables/${gradeable.id}`}
                 style={{ cursor: 'pointer' }}
                 sx={{ '&:hover': { backgroundColor: '#f0f7ff !important' } }}
               >
