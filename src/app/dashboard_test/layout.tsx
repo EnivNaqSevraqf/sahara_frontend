@@ -128,7 +128,21 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         segment: 'dashboard_test/people',
         title: 'People',
         icon: <PeopleIcon />,
+        children: [
+          {
+            segment: 'tas',
+            title: 'Teaching Assistants',
+            //add
+          },
+          {
+            segment: 'teams',
+            title: 'Teams',
+            
+          },
+
+        ],
       },
+      
       {
         segment: 'dashboard_test/discussion',
         title: 'Discussions',
@@ -187,6 +201,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         segment: 'dashboard_test/people',
         title: 'People',
         icon: <PeopleIcon />,
+
       },
       {
         segment: 'dashboard_test/discussion',
@@ -330,7 +345,7 @@ const dashboardTheme = createTheme({
   },
   palette: {
     primary: {
-      main: purple[500],
+      main: '#033076',
     },
     secondary: {
       main: green[500],
