@@ -129,7 +129,12 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'People',
         icon: <PeopleIcon />,
         children: [
-          {
+          {   
+            segment: '',
+            title: 'Users',
+            //add
+          },
+          {   
             segment: 'tas',
             title: 'Teaching Assistants',
             //add
