@@ -10,8 +10,7 @@ import {
   Button,
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import Header from '../people/components/Header';
-import { buttonStyles } from '../people/constants/theme';
+import { buttonStyles } from './constants/theme';
 import axios from 'axios';
 
 const TeamsCreationForm2 = () => {
@@ -74,26 +73,19 @@ const TeamsCreationForm2 = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Header title="TEAMS CREATION CSV UPLOAD" />
-      <Typography
-        variant="h4"
-        component="h2"
-        align="center"
-        sx={{
-          mb: 4,
-          p: 2,
-          border: '1px solid #e0e0e0',
-          borderRadius: '50px',
-        }}
-      >
-        TEAMS CREATION CSV UPLOAD
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4" gutterBottom sx={{ color: '#033076' }}>
+          Teams Creation
+        </Typography>
+      </Box>
+
       <Box
         sx={{
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: 2,
+          mt: 3,
         }}
       >
         <Paper
