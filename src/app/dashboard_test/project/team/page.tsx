@@ -27,7 +27,8 @@ import {
   OutlinedInput,
   Chip,
   SelectChangeEvent,
-  Divider
+  Divider,
+  Container
 } from '@mui/material';
 import axios from 'axios';
 import { currentConfig } from '@/config';
@@ -295,214 +296,240 @@ export default function TeamMembersPage() {
   }
 
   return (
-    <Box p={3}>
-      {/* Header section */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
-          Team Members
-        </Typography>
-      </Box>
-      
-      {/* Team info card */}
-      <Paper 
-        elevation={0}
-        sx={{ 
-          p: 4, 
-          mb: 4, 
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
-          color: 'white',
-          borderRadius: 2,
-          boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
-            <GroupIcon sx={{ fontSize: 50 }} />
-          </Box>
-          
-          <Box>
-            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
-              {teamName}
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              {teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''}
-            </Typography>
-          </Box>
-        </Box>
-      </Paper>
-      
-      {/* Skills section - separate from header */}
-      <Paper 
-        elevation={0}
-        sx={{ 
-          p: 3, 
-          mb: 4,
-          borderRadius: 2,
-          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)'
-        }}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <TimelineIcon sx={{ color: '#3f51b5' }} />
-            <Typography variant="h6" sx={{ fontWeight: 500, color: '#3f51b5' }}>
-              Team Skills
-            </Typography>
-          </Box>
-          
-          <Button 
-            variant="outlined" 
-            startIcon={<AddIcon />}
-            onClick={handleOpenSkillsDialog}
-            sx={{
-              borderColor: '#3f51b5',
-              color: '#3f51b5',
-              '&:hover': {
-                backgroundColor: 'rgba(63, 81, 181, 0.08)',
-              }
-            }}
-          >
-            Manage Skills
-          </Button>
+    <Container maxWidth="lg">
+      <Box p={3}>
+        {/* Header section */}
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+          <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
+            Team Members
+          </Typography>
         </Box>
         
-        <Divider sx={{ my: 2 }} />
+        {/* Team info card */}
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: 4, 
+            mb: 4, 
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+            color: 'white',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <GroupIcon sx={{ fontSize: 50 }} />
+            </Box>
+            
+            <Box>
+              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                {teamName}
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                {teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''}
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
         
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
-          {teamSkills.length > 0 ? (
-            teamSkills.map(skill => renderSkillChip(skill))
-          ) : (
-            <Typography color="text.secondary">
-              No skills added yet. Click "Manage Skills" to add skills to your team.
-            </Typography>
-          )}
-        </Box>
-      </Paper>
-
-      {/* Team Members Table */}
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === 'name'}
-                  direction={orderBy === 'name' ? order : 'asc'}
-                  onClick={() => handleRequestSort('name')}
-                >
-                  Name
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === 'email'}
-                  direction={orderBy === 'email' ? order : 'asc'}
-                  onClick={() => handleRequestSort('email')}
-                >
-                  Email
-                </TableSortLabel>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {sortedTeamMembers.length > 0 ? (
-              sortedTeamMembers.map((member) => (
-                <TableRow 
-                  key={member.id}
-                  hover
-                  sx={{ 
-                    '&:last-child td, &:last-child th': { border: 0 },
-                    '&:hover': { backgroundColor: '#f0f7ff !important' }
-                  }}
-                >
-                  <TableCell component="th" scope="row">
-                    {member.name}
-                  </TableCell>
-                  <TableCell>{member.email}</TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={2} align="center" sx={{ py: 3 }}>
-                  <Typography variant="body1" color="text.secondary">
-                    No team members found.
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Skill Selection Dialog */}
-      <Dialog 
-        open={dialogOpen} 
-        onClose={handleCloseSkillsDialog}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle>Manage Team Skills</DialogTitle>
-        <DialogContent dividers>
-          <FormControl fullWidth>
-            <InputLabel id="skills-select-label">Team Skills</InputLabel>
-            <Select
-              labelId="skills-select-label"
-              id="skills-select"
-              multiple
-              value={selectedSkillIds}
-              onChange={handleSkillSelectionChange}
-              input={<OutlinedInput label="Team Skills" />}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => {
-                    const skill = allSkills.find(s => s.id === value);
-                    return skill ? renderSkillChip(skill) : null;
-                  })}
-                </Box>
-              )}
+        {/* Skills section - separate from header */}
+        <Paper 
+          elevation={0}
+          sx={{ 
+            p: 3, 
+            mb: 4,
+            borderRadius: 2,
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)'
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TimelineIcon sx={{ color: '#3f51b5' }} />
+              <Typography variant="h6" sx={{ fontWeight: 500, color: '#3f51b5' }}>
+                Team Skills
+              </Typography>
+            </Box>
+            
+            <Button 
+              variant="outlined" 
+              startIcon={<AddIcon />}
+              onClick={handleOpenSkillsDialog}
+              sx={{
+                borderColor: '#3f51b5',
+                color: '#3f51b5',
+                '&:hover': {
+                  backgroundColor: 'rgba(63, 81, 181, 0.08)',
+                }
+              }}
             >
-              {allSkills.map((skill) => (
-                <MenuItem key={skill.id} value={skill.id}>
-                  <Box 
-                    display="flex" 
-                    alignItems="center" 
-                    gap={1}
-                    sx={{
-                      padding: '6px 10px',
-                      borderRadius: '4px',
-                      backgroundColor: skill.bgColor,
-                      color: skill.color,
-                      border: `1px solid ${skill.color}`,
-                      width: '100%'
-                    }}
-                  >
-                    {iconComponents[skill.icon]}
-                    {skill.name}
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <Box sx={{ mt: 4 }}>
-            <Typography variant="body2" color="text.secondary">
-              Select the skills that best represent your team's expertise. These skills will help TAs better understand your team's capabilities.
-            </Typography>
+              Manage Skills
+            </Button>
           </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseSkillsDialog} disabled={savingSkills}>Cancel</Button>
-          <Button 
-            onClick={handleUpdateSkills} 
-            variant="contained"
-            disabled={savingSkills}
-            startIcon={savingSkills ? <CircularProgress size={20} /> : null}
-          >
-            {savingSkills ? 'Updating...' : 'Update Skills'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+          
+          <Divider sx={{ my: 2 }} />
+          
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+            {teamSkills.length > 0 ? (
+              teamSkills.map(skill => renderSkillChip(skill))
+            ) : (
+              <Typography color="text.secondary">
+                No skills added yet. Click "Manage Skills" to add skills to your team.
+              </Typography>
+            )}
+          </Box>
+        </Paper>
+
+        {/* Team Members Table */}
+        <Paper 
+          elevation={0}
+          sx={{ 
+            mb: 4,
+            borderRadius: 2,
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <TableContainer sx={{ borderRadius: 2 }}>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ 
+                  backgroundColor: '#f8faff',
+                  '& th': { 
+                    fontWeight: 'bold',
+                    borderBottom: 'none',
+                  }
+                }}>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    <TableSortLabel
+                      active={orderBy === 'name'}
+                      direction={orderBy === 'name' ? order : 'asc'}
+                      onClick={() => handleRequestSort('name')}
+                    >
+                      Name
+                    </TableSortLabel>
+                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    <TableSortLabel
+                      active={orderBy === 'email'}
+                      direction={orderBy === 'email' ? order : 'asc'}
+                      onClick={() => handleRequestSort('email')}
+                    >
+                      Email
+                    </TableSortLabel>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sortedTeamMembers.length > 0 ? (
+                  sortedTeamMembers.map((member) => (
+                    <TableRow 
+                      key={member.id}
+                      hover
+                      sx={{ 
+                        '&:last-child td, &:last-child th': { border: 0 },
+                        '& td': { 
+                          borderBottom: '1px solid #f0f0f0',
+                          padding: '16px',
+                          transition: 'background-color 0.2s ease',
+                        },
+                        '&:hover': { 
+                          backgroundColor: '#e8f0fe !important',
+                        },
+                      }}
+                    >
+                      <TableCell component="th" scope="row">
+                        {member.name}
+                      </TableCell>
+                      <TableCell>{member.email}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={2} align="center" sx={{ py: 3, borderBottom: 'none' }}>
+                      <Typography variant="body1" color="text.secondary">
+                        No team members found.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+
+        {/* Skill Selection Dialog */}
+        <Dialog 
+          open={dialogOpen} 
+          onClose={handleCloseSkillsDialog}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>Manage Team Skills</DialogTitle>
+          <DialogContent dividers>
+            <FormControl fullWidth>
+              <InputLabel id="skills-select-label">Team Skills</InputLabel>
+              <Select
+                labelId="skills-select-label"
+                id="skills-select"
+                multiple
+                value={selectedSkillIds}
+                onChange={handleSkillSelectionChange}
+                input={<OutlinedInput label="Team Skills" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => {
+                      const skill = allSkills.find(s => s.id === value);
+                      return skill ? renderSkillChip(skill) : null;
+                    })}
+                  </Box>
+                )}
+              >
+                {allSkills.map((skill) => (
+                  <MenuItem key={skill.id} value={skill.id}>
+                    <Box 
+                      display="flex" 
+                      alignItems="center" 
+                      gap={1}
+                      sx={{
+                        padding: '6px 10px',
+                        borderRadius: '4px',
+                        backgroundColor: skill.bgColor,
+                        color: skill.color,
+                        border: `1px solid ${skill.color}`,
+                        width: '100%'
+                      }}
+                    >
+                      {iconComponents[skill.icon]}
+                      {skill.name}
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="body2" color="text.secondary">
+                Select the skills that best represent your team's expertise. These skills will help TAs better understand your team's capabilities.
+              </Typography>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseSkillsDialog} disabled={savingSkills}>Cancel</Button>
+            <Button 
+              onClick={handleUpdateSkills} 
+              variant="contained"
+              disabled={savingSkills}
+              startIcon={savingSkills ? <CircularProgress size={20} /> : null}
+            >
+              {savingSkills ? 'Updating...' : 'Update Skills'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </Container>
   );
 }
