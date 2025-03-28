@@ -134,12 +134,12 @@ const PeoplePage = () => {
     <Box p={3}>
       {/* Header with title and action buttons */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
+        <Typography variant="h4" gutterBottom sx={{ color: '#033076' }}>
           People
         </Typography>
         <Button
           variant="contained"
-          color="primary"
+          sx={{ backgroundColor: '#033076', color: 'white', '&:hover': { backgroundColor: '#02225a' } }}
           onClick={() => router.push('/dashboard_test/people/add')}
         >
           Add People

@@ -1,6 +1,7 @@
 'use client';
 import { useRouter } from "next/navigation";
 import * as React from 'react';
+import Image from 'next/image';
 import { createTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -406,15 +407,26 @@ export default function DashboardLayout({
   }
 
   function CustomAppTitle() {
-  return (
-    <Stack direction="row" alignItems="center" spacing={2}>
-      <Typography variant="h6">Sahara</Typography>
-      <Chip size="small" label="BETA" color="info" />
-      {/* <Tooltip title="Connected to production">
-        
-      </Tooltip> */}
-    </Stack>
-  );
+    return (
+      <Stack direction="column" alignItems="center" spacing={2}>
+        {/* Logo */}
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center' }}>
+          <Image 
+            src="/sahara_logo.svg" 
+            alt="SAHARA" 
+            width={150} 
+            height={25} 
+            priority
+          />
+        </Box>
+  
+        {/* Title and Beta Chip
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Typography variant="h6">Sahara</Typography>
+          <Chip size="small" label="BETA" color="info" />
+        </Stack> */}
+      </Stack>
+    );
   }
 
   return (

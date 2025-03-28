@@ -240,12 +240,35 @@ export default function FormPage() {
 
   return (
     <Box sx={{ width: '100%', p: 2 }}>
-      {/* Course navigation */}
-      <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
+      {/* Course navigation with Create Form button */}
+      <Box sx={{ 
+        mb: 3, 
+        pb: 1, 
+        borderBottom: '1px solid', 
+        borderColor: 'divider',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
         <Typography variant="body2" component="div">
           <span style={{ color: '#3f51b5', cursor: 'pointer' }}>Course Home</span> / 
           <span style={{ cursor: 'pointer' }}> Forms</span>
         </Typography>
+
+        <Button
+          variant="contained"
+          onClick={() => router.push('/dashboard_test/forms/create_form')}
+          sx={{
+            backgroundColor: '#033076',
+            '&:hover': {
+              backgroundColor: '#022055',
+            },
+            textTransform: 'none',
+            px: 3
+          }}
+        >
+          Create Form
+        </Button>
       </Box>
       
       {/* Progress chart */}

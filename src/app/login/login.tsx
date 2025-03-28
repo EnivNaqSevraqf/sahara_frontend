@@ -218,42 +218,48 @@ const LoginComponent = () => {
           </Box>
         )}
         <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        disabled={loading || !credentials.username || !credentials.password}
-        sx={{
-          mt: 2,
-          backgroundColor: "#000080",
-          color: "white",
-          borderRadius: "4px",
-          padding: "12px 0",
-          '&:hover': {
-            backgroundColor: "#000060",
-          },
-          '&:disabled': {
-            backgroundColor: "#cccccc",
-          }
-        }}
-      >
-        {loading ? <CircularProgress size={24} color="inherit" /> : "Login"}
-      </Button>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        <Button
-          variant="outlined"
-          onClick={() => setForgotPasswordOpen(true)} // Proper state update
+          type="submit"
+          fullWidth
+          variant="contained"
+          disabled={loading || !credentials.username || !credentials.password}
           sx={{
-            color: '#000080',
-            borderColor: '#E0E0E0',
-            borderRadius: '4px',
-            textTransform: 'none',
+            mt: 2,
+            mb: 3, // Add margin bottom for spacing
+            backgroundColor: "#033076",
+            color: "white",
+            borderRadius: "4px",
+            padding: "12px 0",
             '&:hover': {
-              borderColor: '#000080',
+              backgroundColor: "#000060",
+            },
+            '&:disabled': {
+              backgroundColor: "#cccccc",
             }
           }}
         >
-         Forgot password?
-</Button>
+          {loading ? <CircularProgress size={24} color="inherit" /> : "Login"}
+        </Button>
+        <Box sx={{ 
+          display: "flex", 
+          justifyContent: "flex-end", 
+          mb: 2,
+          mt: 2 // Add margin top for additional spacing
+        }}>
+          <Button
+            variant="outlined"
+            onClick={() => setForgotPasswordOpen(true)}
+            sx={{
+              backgroundColor: '#033076',
+              color: '#B0B0B0',
+              borderRadius: '4px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#02225a',
+              }
+            }}
+          >
+            Forgot password?
+          </Button>
         </Box>
         </Box>
         <ForgotPassword open={forgotPasswordOpen} handleClose={() => setForgotPasswordOpen(false)} />

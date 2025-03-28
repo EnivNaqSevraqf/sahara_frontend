@@ -91,9 +91,9 @@ export default function GradeablesListPage() {
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#033076' }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+              <TableCell sx={{ fontWeight: 'bold', color: '#f5f5f5'}}>Name</TableCell>
               {/* <TableCell sx={{ fontWeight: 'bold' }}>Due Date</TableCell> */}
-              <TableCell sx={{ fontWeight: 'bold' }}>Maximum Points</TableCell>
+              <TableCell sx={{ fontWeight: 'bold' , color: '#f5f5f5'}}>Maximum Points</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
