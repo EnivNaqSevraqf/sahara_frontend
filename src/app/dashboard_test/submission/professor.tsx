@@ -442,6 +442,10 @@ export default function ProfessorSubmissionList() {
     router.push('/dashboard_test/submission/creation');
   };
 
+  const handleViewSubmissions = (submittableId: number) => {
+    router.push(`/dashboard_test/submission/view?id=${submittableId}`);
+  };
+
   // Render a single submittable item
   const renderSubmittableItem = (doc: SubmittableType, index: number) => {
     const isAllowed = isSubmissionAllowed(doc);
@@ -740,7 +744,7 @@ export default function ProfessorSubmissionList() {
                   variant="outlined"
                   color="info"
                   startIcon={<AttachFileIcon sx={{ fontSize: '1.2rem' }} />}
-                  onClick={() => fetchSubmissions(doc.id)}
+                  onClick={() => handleViewSubmissions(doc.id)}
                   sx={{ 
                     mr: 2,
                     textTransform: 'none',
@@ -858,75 +862,6 @@ export default function ProfessorSubmissionList() {
           Create Submittable
         </Button>
       </Box>
-      
-      {/* Progress chart */}
-      <Paper 
-        elevation={0}
-        sx={{ 
-          p: 4, 
-          mb: 4, 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
-          background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
-          color: 'white',
-          borderRadius: 2,
-          boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-            <CircularProgress 
-              variant="determinate" 
-              value={completionPercentage} 
-              size={100} 
-              thickness={4} 
-              sx={{ color: 'white' }}
-            />
-            <Box
-              sx={{
-                top: 0,
-                left: 0,
-                bottom: 0,
-                right: 0,
-                position: 'absolute',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                {`${completionPercentage}%`}
-              </Typography>
-            </Box>
-          </Box>
-          
-          <Box>
-            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
-              Project Progress
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              {submittables.filter(doc => doc.submission_status?.has_submitted).length} of {submittables.length} documents submitted
-            </Typography>
-          </Box>
-        </Box>
-        
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 1,
-          bgcolor: 'rgba(255, 255, 255, 0.1)',
-          p: 2,
-          borderRadius: 2
-        }}>
-          <TimelineIcon />
-          <Typography variant="h6" sx={{ fontWeight: 500 }}>
-            {completionPercentage === 100 
-              ? 'All documents submitted!' 
-              : `${submittables.length - submittables.filter(doc => doc.submission_status?.has_submitted).length} documents remaining`}
-          </Typography>
-        </Box>
-      </Paper>
       
       {/* Ongoing/Upcoming Documents */}
       {(ongoingSubmittables.length > 0 || upcomingSubmittables.length > 0) && (
