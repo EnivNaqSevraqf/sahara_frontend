@@ -427,6 +427,8 @@ const AnnouncementPage = () => {
     console.log('Announcement data:', announcement);
     return (
       <Accordion 
+        expanded={expandedAnnouncementId === announcement.id}
+        onChange={() => setExpandedAnnouncementId(expandedAnnouncementId === announcement.id ? null : announcement.id)}
         sx={{ 
           mb: 1, 
           borderRadius: '12px', 
