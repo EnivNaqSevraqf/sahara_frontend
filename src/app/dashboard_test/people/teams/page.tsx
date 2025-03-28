@@ -1,304 +1,327 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Paper,
-  Button,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  TableSortLabel,
-  Toolbar,
+  Paper,
+  TextField,
+  Button,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
   CircularProgress,
   Alert,
-  Stack
+  Snackbar,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  OutlinedInput,
+  SelectChangeEvent,
 } from '@mui/material';
+import EditIcon from '@mui/icons-material/Edit';
 import axios from 'axios';
-import * as XLSX from 'xlsx';
-import { useRouter } from 'next/navigation';
-import { currentConfig } from '@/config';
-import { tableStyles } from '../constants/theme';
-import type { Student } from '../types';
-import { SelectChangeEvent } from '@mui/material/Select';
 
-const PeoplePage = () => {
-  const router = useRouter();
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [filter, setFilter] = useState('');
-  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
-  const [orderBy, setOrderBy] = useState<keyof Student>('name');
+// Configure axios base URL
+axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-  useEffect(() => {
-    const fetchStudents = async () => {
-      try {
-        setIsLoading(true);
-        const config = {
-          headers: {
-            'Authorization': 'Bearer ' + localStorage.getItem('token'),
-            'Content-Type': 'application/json',
-          }
-        };
-        const response = await axios.get(`${currentConfig.apiBaseUrl}/people/`, config);
-        setStudents(response.data);
-        setError(null);
-      }
-      catch (error) {
-        console.error('Error fetching students:', error);
-        const status = (error as any).response?.status;
-        if(status === 401){
-          console.log("Unauthenticated");
-          setError('Authentication required. Please login again.');
-        }
-        else if(status === 403){
-          setError('Access denied. You do not have permission to view this page.');
-        }
-        else {
-          setError('Failed to load people data. Please try again later.');
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchStudents();
-  }, []);
+interface Skill {
+  id: number;
+  name: string;
+  bgColor: string;
+  color: string;
+  icon: string;
+}
 
-  const handleFilterChange = (event: SelectChangeEvent<string>) => {
-    setFilter(event.target.value as string);
-  };
+interface TA {
+  id: number;
+  name: string;
+}
 
-  const handleRequestSort = (
-    event: React.MouseEvent<unknown>,
-    property: keyof Student,
-  ) => {
-    const isAsc = orderBy === property && order === 'asc';
-    setOrder(isAsc ? 'desc' : 'asc');
-    setOrderBy(property);
-  };
+interface Team {
+  team_id: number;
+  team_name: string;
+  skills: Skill[];
+  tas: TA[];
+}
 
-  const createSortHandler = (property: keyof Student) => (
-    event: React.MouseEvent<unknown>,
-  ) => {
-    handleRequestSort(event, property);
-  };
-
-  const sortedStudents = [...students].sort((a, b) => {
-    if (orderBy === 'id' || orderBy === 'name' || orderBy === 'email' || orderBy === 'role') {
-      if (order === 'asc') {
-        return a[orderBy] > b[orderBy] ? 1 : -1;
-      } else {
-        return a[orderBy] < b[orderBy] ? 1 : -1;
-      }
-    }
-    return 0;
+const TeamsPage = () => {
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [taCount, setTaCount] = useState('');
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<Team | null>(null);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [availableTAs, setAvailableTAs] = useState<TA[]>([]);
+  const [selectedTAs, setSelectedTAs] = useState<number[]>([]);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({
+    open: false,
+    message: '',
+    severity: 'success',
   });
 
-  const filteredStudents = filter
-    ? sortedStudents.filter((student) => student.role === filter)
-    : sortedStudents;
+  useEffect(() => {
+    fetchTeamsData();
+    fetchAvailableTAs();
+  }, []);
 
-  const downloadExcel = () => {
-    const worksheet = XLSX.utils.json_to_sheet(filteredStudents);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'People');
-    XLSX.writeFile(workbook, 'People.xlsx');
+  const fetchTeamsData = async () => {
+    try {
+      const response = await axios.get('/match', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      setTeams(response.data.teams || []);
+    } catch (error) {
+      console.error('Error fetching teams:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch teams data',
+        severity: 'error',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (isLoading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const fetchAvailableTAs = async () => {
+    try {
+      const response = await axios.get('/people/', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      const tas = response.data.filter((user: any) => user.role === 'TA');
+      setAvailableTAs(tas.map((ta: any) => ({ id: ta.id, name: ta.name })));
+    } catch (error) {
+      console.error('Error fetching TAs:', error);
+    }
+  };
 
-  if (error) {
-    return (
-      <Box p={3}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
-    );
-  }
+  const handleMatch = async () => {
+    if (!taCount || isNaN(Number(taCount)) || Number(taCount) <= 0) {
+      setSnackbar({
+        open: true,
+        message: 'Please enter a valid number of TAs',
+        severity: 'error',
+      });
+      return;
+    }
+
+    setMatchLoading(true);
+    try {
+      await axios.get(`/match/${taCount}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      await fetchTeamsData();
+      setSnackbar({
+        open: true,
+        message: 'TA allocation completed successfully',
+        severity: 'success',
+      });
+    } catch (error) {
+      console.error('Error matching TAs:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to allocate TAs',
+        severity: 'error',
+      });
+    } finally {
+      setMatchLoading(false);
+    }
+  };
+
+  const handleEditClick = (team: Team) => {
+    setEditingTeam(team);
+    setSelectedTAs(team.tas.map(ta => ta.id));
+    setOpenEditDialog(true);
+  };
+
+  const handleTAChange = (event: SelectChangeEvent<number[]>) => {
+    setSelectedTAs(event.target.value as number[]);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingTeam) return;
+
+    try {
+      await axios.post(
+        `/teams/${editingTeam.team_id}/update-tas`,
+        { ta_ids: selectedTAs },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      await fetchTeamsData();
+      setSnackbar({
+        open: true,
+        message: 'TA assignments updated successfully',
+        severity: 'success',
+      });
+      setOpenEditDialog(false);
+    } catch (error) {
+      console.error('Error updating TA assignments:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to update TA assignments',
+        severity: 'error',
+      });
+    }
+  };
 
   return (
-    <Box p={3}>
-      {/* Header with title and action buttons */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
-          People
-        </Typography>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Teams
+      </Typography>
+
+      <Box sx={{ mb: 4, display: 'flex', gap: 2, alignItems: 'center' }}>
+        <TextField
+          label="Number of TAs per team"
+          type="number"
+          value={taCount}
+          onChange={(e) => setTaCount(e.target.value)}
+          sx={{ width: 200 }}
+          InputProps={{ inputProps: { min: 1 } }}
+        />
         <Button
           variant="contained"
-          color="primary"
-          onClick={() => router.push('/dashboard_test/people/add')}
+          onClick={handleMatch}
+          disabled={matchLoading}
+          sx={{ height: 56 }}
         >
-          Add People
-        </Button>
-      </Box>
-      
-      {/* Filter and export controls */}
-      <Box display="flex" gap={2} mb={3}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel id="role-filter-label">Filter by Role</InputLabel>
-          <Select
-            labelId="role-filter-label"
-            value={filter}
-            label="Filter by Role"
-            onChange={handleFilterChange}
-            size="small"
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="Professor">Professor</MenuItem>
-            <MenuItem value="Student">Student</MenuItem>
-            <MenuItem value="TA">TA</MenuItem>
-          </Select>
-        </FormControl>
-        
-        <Button
-          variant="outlined"
-          onClick={downloadExcel}
-          sx={{ 
-            borderColor: '#1976d2', 
-            color: '#1976d2', 
-            '&:hover': { borderColor: '#1565c0', backgroundColor: '#f0f7ff' }
-          }}
-        >
-          Export to Excel
+          {matchLoading ? <CircularProgress size={24} /> : 'Allocate TAs'}
         </Button>
       </Box>
 
-      {/* Table of people */}
-      <TableContainer component={Paper} sx={{ mb: 4 }}>
-        <Toolbar sx={{ backgroundColor: '#f5f9ff' }}>
-          <Typography variant="h6" component="div">
-            People List
-          </Typography>
-        </Toolbar>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === 'id'}
-                  direction={orderBy === 'id' ? order : 'asc'}
-                  onClick={createSortHandler('id')}
-                >
-                  ID
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === 'name'}
-                  direction={orderBy === 'name' ? order : 'asc'}
-                  onClick={createSortHandler('name')}
-                >
-                  Name
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === 'email'}
-                  direction={orderBy === 'email' ? order : 'asc'}
-                  onClick={createSortHandler('email')}
-                >
-                  Email
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === 'role'}
-                  direction={orderBy === 'role' ? order : 'asc'}
-                  onClick={createSortHandler('role')}
-                >
-                  Role
-                </TableSortLabel>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredStudents.map((student) => (
-              <TableRow 
-                key={student.id} 
-                hover
-                sx={{ '&:hover': { backgroundColor: '#f0f7ff !important' } }}
-              >
-                <TableCell>{student.id}</TableCell>
-                <TableCell>{student.name}</TableCell>
-                <TableCell>{student.email}</TableCell>
-                <TableCell>
-                  <Box 
-                    component="span" 
-                    sx={{
-                      display: 'inline-block',
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: '12px',
-                      fontSize: '0.75rem',
-                      fontWeight: 'bold',
-                      backgroundColor: student.role === 'Student' 
-                        ? '#e8f5e9' 
-                        : student.role === 'Professor' 
-                          ? '#fff8e1' 
-                          : '#e3f2fd',
-                      color: student.role === 'Student' 
-                        ? '#2e7d32' 
-                        : student.role === 'Professor' 
-                          ? '#f57f17' 
-                          : '#1565c0',
-                    }}
-                  >
-                    {student.role}
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-            {filteredStudents.length === 0 && (
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
-                  No people found matching the current filter.
-                </TableCell>
+                <TableCell>Team ID</TableCell>
+                <TableCell>Team Name</TableCell>
+                <TableCell>Skills</TableCell>
+                <TableCell>Alloted TA</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {teams.map((team) => (
+                <TableRow key={team.team_id}>
+                  <TableCell>{team.team_id}</TableCell>
+                  <TableCell>{team.team_name}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {team.skills?.map((skill) => (
+                        <Chip
+                          key={skill.id}
+                          label={skill.name}
+                          sx={{
+                            backgroundColor: skill.bgColor,
+                            color: skill.color,
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {team.tas?.map((ta) => (
+                        <Chip
+                          key={ta.id}
+                          label={ta.name}
+                          variant="outlined"
+                        />
+                      ))}
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleEditClick(team)}>
+                      <EditIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
-      {/* Action buttons */}
-      <Stack direction="row" spacing={2} justifyContent="center">
-        <Button
-          variant="contained"
-          onClick={() => router.push('/dashboard_test/people/teams/create')}
-          sx={{
-            backgroundColor: '#1976d2',
-            '&:hover': { backgroundColor: '#1565c0' },
-          }}
-        >
-          Create Team
-        </Button>
-        <Button
-          variant="outlined"
-          onClick={() => router.push('/dashboard_test/people/teams/details')}
-          sx={{
-            borderColor: '#1976d2',
-            color: '#1976d2',
-            '&:hover': { borderColor: '#1565c0', backgroundColor: '#f0f7ff' },
-          }}
-        >
-          View Team Details
-        </Button>
-      </Stack>
+      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit TA Assignments</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Assigned TAs</InputLabel>
+            <Select
+              multiple
+              value={selectedTAs}
+              onChange={handleTAChange}
+              input={<OutlinedInput label="Assigned TAs" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => (
+                    <Chip
+                      key={value}
+                      label={availableTAs.find(ta => ta.id === value)?.name}
+                    />
+                  ))}
+                </Box>
+              )}
+            >
+              {availableTAs.map((ta) => (
+                <MenuItem key={ta.id} value={ta.id}>
+                  {ta.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
+          <Button onClick={handleSaveEdit} variant="contained">
+            Save Changes
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+      >
+        <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
 
-export default PeoplePage;
+export default TeamsPage;
+
