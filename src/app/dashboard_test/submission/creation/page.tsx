@@ -89,6 +89,7 @@ const EventCreationApp: React.FC = () => {
     message: '',
     severity: 'success'
   });
+  const [maxScore, setMaxScore] = useState<number>(100);
 
   // Handle reference file input
   const handleReferenceFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,6 +105,16 @@ const EventCreationApp: React.FC = () => {
       setSnackbar({
         open: true,
         message: 'Please fill in all required fields (Name, Due Date, and Description)',
+        severity: 'error'
+      });
+      return;
+    }
+
+    // Validate max score
+    if (maxScore <= 0) {
+      setSnackbar({
+        open: true,
+        message: 'Maximum score must be greater than zero',
         severity: 'error'
       });
       return;
@@ -133,13 +144,6 @@ const EventCreationApp: React.FC = () => {
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
-    // Debug logging for authentication
-    console.log('Authentication Debug:');
-    console.log('Token exists:', !!token);
-    console.log('Token value:', token);
-    console.log('Role:', role);
-    console.log('Is professor:', role === 'prof');
-    
     if (!token) {
       setSnackbar({
         open: true,
@@ -165,6 +169,7 @@ const EventCreationApp: React.FC = () => {
       formData.append('title', name);
       formData.append('deadline', dueDate.toISOString());
       formData.append('description', description);
+      formData.append('max_score', maxScore.toString());
       if (opensAt) {
         formData.append('opens_at', opensAt.toISOString());
       }
@@ -189,7 +194,7 @@ const EventCreationApp: React.FC = () => {
 
       console.log('Response:', response);
 
-      if (response.status === 201) {
+      if (response.status === 201 || response.status === 200) {
         setSnackbar({
           open: true,
           message: 'Submittable created successfully!',
@@ -202,44 +207,38 @@ const EventCreationApp: React.FC = () => {
         setDueDate(null);
         setDescription('');
         setReferenceFile(null);
+
+        // Redirect to the submittables list page after a short delay
+        setTimeout(() => {
+          window.location.href = '/dashboard_test/submission';
+        }, 2000);
       }
     } catch (error: any) {
       console.error('Error creating submittable:', error);
-      console.error('Error response:', error.response);
-      console.error('Error config:', error.config);
-      console.error('Error headers:', error.config?.headers);
-      console.error('Error data:', error.response?.data);
       
       let errorMessage = 'An error occurred while creating the submittable';
       
       if (error.response) {
-        // Handle specific error messages from the backend
         if (error.response.status === 401) {
           errorMessage = 'Your session has expired. Please log in again.';
-          // Show error message first
-          setSnackbar({
-            open: true,
-            message: errorMessage,
-            severity: 'error'
-          });
-          // Wait a bit before redirecting
           setTimeout(() => {
             localStorage.removeItem('token');
             localStorage.removeItem('role');
             window.location.href = '/login';
-          }, 3000); // Wait 3 seconds before redirecting
+          }, 3000);
         } else if (error.response.status === 403) {
           errorMessage = 'You do not have permission to create submittables.';
-        } else {
-          const errorData = error.response.data;
-          if (typeof errorData === 'object' && errorData.detail) {
-            errorMessage = errorData.detail;
-          } else if (Array.isArray(errorData)) {
-            errorMessage = errorData.map(err => err.msg).join(', ');
+        } else if (error.response.status === 422) {
+          // Handle validation errors
+          const validationErrors = error.response.data;
+          if (Array.isArray(validationErrors)) {
+            errorMessage = validationErrors.map(err => err.msg || err.message).join('\n');
+          } else if (validationErrors.detail) {
+            errorMessage = typeof validationErrors.detail === 'string' 
+              ? validationErrors.detail 
+              : 'Validation error occurred';
           }
         }
-      } else if (error.request) {
-        errorMessage = 'No response received from server';
       }
 
       setSnackbar({
@@ -287,12 +286,41 @@ const EventCreationApp: React.FC = () => {
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Enter Name"
+                label="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                variant="outlined"
                 required
-                sx={{ mb: 2 }}
+              />
+            </Grid>
+
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Maximum Score"
+                type="number"
+                value={maxScore}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? 0 : Number(e.target.value);
+                  setMaxScore(value);
+                }}
+                required
+                inputProps={{ 
+                  min: 1,
+                  step: 1,
+                  placeholder: "Enter maximum possible score (e.g., 100)",
+                  style: { 
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'textfield'
+                  }
+                }}
+                helperText="Enter the maximum possible score for this submittable"
+                sx={{ 
+                  mb: 2,
+                  '& input[type=number]': {
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'textfield'
+                  }
+                }}
               />
             </Grid>
 

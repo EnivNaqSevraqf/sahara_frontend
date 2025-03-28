@@ -13,7 +13,7 @@ import SchoolIcon from '@mui/icons-material/School';
 import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { ViewQuilt } from '@mui/icons-material';
+import { ThumbUpAlt, ViewQuilt } from '@mui/icons-material';
 import { AppProvider, type Navigation } from '@toolpad/core/AppProvider';
 import { DashboardLayout as ToolpadDashboardLayout, DashboardLayoutProps } from '@toolpad/core/DashboardLayout';
 import { useDemoRouter } from '@toolpad/core/internal';
@@ -77,17 +77,17 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
   };
 
   // Common footer items for all roles
-  const footerItems = [
-    {
-      kind: 'header' as const,
-      title: 'Account',
-    },
-    {
-      segment: 'settings',
-      title: 'Settings',
-      icon: <SettingsRoundedIcon />,
-    }
-  ];
+  // const footerItems = [
+  //   {
+  //     kind: 'header' as const,
+  //     title: 'Account',
+  //   }
+  //   // {
+  //   //   segment: 'settings',
+  //   //   title: 'Settings',
+  //   //   icon: <SettingsRoundedIcon />,
+  //   // }
+  // ];
   
   // Admin navigation items
   if (role === 'admin') {
@@ -114,6 +114,16 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <ViewQuilt />,
       },
       {
+        segment: 'dashboard_test/assignments',
+        title: 'Assignments',
+        icon: <SchoolIcon />,
+      },
+      {
+        segment: 'dashboard_test/submissions',
+        title: 'Documentation',
+        icon: <AssignmentRoundedIcon />,
+      },
+      {
         segment: 'dashboard_test/people',
         title: 'People',
         icon: <PeopleIcon />,
@@ -129,11 +139,16 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <QuizIcon />,
       },
       {
+        segment: 'dashboard_test/feedback',//delete feedback form
+        title: 'Feedback Form',
+        icon: <ThumbUpAlt />,
+      },
+      {
         segment: 'dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
       },
-      ...footerItems
+     // ...footerItems
     ];
   } 
   // TA navigation items
@@ -155,6 +170,18 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Gradeables',
         icon: <AssignmentRoundedIcon />,
       },
+      //forms for TA?
+      {
+        segment: 'dashboard_test/assignments',
+        title: 'Assignments',
+        icon: <SchoolIcon />,
+      },
+      //documentation
+      {
+        segment: 'dashboard_test/submissions',
+        title: 'Documentation',
+        icon: <AssignmentRoundedIcon />,
+      },
       {
         segment: 'dashboard_test/people',
         title: 'People',
@@ -171,11 +198,16 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <QuizIcon />,
       },
       {
+        segment: 'dashboard_test/feedback',//delete feedback form
+        title: 'Feedback Form',
+        icon: <ThumbUpAlt />,
+      },
+      {
         segment: 'dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
       },
-      ...footerItems
+      //...footerItems
     ];
   }
   // Student/User navigation items (default)
@@ -213,11 +245,16 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <ForumIcon />,
       },
       {
+        segment: 'dashboard_test/feedback',//delete feedback form
+        title: 'Feedback Form',
+        icon: <ThumbUpAlt />,
+      },
+      {
         segment: 'dashboard_test/calendar',
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
       },
-      ...footerItems
+      //...footerItems
     ];
   }
 };
@@ -227,7 +264,7 @@ const dashboardTheme = createTheme({
   cssVariables: {
     colorSchemeSelector: 'data-toolpad-color-scheme',
   },
-  colorSchemes: { light: true, dark: true },
+  colorSchemes: { light: false, dark: true },
   breakpoints: {
     values: {
       xs: 0,

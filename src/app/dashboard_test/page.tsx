@@ -26,6 +26,7 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import Alert from '@mui/material/Alert';
 
 // Configure axios base URL
 axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -65,92 +66,64 @@ interface Announcement {
   };
 }
 
-// Role selector component for testing
-const RoleSwitcher = ({ currentRole, onRoleChange }: { currentRole: string, onRoleChange: (role: UserRole) => void }) => {
-  return (
-    <Paper sx={{ p: 3, mb: 3, bgcolor: 'background.paper' }}>
-      <Typography variant="h6" gutterBottom>Role Selection (For Testing)</Typography>
-      <Typography variant="body2" color="text.secondary" paragraph>
-        Change roles to see different dashboard views
-      </Typography>
-      <FormGroup row>
-        <FormControlLabel 
-          control={
-            <Switch 
-              checked={normalizeRole(currentRole as UserRole) === 'student'} 
-              onChange={() => onRoleChange('student')} 
-            />
-          } 
-          label={
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <PersonIcon sx={{ mr: 0.5 }} fontSize="small" />
-              <Typography variant="body2">Student</Typography>
-            </Box>
-          }
-        />
-        <FormControlLabel 
-          control={
-            <Switch 
-              checked={normalizeRole(currentRole as UserRole) === 'ta'} 
-              onChange={() => onRoleChange('ta')} 
-            />
-          } 
-          label={
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <SchoolIcon sx={{ mr: 0.5 }} fontSize="small" />
-              <Typography variant="body2">Teaching Assistant</Typography>
-            </Box>
-          }
-        />
-        <FormControlLabel 
-          control={
-            <Switch 
-              checked={normalizeRole(currentRole as UserRole) === 'admin'} 
-              onChange={() => onRoleChange('admin')} 
-            />
-          } 
-          label={
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <AdminPanelSettingsIcon sx={{ mr: 0.5 }} fontSize="small" />
-              <Typography variant="body2">Administrator</Typography>
-            </Box>
-          }
-        />
-      </FormGroup>
-    </Paper>
-  );
+interface Assignment {
+  id: number;
+  title: string;
+  due_date: string;
+}
+
+interface Gradeable {
+  id: number;
+  title: string;
+  submission_count: number;
+}
+
+interface DashboardProps {
+  announcements: Announcement[];
+  assignments?: Assignment[];
+  gradeables?: Gradeable[];
+  loading: boolean;
+}
+
+// Add this common style object
+const styles = {
+  paper: {
+    p: 3,
+    border: '1px solid #e3f2fd',
+    backgroundColor: '#fbfdff',
+  },
+  header: {
+    color: '#1976d2',
+    fontWeight: 500,
+  },
+  viewAllButton: {
+    color: '#1976d2',
+    '&:hover': {
+      backgroundColor: '#e3f2fd',
+    },
+  },
+  listItemButton: {
+    '&:hover': {
+      backgroundColor: '#e3f2fd',
+    },
+  },
 };
 
 // Student Dashboard Component
-const StudentDashboard: React.FC = () => {
+const StudentDashboard: React.FC<DashboardProps> = ({ announcements, assignments = [], loading }) => {
   const router = useRouter();
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchAnnouncements = async () => {
-    try {
-      const response = await axios.get('/announcements');
-      // Sort announcements by created_at in descending order and take the latest 2
-      const sortedAnnouncements = response.data.sort((a: Announcement, b: Announcement) => 
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-      setAnnouncements(sortedAnnouncements.slice(0, 2));
-    } catch (error: any) {
-      console.error('Error fetching announcements:', error);
-      if (error.code === 'ERR_NETWORK') {
-        setError('Unable to connect to the server. Please check if the backend is running.');
-      } else {
-        setError('Failed to fetch announcements. Please try again later.');
-      }
-    } finally {
-      setLoading(false);
-    }
+  const handleAnnouncementClick = () => {
+    router.push('/dashboard_test/announcements');
   };
 
-  useEffect(() => {
-    fetchAnnouncements();
-  }, []);
+  const handleAnnouncementItemClick = (announcementId: number) => {
+    router.push(`/dashboard_test/announcements/${announcementId}`);
+  };
+
+  const handleAssignmentClick = (assignmentId: number) => {
+    router.push(`/dashboard_test/assignments/${assignmentId}`);
+  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -170,86 +143,184 @@ const StudentDashboard: React.FC = () => {
     }
   };
 
+  return (
+    <Box>
+      <Grid container spacing={3}>
+        {/* Assignments Section */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={0} sx={styles.paper}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" component="h2" sx={styles.header}>
+                My Assignments
+              </Typography>
+              <Button 
+                size="small"
+                sx={styles.viewAllButton}
+                onClick={() => router.push('/dashboard_test/assignments')}
+              >
+                View All
+              </Button>
+            </Box>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : assignments.length > 0 ? (
+              <List disablePadding>
+                {assignments.map((assignment, index) => (
+                  <ListItem key={assignment.id} disablePadding divider={index < assignments.length - 1}>
+                    <ListItemButton sx={styles.listItemButton} onClick={() => handleAssignmentClick(assignment.id)}>
+                      <ListItemText 
+                        primary={assignment.title}
+                        secondary={`Due: ${new Date(assignment.due_date).toLocaleDateString()}`}
+                      />
+                      <ArrowForwardIcon color="action" fontSize="small" />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                No assignments due
+              </Typography>
+            )}
+          </Paper>
+        </Grid>
+
+        {/* Announcements Section */}
+        <Grid item xs={12} md={6}>
+          <Paper elevation={0} sx={styles.paper}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" component="h2" sx={styles.header}>
+                Recent Announcements
+              </Typography>
+              <Button 
+                size="small"
+                sx={styles.viewAllButton}
+                onClick={handleAnnouncementClick}
+              >
+                View All
+              </Button>
+            </Box>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : announcements.length > 0 ? (
+              <List disablePadding>
+                {announcements.map((announcement, index) => (
+                  <ListItem key={announcement.id} disablePadding divider={index < announcements.length - 1}>
+                    <ListItemButton sx={styles.listItemButton} onClick={() => handleAnnouncementItemClick(announcement.id)}>
+                      <ListItemText 
+                        primary={announcement.title}
+                        secondary={formatDate(announcement.created_at)}
+                      />
+                      <ArrowForwardIcon color="action" fontSize="small" />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                No recent announcements
+              </Typography>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
+// TA Dashboard Component
+const TADashboard: React.FC<DashboardProps> = ({ announcements, gradeables = [], loading }) => {
+  const router = useRouter();
+
+  const handleGradeableClick = (gradeableId: number) => {
+    router.push(`/dashboard_test/scores/${gradeableId}`);
+  };
+
   const handleAnnouncementClick = (announcementId: number) => {
-    router.push(`/dashboard_test/announcements?expanded=${announcementId}`);
+    router.push(`/dashboard_test/announcements/${announcementId}`);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    } else {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric'
+      });
+    }
   };
 
   return (
     <Box>
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
-          <Paper elevation={0} sx={{ p: 3, height: '100%' }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h6" component="h2">
-                Your Upcoming Assignments
+        <Grid item xs={12} md={6}>
+          <Paper elevation={0} sx={styles.paper}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" component="h2" sx={styles.header}>
+                Gradeables
               </Typography>
-              <Chip label="3 Due Soon" color="primary" size="small" />
+              <Button 
+                size="small"
+                sx={styles.viewAllButton}
+                onClick={() => router.push('/dashboard_test/gradeables')}
+              >
+                View All
+              </Button>
             </Box>
-            
-            <List disablePadding>
-              {[
-                { title: 'Lab Report 3', due: '2 days', course: 'CS 253' },
-                { title: 'Midterm Exam', due: '1 week', course: 'MATH 221' },
-                { title: 'Project Proposal', due: '2 weeks', course: 'CS 253' }
-              ].map((item, index) => (
-                <ListItem key={index} disablePadding divider={index < 2}>
-                  <ListItemButton>
-                    <ListItemText 
-                      primary={item.title} 
-                      secondary={`Due in ${item.due} • ${item.course}`}
-                      primaryTypographyProps={{ fontWeight: index === 0 ? 'bold' : 'regular' }}
-                    />
-                    <ArrowForwardIcon color="action" fontSize="small" />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-            
-            <Button variant="outlined" sx={{ mt: 2 }}>View All Assignments</Button>
-          </Paper>
-        </Grid>
-        
-        <Grid item xs={12} md={4}>
-          <Paper elevation={0} sx={{ p: 3, height: '100%' }}>
-            <Typography variant="h6" component="h2" gutterBottom>
-              Course Progress
-            </Typography>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', my: 4 }}>
-              <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-                <CircularProgress variant="determinate" value={65} size={120} thickness={5} />
-                <Box
-                  sx={{
-                    top: 0,
-                    left: 0,
-                    bottom: 0,
-                    right: 0,
-                    position: 'absolute',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Typography variant="h5" component="div" color="text.secondary">
-                    65%
-                  </Typography>
-                </Box>
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+                <CircularProgress size={24} sx={{ color: '#1976d2' }} />
               </Box>
-              <Typography variant="body1" sx={{ mt: 2 }}>Semester Completed</Typography>
-            </Box>
-            
-            <Typography variant="body2" paragraph>
-              You're making good progress. Keep up the good work!
-            </Typography>
+            ) : gradeables.length > 0 ? (
+              <List disablePadding>
+                {gradeables.map((gradeable, index) => (
+                  <ListItem key={gradeable.id} disablePadding divider={index < gradeables.length - 1}>
+                    <ListItemButton 
+                      sx={styles.listItemButton}
+                      onClick={() => handleGradeableClick(gradeable.id)}
+                    >
+                      <ListItemText 
+                        primary={gradeable.title}
+                      />
+                      <ArrowForwardIcon color="action" fontSize="small" />
+                    </ListItemButton>
+                  </ListItem>
+                ))}
+              </List>
+            ) : (
+              <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                No pending gradeables
+              </Typography>
+            )}
           </Paper>
         </Grid>
         
-        <Grid item xs={12}>
-          <Paper elevation={0} sx={{ p: 3 }}>
-            <Typography variant="h6" component="h2" gutterBottom>
-              Recent Announcements
-            </Typography>
-            
+        <Grid item xs={12} md={6}>
+          <Paper elevation={0} sx={styles.paper}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" component="h2" sx={styles.header}>
+                Recent Announcements
+              </Typography>
+              <Button 
+                size="small"
+                sx={styles.viewAllButton}
+                onClick={() => router.push('/dashboard_test/announcements')}
+              >
+                View All
+              </Button>
+            </Box>
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
                 <CircularProgress size={24} />
@@ -257,10 +328,10 @@ const StudentDashboard: React.FC = () => {
             ) : (
               <List disablePadding>
                 {announcements.map((announcement, index) => (
-                  <ListItem key={announcement.id} disablePadding divider={index === 0}>
-                    <ListItemButton onClick={() => handleAnnouncementClick(announcement.id)}>
+                  <ListItem key={announcement.id} disablePadding divider={index < announcements.length - 1}>
+                    <ListItemButton sx={styles.listItemButton} onClick={() => handleAnnouncementClick(announcement.id)}>
                       <ListItemText 
-                        primary={announcement.title} 
+                        primary={announcement.title}
                         secondary={`${formatDate(announcement.created_at)} • ${announcement.created_by?.name || 'Unknown User'}`}
                       />
                       <ArrowForwardIcon color="action" fontSize="small" />
@@ -275,260 +346,155 @@ const StudentDashboard: React.FC = () => {
     </Box>
   );
 };
-
-// TA Dashboard Component
-const TADashboard: React.FC = () => (
-  <Box>
-    <Grid container spacing={3}>
-      <Grid item xs={12} md={6}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography variant="h6" component="h2" gutterBottom>
-            Pending Grading Tasks
-          </Typography>
-          
-          <List disablePadding>
-            {[
-              { title: 'Assignment 2 Submissions', count: 15, deadline: '2 days' },
-              { title: 'Lab Reports', count: 8, deadline: '1 week' },
-              { title: 'Quiz 3 Responses', count: 22, deadline: 'No deadline' }
-            ].map((item, index) => (
-              <ListItem key={index} disablePadding divider={index < 2}>
-                <ListItemButton>
-                  <ListItemText 
-                    primary={item.title} 
-                    secondary={`${item.count} submissions • Due in ${item.deadline}`}
-                    primaryTypographyProps={{ fontWeight: index === 0 ? 'bold' : 'regular' }}
-                  />
-                  <Button size="small" variant="contained" color="primary">
-                    Grade
-                  </Button>
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12} md={6}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6" component="h2">
-              Student Questions
-            </Typography>
-            <Chip label="4 New" color="error" size="small" />
-          </Box>
-          
-          <List disablePadding>
-            {[
-              { student: 'Alice Smith', question: 'Question about lab 3 submission', time: '15 minutes ago' },
-              { student: 'Bob Johnson', question: 'Clarification on midterm topics', time: '2 hours ago' },
-              { student: 'Carol Williams', question: 'Extension request for assignment', time: '1 day ago' }
-            ].map((item, index) => (
-              <ListItem key={index} disablePadding divider={index < 2}>
-                <ListItemButton>
-                  <Avatar sx={{ mr: 2, width: 32, height: 32, bgcolor: 'primary.main' }}>
-                    {item.student[0]}
-                  </Avatar>
-                  <ListItemText 
-                    primary={item.question} 
-                    secondary={`${item.student} • ${item.time}`}
-                  />
-                  <ArrowForwardIcon color="action" fontSize="small" />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-          
-          <Button variant="outlined" sx={{ mt: 2 }}>View All Questions</Button>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography variant="h6" component="h2" gutterBottom>
-            Course Analytics
-          </Typography>
-          
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="h3" color="primary.main">82%</Typography>
-                  <Typography variant="body2">Average Assignment Score</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="h3" color="primary.main">19</Typography>
-                  <Typography variant="body2">Students Requiring Attention</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <Card variant="outlined">
-                <CardContent>
-                  <Typography variant="h3" color="primary.main">94%</Typography>
-                  <Typography variant="body2">Assignment Submission Rate</Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </Paper>
-      </Grid>
-    </Grid>
-  </Box>
-);
-
-// Admin Dashboard Component
-const AdminDashboard: React.FC = () => (
-  <Box>
-    <Grid container spacing={3}>
-      <Grid item xs={12} md={3}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography variant="h3" color="primary.main">346</Typography>
-          <Typography variant="body1" gutterBottom>Total Users</Typography>
-          <Typography variant="body2" color="text.secondary">24 new this week</Typography>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12} md={3}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography variant="h3" color="primary.main">15</Typography>
-          <Typography variant="body1" gutterBottom>Active Courses</Typography>
-          <Typography variant="body2" color="text.secondary">3 pending approval</Typography>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12} md={3}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography variant="h3" color="success.main">98.2%</Typography>
-          <Typography variant="body1" gutterBottom>System Uptime</Typography>
-          <Typography variant="body2" color="text.secondary">Last incident: 12 days ago</Typography>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12} md={3}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography variant="h3" color="warning.main">8</Typography>
-          <Typography variant="body1" gutterBottom>Support Tickets</Typography>
-          <Typography variant="body2" color="text.secondary">3 urgent, 5 normal</Typography>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12} md={6}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6" component="h2">
-              Recent System Activity
-            </Typography>
-            <Button size="small" color="primary">View All</Button>
-          </Box>
-          
-          <List disablePadding>
-            {[
-              { action: 'Course added', details: 'CS 355 - Database Systems', time: '2 hours ago' },
-              { action: 'User role changed', details: 'David Brown from student to TA', time: '5 hours ago' },
-              { action: 'System backup', details: 'Automated daily backup', time: '1 day ago' },
-              { action: 'User deleted', details: 'Account removed at user request', time: '2 days ago' }
-            ].map((item, index) => (
-              <ListItem key={index} disablePadding divider={index < 3}>
-                <ListItemButton>
-                  <ListItemText 
-                    primary={item.action} 
-                    secondary={`${item.details} • ${item.time}`}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
-        </Paper>
-      </Grid>
-      
-      <Grid item xs={12} md={6}>
-        <Paper elevation={0} sx={{ p: 3 }}>
-          <Typography variant="h6" component="h2" gutterBottom>
-            System Status
-          </Typography>
-          
-          <List disablePadding>
-            {[
-              { service: 'Authentication Service', status: 'Operational', indicator: 'success' },
-              { service: 'Database Server', status: 'Operational', indicator: 'success' },
-              { service: 'File Storage', status: 'Operational', indicator: 'success' },
-              { service: 'Email Service', status: 'Degraded', indicator: 'warning' }
-            ].map((item, index) => (
-              <ListItem key={index} disablePadding divider={index < 3}>
-                <ListItemText 
-                  primary={item.service} 
-                  secondary={item.status}
-                />
-                <Chip 
-                  size="small" 
-                  sx={{ width: 12, height: 12 }} 
-                  color={item.indicator as 'success' | 'warning' | 'error'} 
-                />
-              </ListItem>
-            ))}
-          </List>
-          
-          <Button variant="outlined" sx={{ mt: 2 }}>View Detailed Report</Button>
-        </Paper>
-      </Grid>
-    </Grid>
-  </Box>
-);
-
 // Main Dashboard Component
 export default function Dashboard() {
   const [role, setRole] = useState<UserRole>('student');
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [gradeables, setGradeables] = useState<Gradeable[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  
-  useEffect(() => {
-    // Get role from localStorage on component mount
-    setRole(getUserRole());
-  }, []);
 
-  const handleRoleChange = (newRole: UserRole) => {
-    // Update state
-    setRole(newRole);
-    
-    // Save to localStorage
-    setUserRole(newRole);
-    
-    // Dispatch custom event to notify layout about role change
-    const event = new CustomEvent('roleChange', { 
-      detail: { role: newRole }
-    });
-    window.dispatchEvent(event);
-    
-    // Force navigation refresh by adding a small delay and reloading the page
-    // This ensures other components depending on role are updated
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
-  };
+  // Fetch announcements function
+  const fetchAnnouncements = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
 
-  // Render dashboard based on normalized role
-  const renderDashboard = () => {
-    const normalizedRole = normalizeRole(role);
-    
-    switch(normalizedRole) {
-      case 'ta':
-        return <TADashboard />;
-      case 'admin':
-        return <AdminDashboard />;
-      case 'student':
-      default:
-        return <StudentDashboard />;
+      const response = await axios.get('/announcements', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      // Sort announcements by date and get most recent
+      const sortedAnnouncements = response.data.sort((a: Announcement, b: Announcement) => 
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      
+      setAnnouncements(sortedAnnouncements.slice(0, 5)); // Get 5 most recent announcements
+      setError(null);
+    } catch (error: any) {
+      console.error('Error fetching announcements:', error);
+      setError('Failed to fetch announcements');
+      if (error.response?.status === 401) {
+        router.push('/login');
+      }
+    } finally {
+      setLoading(false);
     }
   };
+
+  const fetchAssignments = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axios.get('/assignments', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setAssignments(response.data);
+      setError(null);
+    } catch (error: any) {
+      console.error('Error fetching assignments:', error);
+      setError('Failed to fetch assignments');
+      if (error.response?.status === 401) {
+        router.push('/login');
+      }
+    }
+  };
+
+  const fetchGradeables = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await axios.get('/gradeables', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setGradeables(response.data);
+      setError(null);
+    } catch (error: any) {
+      console.error('Error fetching gradeables:', error);
+      setError('Failed to fetch gradeables');
+      if (error.response?.status === 401) {
+        router.push('/login');
+      }
+    }
+  };
+
+  useEffect(() => {
+    const storedRole = localStorage.getItem('role');
+    if (storedRole) {
+      const normalizedRole = normalizeRole(storedRole as UserRole);
+      setRole(normalizedRole);
+      
+      // Always fetch announcements
+      fetchAnnouncements();
+      
+      // Fetch data based on role
+      if (normalizedRole === 'student') {
+        // Students see assignments
+        fetchAssignments();
+      } else if (normalizedRole === 'ta' || normalizedRole === 'admin') {
+        // TAs and Admins see gradeables
+        fetchGradeables();
+      }
+    }
+  }, []); 
+
+  const renderDashboard = () => {
+    const storedRole = localStorage.getItem('role');
+    if (!storedRole) return null;
+
+    switch(storedRole.toLowerCase()) {
+      case 'ta':
+      case 'admin':
+      case 'professor':
+      case 'prof':
+        return (
+          <TADashboard 
+            announcements={announcements}
+            gradeables={gradeables}
+            loading={loading}
+          />
+        );
+      case 'student':
+      default:
+        return (
+          <StudentDashboard 
+            announcements={announcements} 
+            assignments={assignments} 
+            loading={loading} 
+          />
+        );
+    }
+  };
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box sx={{ p: 2 }}>
-        <RoleSwitcher currentRole={role} onRoleChange={handleRoleChange} />
         {renderDashboard()}
       </Box>
     </Box>
