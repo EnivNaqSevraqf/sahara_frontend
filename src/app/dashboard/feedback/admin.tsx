@@ -32,11 +32,13 @@ const MatrixCell = styled(TableCell)(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
   minWidth: '60px',  // Reduced from 80px
   backgroundColor: theme.palette.background.paper,
+  color: theme.palette.text.primary,
 }));
 
 const StatCell = styled(MatrixCell)(({ theme }) => ({
-  backgroundColor: theme.palette.grey[100],
+  backgroundColor: theme.palette.mode === 'dark' ? theme.palette.grey[800] : theme.palette.grey[100],
   fontWeight: 'bold',
+  color: theme.palette.text.primary,
 }));
 
 interface TeamFeedback {
@@ -369,96 +371,174 @@ export default function AdminFeedback() {
   }
 
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3, bgcolor: 'background.default' }}>
+      <Box sx={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        mb: 3
+      }}>
+        <Typography variant="h4" sx={{ color: 'text.primary', fontWeight: 500 }}>
           Team Feedback Overview
         </Typography>
         <Button
           variant="outlined"
           startIcon={<FileDownloadIcon />}
           onClick={exportAllMatrices}
+          sx={{
+            borderColor: 'primary.main',
+            color: 'primary.main',
+            '&:hover': {
+              borderColor: 'primary.dark',
+              backgroundColor: 'action.hover',
+            }
+          }}
         >
           Export All Matrices
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Team Name</TableCell>
-              <TableCell align="center">Submissions</TableCell>
-              <TableCell>Last Submission</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {teams.map((team) => (
-              <TableRow key={team.team_id}>
-                <TableCell>{team.team_name}</TableCell>
-                <TableCell align="center">{team.submission_count}</TableCell>
-                <TableCell>{new Date(team.last_submission).toLocaleDateString()}</TableCell>
-                <TableCell align="center">
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => handleViewDetails(team.team_id)}
-                  >
-                    View Details
-                  </Button>
-                </TableCell>
+      <Paper elevation={2} sx={{ mb: 4, bgcolor: 'background.paper' }}>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'background.paper' }}>
+                <TableCell sx={{ color: 'text.primary', fontWeight: 600 }}>Team Name</TableCell>
+                <TableCell align="center" sx={{ color: 'text.primary', fontWeight: 600 }}>Submissions</TableCell>
+                <TableCell sx={{ color: 'text.primary', fontWeight: 600 }}>Last Submission</TableCell>
+                <TableCell align="center" sx={{ color: 'text.primary', fontWeight: 600 }}>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {teams.map((team) => (
+                <TableRow 
+                  key={team.team_id} 
+                  sx={{ 
+                    '&:hover': { 
+                      bgcolor: 'action.hover'
+                    }
+                  }}
+                >
+                  <TableCell sx={{ color: 'text.primary' }}>{team.team_name}</TableCell>
+                  <TableCell align="center" sx={{ color: 'text.primary' }}>{team.submission_count}</TableCell>
+                  <TableCell sx={{ color: 'text.primary' }}>{new Date(team.last_submission).toLocaleDateString()}</TableCell>
+                  <TableCell align="center">
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleViewDetails(team.team_id)}
+                      sx={{
+                        bgcolor: 'primary.main',
+                        color: 'primary.contrastText',
+                        '&:hover': {
+                          bgcolor: 'primary.dark',
+                        }
+                      }}
+                    >
+                      View Details
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
 
       <Dialog 
         open={dialogOpen} 
         onClose={() => setDialogOpen(false)}
         maxWidth="lg"
         fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: 'background.paper',
+            color: 'text.primary',
+          }
+        }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{ 
+          borderBottom: 1, 
+          borderColor: 'divider',
+          color: 'text.primary',
+          bgcolor: 'background.paper',
+          fontWeight: 600
+        }}>
           Team Feedback Details - {selectedTeam?.team_name}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ bgcolor: 'background.paper', pt: 3 }}>
           {selectedTeam && (
             <>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                  Feedback Correlation Matrix
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center', 
+                mb: 2,
+                mt: 2
+              }}>
+                <Typography variant="h6" gutterBottom sx={{ color: 'text.primary', fontWeight: 500 }}>
+                  Feedback Matrix
                 </Typography>
                 <Button
                   variant="outlined"
                   startIcon={<FileDownloadIcon />}
                   onClick={() => exportToCSV(selectedTeam)}
-                  sx={{ ml: 2 }}
+                  sx={{
+                    borderColor: 'primary.main',
+                    color: 'primary.main',
+                    '&:hover': {
+                      borderColor: 'primary.dark',
+                      bgcolor: 'action.hover',
+                    }
+                  }}
                 >
                   Export Matrix
                 </Button>
               </Box>
               {renderFeedbackMatrix(selectedTeam)}
               
-              <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+              <Typography variant="h6" gutterBottom sx={{ mt: 4, color: 'text.primary', fontWeight: 500 }}>
                 Detailed Submissions
               </Typography>
-              {selectedTeam.submissions.map((submission, index) => (
-                <Box key={submission.submission_id} mb={4}>
-                  <Typography variant="h6" gutterBottom>
+              {selectedTeam.submissions.map((submission) => (
+                <Paper 
+                  key={submission.submission_id} 
+                  elevation={1}
+                  sx={{ 
+                    p: 2, 
+                    mb: 2,
+                    bgcolor: 'background.paper',
+                    '&:hover': { bgcolor: 'action.hover' }
+                  }}
+                >
+                  <Typography variant="subtitle1" sx={{ color: 'text.primary', fontWeight: 500 }}>
                     Submission by {submission.submitter.name}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary" gutterBottom>
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     Submitted on: {new Date(submission.submitted_at).toLocaleString()}
                   </Typography>
-                </Box>
+                </Paper>
               ))}
             </>
           )}
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>Close</Button>
+        <DialogActions sx={{ 
+          borderTop: 1, 
+          borderColor: 'divider', 
+          p: 2,
+          bgcolor: 'background.paper'
+        }}>
+          <Button 
+            onClick={() => setDialogOpen(false)}
+            sx={{
+              color: 'primary.main',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              }
+            }}
+          >
+            Close
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
