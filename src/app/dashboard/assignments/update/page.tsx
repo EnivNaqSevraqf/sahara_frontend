@@ -71,8 +71,8 @@ const UpdateAssignable: React.FC = () => {
       setAssignable(response.data);
       setError(null);
     } catch (err: any) {
-      console.error('Error fetching assignment:', err);
-      setError(err.response?.data?.detail || 'Failed to fetch assignment details');
+      console.error('Error fetching assignable:', err);
+      setError(err.response?.data?.detail || 'Failed to fetch assignable details');
     } finally {
       setLoading(false);
     }
@@ -100,10 +100,10 @@ const UpdateAssignable: React.FC = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-
+      
       setSnackbar({
         open: true,
-        message: 'Assignment updated successfully!',
+        message: 'Assignable updated successfully!',
         severity: 'success'
       });
 
@@ -112,10 +112,10 @@ const UpdateAssignable: React.FC = () => {
         router.push('/dashboard/assignments');
       }, 1500);
     } catch (err: any) {
-      console.error('Error updating assignment:', err);
+      console.error('Error updating assignable:', err);
       setSnackbar({
         open: true,
-        message: err.response?.data?.detail || 'Failed to update assignment',
+        message: err.response?.data?.detail || 'Failed to update assignable',
         severity: 'error'
       });
     } finally {
@@ -265,7 +265,7 @@ const UpdateAssignable: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
                 <Button
                   variant="outlined"
-                  onClick={() => router.push('/dashboard/submission')}
+                  onClick={() => router.push('/dashboard/assignments')}
                   disabled={saving}
                 >
                   Cancel
@@ -277,7 +277,7 @@ const UpdateAssignable: React.FC = () => {
                   disabled={saving}
                   startIcon={saving ? <CircularProgress size={20} /> : null}
                 >
-                  {saving ? 'Updating...' : 'Update Submittable'}
+                  {saving ? 'Updating...' : 'Update Assignment'}
                 </Button>
               </Box>
             </Grid>
