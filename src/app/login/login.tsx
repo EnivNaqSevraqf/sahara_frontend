@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from "next/navigation";
 import Auth from "./auth";
 import EmailIcon from '@mui/icons-material/Email';
-import LockIcon from '@mui/icons-material/Lock';
+import PersonIcon from '@mui/icons-material/Person';
 import ForgotPassword from "./ForgotPassword";
 import { TextField, Button, Typography, Box, Link, FormControl, InputLabel, MenuItem, Select, CircularProgress, InputAdornment } from "@mui/material";
 import axios from 'axios';
@@ -156,7 +156,7 @@ const LoginComponent = () => {
               borderBottomLeftRadius: '4px'
             }}
           >
-            <span style={{ fontSize: '20px' }}>📧</span>
+            <PersonIcon sx={{ fontSize: 24 }} />
           </Box>
           <TextField
           fullWidth
@@ -250,7 +250,7 @@ const LoginComponent = () => {
             onClick={() => setForgotPasswordOpen(true)}
             sx={{
               backgroundColor: '#033076',
-              color: '#B0B0B0',
+              color: '#FFFFFF',
               borderRadius: '4px',
               textTransform: 'none',
               '&:hover': {
