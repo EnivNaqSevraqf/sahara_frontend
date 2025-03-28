@@ -435,15 +435,15 @@ export default function ProfessorAssignmentList() {
   };
 
   const handleUpdateAssignment = (assignableId: number) => {
-    router.push(`/dashboard_test/assignment/update?id=${assignableId}`);
+    router.push(`/dashboard_test/assignments/update?id=${assignableId}`);
   };
 
   const handleCreateAssignment = () => {
-    router.push('/dashboard_test/assignment/creation');
+    router.push('/dashboard_test/assignments/creation');
   };
 
   const handleViewSubmissions = (assignableId: number) => {
-    router.push(`/dashboard_test/assignment/view?id=${assignableId}`);
+    router.push(`/dashboard_test/assignments/view?id=${assignableId}`);
   };
 
   // Render a single submittable item

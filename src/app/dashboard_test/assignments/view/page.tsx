@@ -64,7 +64,7 @@ interface AssignableType {
   };
 }
 
-export default function AssignmentView() {
+export default function AssignmentView () {
   const router = useRouter();
   const searchParams = useSearchParams();
   const theme = useTheme();
@@ -84,29 +84,29 @@ export default function AssignmentView() {
   const [gradeScore, setGradeScore] = useState<string>('');
 
   useEffect(() => {
-    console.log('Assignment ID:', assignableId);
+    console.log('Assignable ID:', assignableId);
     if (assignableId) {
       fetchAssignableDetails();
       fetchAssignments();
     } else {
-      setError('No assignment ID provided');
+      setError('No assignable ID provided');
       setLoading(false);
     }
   }, [assignableId]);
 
   const fetchAssignableDetails = async () => {
     try {
-      console.log('Fetching assignment details...');
+      console.log('Fetching assignable details...');
       const response = await axios.get(`/assignables/${assignableId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
-      console.log('Assignment details response:', response.data);
+      console.log('Assignable details response:', response.data);
       setAssignable(response.data);
     } catch (err: any) {
-      console.error('Error fetching assignment details:', err);
-      setError('Failed to fetch assignment details');
+      console.error('Error fetching assignable details:', err);
+      setError('Failed to fetch assignable details');
     }
   };
 
@@ -132,7 +132,7 @@ export default function AssignmentView() {
     try {
       const response = await axios.get(
         `/assignments/${assignmentId}/download`,
-        {   
+        {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
@@ -191,7 +191,7 @@ export default function AssignmentView() {
         severity: 'success'
       });
     } catch (err: any) {
-      console.error('Error deleting assignment:', err);
+      console.error('Error deleting submission:', err);
       setSnackbar({
         open: true,
         message: err.response?.data?.detail || 'Failed to delete assignment. Please try again.',
@@ -264,10 +264,10 @@ export default function AssignmentView() {
   }
 
   if (!assignable) {
-    console.log('Rendering no assignment state');
+    console.log('Rendering no assignable state');
     return (
       <Box p={3}>
-        <Alert severity="error">Assignment not found</Alert>
+        <Alert severity="error">Assignable not found</Alert>
       </Box>
     );
   }
@@ -275,7 +275,7 @@ export default function AssignmentView() {
   return (
     <Box p={3}>
       <Grid container spacing={3}>
-        {/* Assignment Details */}
+        {/* Submittable Details */}
         <Grid item xs={12}>
           <Card elevation={0} sx={{ 
             background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
@@ -323,7 +323,7 @@ export default function AssignmentView() {
           </Card>
         </Grid>
 
-        {/* Assignments List */}
+        {/* Submissions List */}
         <Grid item xs={12}>
           <Card elevation={0} sx={{ 
             borderRadius: 2,
