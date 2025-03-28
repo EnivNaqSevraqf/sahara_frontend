@@ -123,7 +123,7 @@ const StudentDashboard: React.FC<DashboardProps> = ({ announcements, assignments
   };
 
   const handleAnnouncementItemClick = (announcementId: number) => {
-    router.push(`/dashboard_test/announcements`);
+    router.push(`/dashboard/announcements?expanded=${announcementId}`);
   };
 
   const handleAssignmentClick = (assignmentId: number) => {
@@ -246,7 +246,7 @@ const TADashboard: React.FC<DashboardProps> = ({ announcements, gradeables = [],
   };
 
   const handleAnnouncementClick = (announcementId: number) => {
-    router.push(`/dashboard_test/announcements?expanded=${announcementId}`);
+    router.push(`/dashboard/announcements?expanded=${announcementId}`);
   };
 
   const formatDate = (dateString: string) => {
@@ -467,7 +467,7 @@ export default function Dashboard() {
   // Announcements Section Component
   const AnnouncementsSection = () => {
     const handleAnnouncementClick = (announcementId: number) => {
-      router.push(`/dashboard_test/announcements?expanded=${announcementId}`);
+      router.push(`/dashboard/announcements?expanded=${announcementId}`);
     };
 
     const formatDate = (dateString: string) => {
