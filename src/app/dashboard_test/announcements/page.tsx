@@ -546,7 +546,7 @@ const AnnouncementPage = () => {
   return (
     <Box sx={{ p: 3, maxWidth: '1200px', margin: '0 auto' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: '#033076' }}>
           Announcements
         </Typography>
         {isProfessor && (

@@ -534,7 +534,7 @@ export default function ProfessorAssignmentList() {
                   fontSize: '0.95rem'
                 }}
               >
-                <AccessTimeIcon sx={{ mr: 1, fontSize: '1.2rem', color: 'primary.main', opacity: 0.8 }} />
+                <AccessTimeIcon sx={{ mr: 1, fontSize: '1.2rem', color: '#033076', opacity: 0.8 }} />
                 Opens at: {formatDate(doc.opens_at)}
               </Typography>
             )}
@@ -548,7 +548,7 @@ export default function ProfessorAssignmentList() {
                 fontSize: '0.95rem'
               }}
             >
-              <AccessTimeIcon sx={{ mr: 1, fontSize: '1.2rem', color: 'primary.main', opacity: 0.8 }} />
+              <AccessTimeIcon sx={{ mr: 1, fontSize: '1.2rem', color: '#033076', opacity: 0.8 }} />
               Due on: {formatDate(doc.deadline)}
             </Typography>
           </Box>
@@ -844,22 +844,22 @@ export default function ProfessorAssignmentList() {
           <AssignmentIcon color="primary" />
           <Typography variant="body2" component="div">
             <span style={{ color: '#3f51b5', cursor: 'pointer', fontWeight: 500 }}>Course Home</span> / 
-            <span style={{ cursor: 'pointer', color: 'text.secondary' }}> Submissions</span>
+            <span style={{ cursor: 'pointer', color: 'text.secondary' }}> Assignments</span>
           </Typography>
         </Box>
         <Button
           variant="contained"
-          color="primary"
           startIcon={<CloudUploadIcon />}
           onClick={handleCreateAssignment}
           sx={{
             borderRadius: 1,
             textTransform: 'none',
             fontWeight: 600,
+            backgroundColor: '#033076',
             fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
           }}
         >
-          Create Submittable
+          Create Assignment
         </Button>
       </Box>
       
@@ -875,7 +875,7 @@ export default function ProfessorAssignmentList() {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              color: 'primary.main'
+              color: '#033076'
             }}
           >
             <AssignmentIcon /> Ongoing/Upcoming Documents

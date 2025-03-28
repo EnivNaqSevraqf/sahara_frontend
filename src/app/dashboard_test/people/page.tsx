@@ -168,9 +168,9 @@ const PeoplePage = () => {
           variant="outlined"
           onClick={downloadExcel}
           sx={{ 
-            borderColor: '#1976d2', 
-            color: '#1976d2', 
-            '&:hover': { borderColor: '#1565c0', backgroundColor: '#f0f7ff' }
+            borderColor: '#033076', 
+            color: '#033076', 
+            '&:hover': { borderColor: '#033076', backgroundColor: '#f0f7ff' }
           }}
         >
           Export to Excel

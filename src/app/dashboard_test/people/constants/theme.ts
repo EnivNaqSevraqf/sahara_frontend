@@ -1,6 +1,6 @@
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#003366',
+    backgroundColor: '#033076',
     color: 'white',
     '&:hover': {
       backgroundColor: '#002244',
