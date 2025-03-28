@@ -140,14 +140,14 @@ const EventCreationApp: React.FC = () => {
       return;
     }
 
-    // Check if user is logged in and has professor role
+    // Check if user is logged in and has professor/TA role
     const token = localStorage.getItem('token');
     const role = localStorage.getItem('role');
     
     if (!token) {
       setSnackbar({
         open: true,
-        message: 'Please log in to create a submittable',
+        message: 'Please log in to create an assignment',
         severity: 'error'
       });
       return;
@@ -156,7 +156,7 @@ const EventCreationApp: React.FC = () => {
     if (role == 'student') {
       setSnackbar({
         open: true,
-        message: 'Only professors/TAs can create submittables',
+        message: 'Only professors/TAs can create assignments',
         severity: 'error'
       });
       return;
@@ -185,7 +185,7 @@ const EventCreationApp: React.FC = () => {
       }
 
       // Make API call to create submittable
-      const response = await axios.post('/submittables/create', formData, {
+      const response = await axios.post('/assignables/create', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
@@ -197,7 +197,7 @@ const EventCreationApp: React.FC = () => {
       if (response.status === 201 || response.status === 200) {
         setSnackbar({
           open: true,
-          message: 'Submittable created successfully!',
+          message: 'Assignment created successfully!',
           severity: 'success'
         });
 
@@ -208,15 +208,15 @@ const EventCreationApp: React.FC = () => {
         setDescription('');
         setReferenceFile(null);
 
-        // Redirect to the submittables list page after a short delay
+        // Redirect to the assignments list page after a short delay
         setTimeout(() => {
-          window.location.href = '/dashboard_test/submission';
+          window.location.href = '/dashboard_test/assignments';
         }, 2000);
       }
     } catch (error: any) {
-      console.error('Error creating submittable:', error);
+      console.error('Error creating assignment:', error);
       
-      let errorMessage = 'An error occurred while creating the submittable';
+      let errorMessage = 'An error occurred while creating the assignment';
       
       if (error.response) {
         if (error.response.status === 401) {
@@ -227,7 +227,7 @@ const EventCreationApp: React.FC = () => {
             window.location.href = '/login';
           }, 3000);
         } else if (error.response.status === 403) {
-          errorMessage = 'You do not have permission to create submittables.';
+          errorMessage = 'You do not have permission to create assignments.';
         } else if (error.response.status === 422) {
           // Handle validation errors
           const validationErrors = error.response.data;
@@ -258,7 +258,7 @@ const EventCreationApp: React.FC = () => {
         <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
           <Typography variant="body2" component="div">
             <span style={{ color: '#3f51b5', cursor: 'pointer' }}>Course Home</span> / 
-            <span style={{ cursor: 'pointer' }}> Create Submission</span>
+            <span style={{ cursor: 'pointer' }}> Create Assignment</span>
           </Typography>
         </Box>
 
@@ -274,10 +274,10 @@ const EventCreationApp: React.FC = () => {
           }}
         >
           <Typography variant="h4" component="h1" gutterBottom>
-            Create New Submittable
+            Create New Assignment
           </Typography>
           <Typography variant="body1" sx={{ opacity: 0.9 }}>
-            Create a new submittable for your students to complete.
+            Create a new assignment for your students to complete.
           </Typography>
         </Paper>
 
@@ -313,7 +313,7 @@ const EventCreationApp: React.FC = () => {
                     MozAppearance: 'textfield'
                   }
                 }}
-                helperText="Enter the maximum possible score for this submittable"
+                helperText="Enter the maximum possible score for this assignment"
                 sx={{ 
                   mb: 2,
                   '& input[type=number]': {
@@ -460,7 +460,7 @@ const EventCreationApp: React.FC = () => {
                 disabled={loading}
                 startIcon={loading ? <CircularProgress size={20} /> : null}
               >
-                Create Submittable
+                Create Assignment
               </Button>
             </Grid>
           </Grid>
