@@ -9,7 +9,7 @@ export type UserRole = 'user' | 'student' | 'TA' | 'ta' | 'admin';
  */
 export function getUserRole(): UserRole {
   // if (typeof window !== 'undefined') {
-    const role = localStorage.getItem('userRole');
+    const role = localStorage.getItem('role');
     if (role === 'user' || role === 'student' || role === 'TA' || role === 'ta' || role === 'admin') {
       return role as UserRole;
     }
@@ -17,12 +17,12 @@ export function getUserRole(): UserRole {
   return 'student'; // Default role
 }
 
-/**
+/**q1
  * Set the user role in local storage
  */
 export function setUserRole(role: UserRole): void {
   // if (typeof window !== 'undefined') {
-    localStorage.setItem('userRole', role);
+    localStorage.setItem('role', role);
   // }
 }
 

@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from "next/navigation";
 import Auth from "./auth";
 import EmailIcon from '@mui/icons-material/Email';
-import LockIcon from '@mui/icons-material/Lock';
+import PersonIcon from '@mui/icons-material/Person';
 import ForgotPassword from "./ForgotPassword";
 import { TextField, Button, Typography, Box, Link, FormControl, InputLabel, MenuItem, Select, CircularProgress, InputAdornment } from "@mui/material";
 import axios from 'axios';
@@ -34,7 +34,7 @@ const LoginComponent = () => {
     // If token exists, redirect to dashboard
     if (existingToken && Auth.isTokenValid()) {
       console.log("Token exists, redirecting to dashboard");
-      router.push("/dashboard_test");
+      router.push("/dashboard");
       return true;
     }  
     console.log("No token found");
@@ -77,7 +77,7 @@ const LoginComponent = () => {
 
       // Store auth data and redirect
       Auth.doLogIn(credentials.username, response.data.access_token, response.data.role);
-      router.push("/dashboard_test");
+      router.push("/dashboard");
 
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -156,7 +156,7 @@ const LoginComponent = () => {
               borderBottomLeftRadius: '4px'
             }}
           >
-            <span style={{ fontSize: '20px' }}>📧</span>
+            <PersonIcon sx={{ fontSize: 24 }} />
           </Box>
           <TextField
           fullWidth
@@ -218,42 +218,48 @@ const LoginComponent = () => {
           </Box>
         )}
         <Button
-        type="submit"
-        fullWidth
-        variant="contained"
-        disabled={loading || !credentials.username || !credentials.password}
-        sx={{
-          mt: 2,
-          backgroundColor: "#000080",
-          color: "white",
-          borderRadius: "4px",
-          padding: "12px 0",
-          '&:hover': {
-            backgroundColor: "#000060",
-          },
-          '&:disabled': {
-            backgroundColor: "#cccccc",
-          }
-        }}
-      >
-        {loading ? <CircularProgress size={24} color="inherit" /> : "Login"}
-      </Button>
-        <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
-        <Button
-          variant="outlined"
-          onClick={() => setForgotPasswordOpen(true)} // Proper state update
+          type="submit"
+          fullWidth
+          variant="contained"
+          disabled={loading || !credentials.username || !credentials.password}
           sx={{
-            color: '#000080',
-            borderColor: '#E0E0E0',
-            borderRadius: '4px',
-            textTransform: 'none',
+            mt: 2,
+            mb: 3, // Add margin bottom for spacing
+            backgroundColor: "#033076",
+            color: "white",
+            borderRadius: "4px",
+            padding: "12px 0",
             '&:hover': {
-              borderColor: '#000080',
+              backgroundColor: "#000060",
+            },
+            '&:disabled': {
+              backgroundColor: "#cccccc",
             }
           }}
         >
-         Forgot password?
-</Button>
+          {loading ? <CircularProgress size={24} color="inherit" /> : "Login"}
+        </Button>
+        <Box sx={{ 
+          display: "flex", 
+          justifyContent: "flex-end", 
+          mb: 2,
+          mt: 2 // Add margin top for additional spacing
+        }}>
+          <Button
+            variant="outlined"
+            onClick={() => setForgotPasswordOpen(true)}
+            sx={{
+              backgroundColor: '#033076',
+              color: '#FFFFFF',
+              borderRadius: '4px',
+              textTransform: 'none',
+              '&:hover': {
+                backgroundColor: '#02225a',
+              }
+            }}
+          >
+            Forgot password?
+          </Button>
         </Box>
         </Box>
         <ForgotPassword open={forgotPasswordOpen} handleClose={() => setForgotPasswordOpen(false)} />
