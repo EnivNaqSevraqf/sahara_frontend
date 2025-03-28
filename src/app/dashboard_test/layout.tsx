@@ -120,7 +120,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
       },
       {
         segment: 'dashboard_test/submission',
-        title: 'Documentation',
+        title: 'Submissions',
         icon: <AssignmentRoundedIcon />,
       },
       {
@@ -176,10 +176,10 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Assignments',
         icon: <SchoolIcon />,
       },
-      //documentation
+      //documentation -> Submissions
       {
         segment: 'dashboard_test/submission',
-        title: 'Documentation',
+        title: 'Submissions',
         icon: <AssignmentRoundedIcon />,
       },
       {
