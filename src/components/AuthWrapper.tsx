@@ -29,7 +29,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
       (error) => {
         if (error.response?.status === 403) {
           console.log('Access denied:', pathname);
-          router.push('/dashboard_test');
+          router.push('/dashboard');
         }
         else if (error.response?.status === 401) {
           console.log('Unauthorized:', pathname);

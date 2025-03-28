@@ -433,7 +433,7 @@ const AnnouncementPage = () => {
       let errorMessage = 'Error deleting announcement';
       console.log(error.response?.request?.status);
       if (error.response?.request?.status === 403) {
-        console.log("Pushing to dashboard_test");
+        console.log("Pushing to dashboard");
         errorMessage = "Only professors can delete announcements";
         router.push('/dashboard');
         return;

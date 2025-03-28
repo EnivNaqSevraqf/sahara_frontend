@@ -23,7 +23,7 @@ import Link from '@mui/material/Link';
 import { getUserRole, normalizeRole, type UserRole } from '@/utils/roles';
 
   const adminListItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard_test' },
+    { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard' },
     { text: 'Announcements', icon: <AnnouncementIcon />, href: '/announcements' },
     { text: 'Gradeables', icon: <AssignmentRoundedIcon />, href: '/gradeables' },
     { text: 'Form Management', icon: <ViewQuilt />, href: '/forms' },
@@ -34,7 +34,7 @@ import { getUserRole, normalizeRole, type UserRole } from '@/utils/roles';
   ];
   
   const studentListItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard_test' },
+    { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard' },
     { text: 'Announcements', icon: <AnnouncementIcon />, href: '/announcements' },
     { text: 'Project', icon: <SchoolIcon />, href: '/project' },
     { text: 'Quizzes', icon: <QuizIcon />, href: '/quizzes' },
@@ -44,7 +44,7 @@ import { getUserRole, normalizeRole, type UserRole } from '@/utils/roles';
   ];
   
   const taListItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard_test' },
+    { text: 'Dashboard', icon: <DashboardIcon />, href: '/dashboard' },
     { text: 'Gradeables', icon: <AssignmentRoundedIcon />, href: '/gradeables' },
     { text: 'Courses', icon: <SchoolIcon />, href: '/courses' },
     { text: 'Users', icon: <PeopleIcon />, href: '/users' },
