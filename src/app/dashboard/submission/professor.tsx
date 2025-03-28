@@ -39,9 +39,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import { useRouter } from 'next/navigation';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import TimelineIcon from '@mui/icons-material/Timeline';
+import { currentConfig } from '@/config';
 
 // Configure axios base URL
-axios.defaults.baseURL = 'http://localhost:8000';
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 interface SubmissionType {
   id: number;
@@ -138,43 +139,44 @@ export default function ProfessorSubmissionList() {
 
       console.log('Using token:', token.substring(0, 20) + '...');
       
-      const response = await axios.get('/submittables/', {
+      const response = await axios.get('/submittables/all', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      console.log('Submittables response:', response.data);
+      console.log('Raw response:', response);
+      console.log('Response data:', response.data);
       
-      // Handle the response format with upcoming, open, and closed arrays
-      if (typeof response.data === 'object' && response.data !== null) {
-        // Combine all submittables from different categories
-        const allSubmittables = [
-          ...(response.data.upcoming || []),
-          ...(response.data.open || []),
-          ...(response.data.closed || [])
-        ].map((submittable: any) => ({
-          ...submittable,
-          submission_count: 0 // Default to 0 for now until backend endpoint is ready
-        }));
-        
-        setSubmittables(allSubmittables);
-        setError(null);
-      } else {
-        console.error('Unexpected response format:', response.data);
+      // Check if response.data exists and has the expected structure
+      if (!response.data || typeof response.data !== 'object') {
+        console.error('Invalid response structure:', response.data);
         throw new Error('Invalid response format from server');
       }
+
+      // Ensure we have arrays for each category, defaulting to empty arrays if missing
+      const upcoming = Array.isArray(response.data.upcoming) ? response.data.upcoming : [];
+      const open = Array.isArray(response.data.open) ? response.data.open : [];
+      const closed = Array.isArray(response.data.closed) ? response.data.closed : [];
+
+      console.log('Processed categories:', {
+        upcoming: upcoming.length,
+        open: open.length,
+        closed: closed.length
+      });
+      
+      // Combine all submittables from different categories
+      const allSubmittables = [...upcoming, ...open, ...closed];
+      
+      console.log('Total submittables:', allSubmittables.length);
+      setSubmittables(allSubmittables);
+      setError(null);
     } catch (err: any) {
       console.error('Error fetching submittables:', {
         message: err.message,
         response: err.response?.data,
         status: err.response?.status,
-        headers: err.response?.headers,
-        config: {
-          url: err.config?.url,
-          method: err.config?.method,
-          headers: err.config?.headers
-        }
+        headers: err.response?.headers
       });
       
       let errorMessage = 'Failed to fetch submittables';
@@ -190,6 +192,8 @@ export default function ProfessorSubmissionList() {
         setTimeout(() => {
           window.location.href = '/login';
         }, 2000);
+      } else if (err.message === 'Invalid response format from server') {
+        errorMessage = 'Server returned invalid data format. Please try again later.';
       } else if (err.response?.data) {
         if (typeof err.response.data === 'string') {
           errorMessage = err.response.data;
