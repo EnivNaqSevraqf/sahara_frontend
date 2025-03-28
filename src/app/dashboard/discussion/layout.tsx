@@ -60,11 +60,11 @@ export default function DiscussionLayout({
   children: React.ReactNode;
 }) {
   // You can implement a theme toggle here if needed
-  const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const currentTheme = prefersDarkMode ? darkTheme : theme;
+  // const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  // const currentTheme = prefersDarkMode ? darkTheme : theme;
 
   return (
-    <ThemeProvider theme={currentTheme}>
+    <ThemeProvider theme={theme}>
       <CssBaseline />
       {children}
     </ThemeProvider>
