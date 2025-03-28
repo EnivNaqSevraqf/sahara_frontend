@@ -272,7 +272,7 @@ export default function ProfessorAssignmentList() {
         return;
       }
 
-      await axios.delete(`/assignments/${assignmentId}`, {
+      await axios.delete(`/assignables/${assignmentId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

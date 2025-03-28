@@ -323,8 +323,8 @@ const AnnouncementPage = () => {
 
       if (error.response?.data?.status === 403) {
         errorMessage = "Only professors can create announcements";
-        console.log("Pushing to dashboard_test");
-        router.push('/dashboard_test');
+        console.log("Pushing to dashboard");
+        router.push('/dashboard');
         return;
       }
 
@@ -433,9 +433,9 @@ const AnnouncementPage = () => {
       let errorMessage = 'Error deleting announcement';
       console.log(error.response?.request?.status);
       if (error.response?.request?.status === 403) {
-        console.log("Pushing to dashboard_test");
+        console.log("Pushing to dashboard");
         errorMessage = "Only professors can delete announcements";
-        router.push('/dashboard_test');
+        router.push('/dashboard');
         return;
       }
 
