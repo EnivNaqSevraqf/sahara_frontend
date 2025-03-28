@@ -4,6 +4,7 @@ import * as React from 'react';
 import Image from 'next/image';
 import { createTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
+import Avatar from "@mui/material/Avatar";
 import GroupsIcon from '@mui/icons-material/Groups';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
@@ -14,6 +15,7 @@ import ForumIcon from '@mui/icons-material/Forum';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SchoolIcon from '@mui/icons-material/School';
 import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
+import ProfileIcon from '@mui/icons-material/AccountCircle';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { ThumbUpAlt, ViewQuilt } from '@mui/icons-material';
@@ -24,7 +26,7 @@ import { useDemoRouter } from '@toolpad/core/internal';
 import { useEffect, useState } from 'react';
 import AuthWrapper from '@/components/AuthWrapper';
 import "../globals.css";
-import { Chip, Stack, Tooltip, Typography } from '@mui/material';
+import { Button, Chip, Stack, Tooltip, Typography } from '@mui/material';
 import LogoutButton from '@/components/logout';
 import Header from '@/components/Header';
 //import toolbaritems from '@/components/toolbaritems';
@@ -394,7 +396,7 @@ export default function DashboardLayout({
 }>) {
   const [role, setRole] = useState<UserRole>('student');
   const [key, setKey] = useState<number>(0);
-  const router = useDemoRouter();
+  const router = useRouter();
   
   useEffect(() => {
     const checkAndSetRole = () => {
@@ -424,13 +426,60 @@ export default function DashboardLayout({
   // Generate navigation based on user role
   const navigation = getUserNavigation(role);
 
-  function CustomToolbarActions(){
+  function CustomToolbarActions() {
+    const router = useRouter();
+    const username = localStorage.getItem('username') || 'User';
+    const firstName = username.split(' ')[0];
+
     return (
-      <LogoutButton>
-        <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
-        Logout
-      </LogoutButton>
-    )
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px'
+      }}>
+        <Tooltip title="Profile">
+          <Button
+            onClick={() => router.push('/dashboard/profile')}
+            sx={{
+              minWidth: 'auto',
+              padding: 0,
+              borderRadius: '50%',
+              '&:hover': {
+                backgroundColor: 'rgba(3, 48, 118, 0.08)',
+              }
+            }}
+          >
+            <Avatar
+              sx={{
+                bgcolor: '#033076',
+                color: '#ffffff',
+                width: 40,
+                height: 40,
+                fontSize: '1.1rem',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                boxShadow: '0 2px 4px rgba(3, 48, 118, 0.2)'
+              }}
+            >
+              {firstName[0]}
+            </Avatar>
+          </Button>
+        </Tooltip>
+        
+        <LogoutButton
+          sx={{
+            backgroundColor: '#033076',
+            color: '#ffffff',
+            '&:hover': {
+              backgroundColor: '#022060'
+            }
+          }}
+        >
+          <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
+          Logout
+        </LogoutButton>
+      </div>
+    );
   }
 
   function CustomAppTitle() {

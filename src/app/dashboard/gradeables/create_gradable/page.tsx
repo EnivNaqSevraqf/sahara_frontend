@@ -10,9 +10,13 @@ import {
   Alert,
   Button,
   TextField,
-  Snackbar
+  Snackbar,
+  Divider,
+  Grid
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 
@@ -149,22 +153,6 @@ const CreateGradeable: React.FC = () => {
 
       const gradeableId = gradeableResponse.data.id;
 
-      // Upload scores
-      // const formData = new FormData();
-      // formData.append('file', selectedFile);
-
-      // await axios.post(
-      //   `http://localhost:8000/gradeables/${gradeableId}/upload-scores`,
-      //   formData,
-      //   {
-      //     ...axiosConfig,
-      //     headers: {
-      //       ...axiosConfig.headers,
-      //       'Content-Type': 'multipart/form-data',
-      //     }
-      //   }
-      // );
-
       setSubmitStatus({
         severity: 'success',
         message: 'Gradeable created and scores uploaded successfully!'
@@ -196,92 +184,230 @@ const CreateGradeable: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h2" align="center" sx={{
-        mb: 4,
-        p: 2,
-        border: '1px solid #e0e0e0',
-        borderRadius: '50px',
-        color: '#1976d2'
+    <Box sx={{ 
+      p: 3, 
+      maxWidth: '1200px', 
+      margin: '0 auto',
+      bgcolor: 'background.default'
+    }}>
+      {/* Course navigation */}
+      <Box sx={{ 
+        mb: 4, 
+        pb: 2, 
+        borderBottom: '1px solid', 
+        borderColor: 'divider',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
-        Create Gradeable and Upload Scores
-      </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <AssignmentIcon color="primary" />
+          <Typography variant="body2" component="div">
+            <span style={{ color: '#3f51b5', cursor: 'pointer', fontWeight: 500 }}>Course Home</span> / 
+            <span style={{ cursor: 'pointer', color: 'text.secondary' }}> Gradeables</span>
+          </Typography>
+        </Box>
+      </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-        <Paper sx={{ p: 3, width: '100%', maxWidth: '600px' }}>
-          <TextField
-            label="Test/Assignment Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            fullWidth
-            required
-            error={titleError}
-            helperText={titleError ? "Title is required" : ""}
-            sx={{ mb: 2 }}
-          />
-          
-          <TextField
-            label="Maximum Points"
-            type="number"
-            value={maxPoints}
-            onChange={(e) => setMaxPoints(Number(e.target.value))}
-            fullWidth
-            required
-            error={maxPointsError}
-            helperText={maxPointsError ? "Points must be between 1 and 1000" : ""}
-            inputProps={{ min: 1, max: 1000 }}
-            sx={{ mb: 2 }}
-          />
-          
-          <Paper sx={{
-            p: 1,
-            display: 'flex',
-            alignItems: 'center',
-            border: '1px solid #e0e0e0',
-          }}>
-            <Input
-              placeholder="Attach scores CSV file"
-              fullWidth
-              disableUnderline
-              sx={{ px: 2 }}
-              value={selectedFile ? selectedFile.name : ''}
-              readOnly
-            />
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              accept=".csv,application/vnd.ms-excel"
-              style={{ display: 'none' }}
-            />
-            <IconButton
-              onClick={() => fileInputRef.current?.click()}
-              sx={{
-                borderRadius: '4px',
-                backgroundColor: '#1976d2',
-                color: 'white',
-                '&:hover': { backgroundColor: '#1565c0' }
-              }}
-            >
-              <AttachFileIcon />
-            </IconButton>
-          </Paper>
+      {/* Gradient Header */}
+      <Box 
+        sx={{
+          background: 'linear-gradient(90deg, #1976d2 0%, #1565c0 100%)',
+          borderRadius: 2,
+          p: 4,
+          mb: 4,
+          color: 'white',
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+          textAlign: 'center',
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        }}
+      >
+        <Typography variant="h4" component="h1" sx={{
+          fontWeight: 600,
+          letterSpacing: '-0.01em',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2
+        }}>
+          <AssignmentIcon sx={{ fontSize: '2rem' }} /> Create Gradeable and Upload Scores
+        </Typography>
+        <Typography variant="body1" sx={{ mt: 1, opacity: 0.9, maxWidth: '700px', mx: 'auto' }}>
+          Create a new gradeable by providing a title, maximum points, and uploading a CSV file with student scores.
+        </Typography>
+      </Box>
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+        <Paper sx={{ 
+          p: 4, 
+          width: '100%', 
+          maxWidth: '700px',
+          borderRadius: 2,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+          border: '1px solid',
+          borderColor: 'divider',
+        }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 1,
+                  fontWeight: 600,
+                  fontSize: '1.1rem',
+                  color: 'text.primary',
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                Gradeable Information
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                label="Test/Assignment Title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                fullWidth
+                required
+                error={titleError}
+                helperText={titleError ? "Title is required" : ""}
+                sx={{ 
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 1.5,
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                      borderWidth: '2px',
+                    },
+                  }
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12}>
+              <TextField
+                label="Maximum Points"
+                type="number"
+                value={maxPoints}
+                onChange={(e) => setMaxPoints(Number(e.target.value))}
+                fullWidth
+                required
+                error={maxPointsError}
+                helperText={maxPointsError ? "Points must be between 1 and 1000" : ""}
+                inputProps={{ min: 1, max: 1000 }}
+                sx={{ 
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 1.5,
+                    '&.Mui-focused fieldset': {
+                      borderColor: 'primary.main',
+                      borderWidth: '2px',
+                    },
+                  }
+                }}
+              />
+            </Grid>
+            
+            <Grid item xs={12} sx={{ mt: 2 }}>
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  mb: 1,
+                  fontWeight: 600,
+                  fontSize: '1.1rem',
+                  color: 'text.primary',
+                  letterSpacing: '-0.01em'
+                }}
+              >
+                Upload Scores
+              </Typography>
+              <Divider sx={{ mb: 3 }} />
+              
+              <Paper sx={{
+                p: 0.5,
+                display: 'flex',
+                alignItems: 'center',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 1.5,
+                overflow: 'hidden',
+                transition: 'border-color 0.2s',
+                '&:hover': {
+                  borderColor: 'primary.main',
+                }
+              }}>
+                <Input
+                  placeholder="Attach scores CSV file"
+                  fullWidth
+                  disableUnderline
+                  sx={{ 
+                    px: 2,
+                    py: 1,
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  }}
+                  value={selectedFile ? selectedFile.name : ''}
+                  readOnly
+                />
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  accept=".csv,application/vnd.ms-excel"
+                  style={{ display: 'none' }}
+                />
+                <Button
+                  variant="contained"
+                  onClick={() => fileInputRef.current?.click()}
+                  startIcon={<AttachFileIcon />}
+                  sx={{
+                    borderRadius: '4px',
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    '&:hover': { backgroundColor: '#1565c0' },
+                    height: '100%',
+                    px: 2,
+                    py: 1,
+                    textTransform: 'none',
+                    fontWeight: 500,
+                  }}
+                >
+                  Browse
+                </Button>
+              </Paper>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Upload a CSV file containing student scores. Maximum file size: 10MB.
+              </Typography>
+            </Grid>
+          </Grid>
         </Paper>
 
         <Button
           variant="contained"
           onClick={handleSubmit}
           disabled={isSubmitting}
+          startIcon={<CloudUploadIcon />}
           sx={{
             mt: 2,
+            mb: 4,
             backgroundColor: '#1976d2',
             color: '#fff',
             '&:hover': { backgroundColor: '#1565c0' },
             px: 4,
-            borderRadius: '4px',
+            py: 1,
+            borderRadius: '6px',
+            textTransform: 'none',
+            fontWeight: 600,
+            fontSize: '1rem',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: '#1565c0',
+              transform: 'translateY(-2px)',
+              boxShadow: '0 6px 10px rgba(0, 0, 0, 0.15)',
+            }
           }}
         >
-          {isSubmitting ? 'Submitting...' : 'Create Gradeable'}
+          {isSubmitting ? 'Creating Gradeable...' : 'Create Gradeable'}
         </Button>
 
         {submitStatus && (
@@ -293,7 +419,12 @@ const CreateGradeable: React.FC = () => {
           >
             <Alert 
               severity={submitStatus.severity} 
-              sx={{ width: '100%' }}
+              sx={{ 
+                width: '100%',
+                borderRadius: 2,
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              }}
               onClose={() => setSubmitStatus(null)}
             >
               {submitStatus.message}

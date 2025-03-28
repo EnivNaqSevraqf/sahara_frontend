@@ -157,7 +157,7 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
           <Box component="form" onSubmit={handleRequestOTP} sx={{ width: '100%' }}>
             <DialogTitle>Reset password</DialogTitle>
             <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: '300px' }}>
-              <DialogContentText>
+              <DialogContentText sx={{ color: 'black' }}>
                 Enter your email address. We'll send you a verification code.
               </DialogContentText>
               
