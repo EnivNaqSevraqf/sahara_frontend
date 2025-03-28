@@ -257,7 +257,7 @@ const EventCreationApp: React.FC = () => {
         {/* Course navigation */}
         <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
           <Typography variant="body2" component="div">
-            <span style={{ color: '#3f51b5', cursor: 'pointer' }}>Course Home</span> / 
+            <span style={{ color: '#1F2E6A', cursor: 'pointer' }}>Course Home</span> / 
             <span style={{ cursor: 'pointer' }}> Create Submission</span>
           </Typography>
         </Box>
@@ -268,7 +268,7 @@ const EventCreationApp: React.FC = () => {
           sx={{ 
             p: 3, 
             mb: 4, 
-            backgroundColor: '#1976d2',
+            backgroundColor: '#1F2E6A',
             color: 'white',
             borderRadius: 2
           }}
@@ -459,6 +459,7 @@ const EventCreationApp: React.FC = () => {
                 onClick={handlePublishEvent}
                 disabled={loading}
                 startIcon={loading ? <CircularProgress size={20} /> : null}
+                sx={{ backgroundColor: '#1F2E6A' }}
               >
                 Create Submittable
               </Button>
