@@ -27,7 +27,10 @@ import {
   OutlinedInput,
   Chip,
   SelectChangeEvent,
-  Divider
+  Divider,
+  TextField,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import axios from 'axios';
 import { currentConfig } from '@/config';
@@ -40,6 +43,7 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
 import WebIcon from '@mui/icons-material/Web';
 import JavascriptIcon from '@mui/icons-material/Javascript';
+import EditIcon from '@mui/icons-material/Edit';
 
 interface TeamMember {
   id: number;
@@ -80,7 +84,10 @@ export default function TeamMembersPage() {
   const [savingSkills, setSavingSkills] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>([]);
-  
+  const [editNameDialogOpen, setEditNameDialogOpen] = useState(false);
+  const [newTeamName, setNewTeamName] = useState('');
+  const [updatingName, setUpdatingName] = useState(false);
+
   // Sorting states
   const [order, setOrder] = useState<Order>('asc');
   const [orderBy, setOrderBy] = useState<OrderBy>('name');
@@ -90,17 +97,17 @@ export default function TeamMembersPage() {
       try {
         setLoading(true);
         const token = localStorage.getItem('token');
-        
+
         // Try to get the team info from the teams endpoint
         const response = await axios.get(`${currentConfig.apiBaseUrl}/teams`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         if (response.data && response.data.team_id) {
           setHasTeam(true);
           setTeamId(response.data.team_id);
           setTeamName(response.data.team_name);
-          
+
           // Set team members
           if (response.data.members && response.data.members.length > 0) {
             setTeamMembers(response.data.members);
@@ -124,26 +131,26 @@ export default function TeamMembersPage() {
       } catch (err) {
         console.error('Error fetching team data:', err);
         setError('Failed to fetch team information. Please try again later.');
-        
+
         // Fallback to feedback endpoint if the teams endpoint fails
         try {
           const token = localStorage.getItem('token');
           const feedbackResponse = await axios.get(`${currentConfig.apiBaseUrl}/feedback/students`, {
             headers: { Authorization: `Bearer ${token}` }
           });
-          
+
           if (feedbackResponse.data.team_id) {
             setHasTeam(true);
             setTeamId(feedbackResponse.data.team_id);
             setTeamName(feedbackResponse.data.team_name);
-            
+
             // Format the team members data
             const members = feedbackResponse.data.members.map((member: any) => ({
               id: member.id,
               name: member.name,
               email: member.email || 'N/A'
             }));
-            
+
             setTeamMembers(members);
             setError(null); // Clear error since we got data from fallback
 
@@ -151,7 +158,7 @@ export default function TeamMembersPage() {
             const skillsResponse = await axios.get(`${currentConfig.apiBaseUrl}/api/teams/${feedbackResponse.data.team_id}/skills`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            
+
             if (skillsResponse.data) {
               setTeamSkills(skillsResponse.data);
               setSelectedSkillIds(skillsResponse.data.map((skill: Skill) => skill.id));
@@ -161,7 +168,7 @@ export default function TeamMembersPage() {
             const allSkillsResponse = await axios.get(`${currentConfig.apiBaseUrl}/api/skills/`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            
+
             if (allSkillsResponse.data) {
               setAllSkills(allSkillsResponse.data);
             }
@@ -190,7 +197,7 @@ export default function TeamMembersPage() {
     return [...teamMembers].sort((a, b) => {
       const aValue = a[orderBy] || '';
       const bValue = b[orderBy] || '';
-      
+
       if (order === 'asc') {
         return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
       } else {
@@ -215,13 +222,13 @@ export default function TeamMembersPage() {
 
   const handleUpdateSkills = async () => {
     if (!teamId) return;
-    
+
     try {
       setSavingSkills(true);
       const token = localStorage.getItem('token');
-      
+
       // Update team skills
-      await axios.put(`${currentConfig.apiBaseUrl}/teams/skills`, 
+      await axios.put(`${currentConfig.apiBaseUrl}/teams/skills`,
         selectedSkillIds,
         { headers: { Authorization: `Bearer ${token}` }
       });
@@ -230,17 +237,51 @@ export default function TeamMembersPage() {
       const updatedSkillsResponse = await axios.get(`${currentConfig.apiBaseUrl}/api/teams/${teamId}/skills`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (updatedSkillsResponse.data) {
         setTeamSkills(updatedSkillsResponse.data);
       }
-      
+
       handleCloseSkillsDialog();
     } catch (err) {
       console.error('Error updating team skills:', err);
       setError('Failed to update team skills. Please try again later.');
     } finally {
       setSavingSkills(false);
+    }
+  };
+
+  const handleOpenEditNameDialog = () => {
+    setNewTeamName(teamName);
+    setEditNameDialogOpen(true);
+  };
+
+  const handleCloseEditNameDialog = () => {
+    setEditNameDialogOpen(false);
+  };
+
+  const handleUpdateTeamName = async () => {
+    if (!teamId || !newTeamName.trim()) return;
+
+    try {
+      setUpdatingName(true);
+      const token = localStorage.getItem('token');
+
+      // Update team name
+      await axios.put(
+        `${currentConfig.apiBaseUrl}/teams/name`,
+        { name: newTeamName.trim() },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      // Update the displayed team name
+      setTeamName(newTeamName.trim());
+      handleCloseEditNameDialog();
+    } catch (err) {
+      console.error('Error updating team name:', err);
+      setError('Failed to update team name. Please try again later.');
+    } finally {
+      setUpdatingName(false);
     }
   };
 
@@ -254,8 +295,8 @@ export default function TeamMembersPage() {
         margin: '4px',
         border: `1px solid ${skill.color || '#000000'}`,
       }}
-      icon={iconComponents[skill.icon] ? 
-        React.cloneElement(iconComponents[skill.icon] as React.ReactElement, { style: { color: skill.color } }) : 
+      icon={iconComponents[skill.icon] ?
+        React.cloneElement(iconComponents[skill.icon] as React.ReactElement, { style: { color: skill.color } }) :
         undefined
       }
     />
@@ -302,13 +343,13 @@ export default function TeamMembersPage() {
           Team Members
         </Typography>
       </Box>
-      
+
       {/* Team info card */}
-      <Paper 
+      <Paper
         elevation={0}
-        sx={{ 
-          p: 4, 
-          mb: 4, 
+        sx={{
+          p: 4,
+          mb: 4,
           display: 'flex',
           flexDirection: 'column',
           background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
@@ -317,27 +358,44 @@ export default function TeamMembersPage() {
           boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
-            <GroupIcon sx={{ fontSize: 50 }} />
-          </Box>
-          
-          <Box>
-            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
-              {teamName}
-            </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              {teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''}
-            </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <GroupIcon sx={{ fontSize: 50 }} />
+            </Box>
+
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  {teamName}
+                </Typography>
+                <Tooltip title="Edit Team Name">
+                  <IconButton
+                    onClick={handleOpenEditNameDialog}
+                    size="small"
+                    sx={{
+                      color: 'white',
+                      bgcolor: 'rgba(255, 255, 255, 0.2)',
+                      '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' }
+                    }}
+                  >
+                    <EditIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                {teamMembers.length} team member{teamMembers.length !== 1 ? 's' : ''}
+              </Typography>
+            </Box>
           </Box>
         </Box>
       </Paper>
-      
+
       {/* Skills section - separate from header */}
-      <Paper 
+      <Paper
         elevation={0}
-        sx={{ 
-          p: 3, 
+        sx={{
+          p: 3,
           mb: 4,
           borderRadius: 2,
           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)'
@@ -350,9 +408,9 @@ export default function TeamMembersPage() {
               Team Skills
             </Typography>
           </Box>
-          
-          <Button 
-            variant="outlined" 
+
+          <Button
+            variant="outlined"
             startIcon={<AddIcon />}
             onClick={handleOpenSkillsDialog}
             sx={{
@@ -366,9 +424,9 @@ export default function TeamMembersPage() {
             Manage Skills
           </Button>
         </Box>
-        
+
         <Divider sx={{ my: 2 }} />
-        
+
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
           {teamSkills.length > 0 ? (
             teamSkills.map(skill => renderSkillChip(skill))
@@ -381,9 +439,9 @@ export default function TeamMembersPage() {
       </Paper>
 
       {/* Team Members Table */}
-      <Paper 
+      <Paper
         elevation={0}
-        sx={{ 
+        sx={{
           mb: 4,
           borderRadius: 2,
           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
@@ -394,9 +452,9 @@ export default function TeamMembersPage() {
         <TableContainer sx={{ borderRadius: 2 }}>
           <Table>
             <TableHead>
-              <TableRow sx={{ 
+              <TableRow sx={{
                 backgroundColor: '#f8faff',
-                '& th': { 
+                '& th': {
                   fontWeight: 'bold',
                   borderBottom: 'none',
                 }
@@ -424,17 +482,17 @@ export default function TeamMembersPage() {
             <TableBody>
               {sortedTeamMembers.length > 0 ? (
                 sortedTeamMembers.map((member) => (
-                  <TableRow 
+                  <TableRow
                     key={member.id}
                     hover
-                    sx={{ 
+                    sx={{
                       '&:last-child td, &:last-child th': { border: 0 },
-                      '& td': { 
+                      '& td': {
                         borderBottom: '1px solid #f0f0f0',
                         padding: '16px',
                         transition: 'background-color 0.2s ease',
                       },
-                      '&:hover': { 
+                      '&:hover': {
                         backgroundColor: '#e8f0fe !important',
                       },
                     }}
@@ -460,8 +518,8 @@ export default function TeamMembersPage() {
       </Paper>
 
       {/* Skill Selection Dialog */}
-      <Dialog 
-        open={dialogOpen} 
+      <Dialog
+        open={dialogOpen}
         onClose={handleCloseSkillsDialog}
         maxWidth="md"
         fullWidth
@@ -488,9 +546,9 @@ export default function TeamMembersPage() {
             >
               {allSkills.map((skill) => (
                 <MenuItem key={skill.id} value={skill.id}>
-                  <Box 
-                    display="flex" 
-                    alignItems="center" 
+                  <Box
+                    display="flex"
+                    alignItems="center"
                     gap={1}
                     sx={{
                       padding: '6px 10px',
@@ -517,13 +575,48 @@ export default function TeamMembersPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseSkillsDialog} disabled={savingSkills}>Cancel</Button>
-          <Button 
-            onClick={handleUpdateSkills} 
+          <Button
+            onClick={handleUpdateSkills}
             variant="contained"
             disabled={savingSkills}
             startIcon={savingSkills ? <CircularProgress size={20} /> : null}
           >
             {savingSkills ? 'Updating...' : 'Update Skills'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Team Name Dialog */}
+      <Dialog
+        open={editNameDialogOpen}
+        onClose={handleCloseEditNameDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Edit Team Name</DialogTitle>
+        <DialogContent dividers>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="name"
+            label="Team Name"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={newTeamName}
+            onChange={(e) => setNewTeamName(e.target.value)}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseEditNameDialog} disabled={updatingName}>Cancel</Button>
+          <Button
+            onClick={handleUpdateTeamName}
+            variant="contained"
+            disabled={updatingName || !newTeamName.trim() || newTeamName.trim() === teamName}
+            startIcon={updatingName ? <CircularProgress size={20} /> : null}
+          >
+            {updatingName ? 'Updating...' : 'Update Name'}
           </Button>
         </DialogActions>
       </Dialog>
