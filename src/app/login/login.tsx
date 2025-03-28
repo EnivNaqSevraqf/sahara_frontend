@@ -34,7 +34,7 @@ const LoginComponent = () => {
     // If token exists, redirect to dashboard
     if (existingToken && Auth.isTokenValid()) {
       console.log("Token exists, redirecting to dashboard");
-      router.push("/dashboard_test");
+      router.push("/dashboard");
       return true;
     }  
     console.log("No token found");
@@ -77,7 +77,7 @@ const LoginComponent = () => {
 
       // Store auth data and redirect
       Auth.doLogIn(credentials.username, response.data.access_token, response.data.role);
-      router.push("/dashboard_test");
+      router.push("/dashboard");
 
     } catch (error) {
       if (axios.isAxiosError(error)) {
