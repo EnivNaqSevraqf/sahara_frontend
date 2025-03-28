@@ -4,9 +4,11 @@ import * as React from 'react';
 import Image from 'next/image';
 import { createTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
+import GroupsIcon from '@mui/icons-material/Groups';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import PeopleIcon from '@mui/icons-material/People';
+import MenuBookIcon  from '@mui/icons-material/MenuBook';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ForumIcon from '@mui/icons-material/Forum';
 import QuizIcon from '@mui/icons-material/Quiz';
@@ -245,16 +247,21 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Announcements',
         icon: <AnnouncementIcon />,
       },
-      // {
-      //   segment: 'dashboard/project',
-      //   title: 'Project',
-      //   icon: <SchoolIcon />,
-      // },
-      // {
-      //   segment: 'dashboard/quizzes',
-      //   title: 'Quizzes',
-      //   icon: <QuizIcon />,
-      // },
+       {
+        segment: 'dashboard/team',
+        title: 'Team',
+        icon: <PeopleIcon />,
+      },
+      {
+        segment: 'dashboard/submission',
+        title: 'Documentation',
+        icon: <AssignmentRoundedIcon />,
+      },
+      {
+        segment: 'dashboard/assignments',
+        title: 'Assignments',
+        icon: <MenuBookIcon />,
+      },
       {
         segment: 'dashboard/forms',
         title: 'Forms',
