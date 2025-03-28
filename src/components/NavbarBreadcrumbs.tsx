@@ -39,19 +39,19 @@ export default function NavbarBreadcrumbs() {
     }
     
     // Start with dashboard
-    const breadcrumbs = [{ name: 'Dashboard', path: '/dashboard_test', active: false }];
+    const breadcrumbs = [{ name: 'Dashboard', path: '/dashboard', active: false }];
     
     // Build path progressively
-    let currentPath = '/dashboard_test';
+    let currentPath = '/dashboard';
     segments.forEach((segment, index) => {
-      // Skip the first segment if it's already dashboard_test
-      if (index === 0 && segment === 'dashboard_test') {
+      // Skip the first segment if it's already dashboard
+      if (index === 0 && segment === 'dashboard') {
         return;
       }
       
       currentPath += `/${segment}`;
       const isLast = index === segments.length - 1 || 
-                    (index === segments.length - 2 && segment === 'dashboard_test');
+                    (index === segments.length - 2 && segment === 'dashboard');
       
       breadcrumbs.push({
         name: toTitleCase(segment),

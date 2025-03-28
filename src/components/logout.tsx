@@ -27,7 +27,7 @@ const LogoutButton: React.FC<LogoutButtonProps> = ({
       variant={variant}
       color={color}
       sx={{
-        backgroundColor: "#000080",
+        backgroundColor: "#033076",
         color: "white",
         fontWeight: 500,
         '&:hover': {
