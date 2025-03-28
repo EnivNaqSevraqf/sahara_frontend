@@ -176,46 +176,53 @@ export default function FeedbackForm() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h1" gutterBottom align="center">
-        Team Contribution Feedback - {teamName}
-      </Typography>
+    <Box sx={{ p: 3, bgcolor: 'background.default' }}>
+      <Paper elevation={2} sx={{ p: 4, mb: 4, bgcolor: 'background.paper' }}>
+        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ color: 'text.primary', fontWeight: 500 }}>
+          Team Contribution Feedback - {teamName}
+        </Typography>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-      {success && (
-        <Alert severity="success" sx={{ mb: 2 }}>
-          Feedback submitted successfully!
-        </Alert>
-      )}
+        {success && (
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Feedback submitted successfully!
+          </Alert>
+        )}
 
-      {isSubmitted && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          This feedback was submitted on {new Date(submittedAt!).toLocaleString()}
-        </Alert>
-      )}
+        {isSubmitted && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            This feedback was submitted on {new Date(submittedAt!).toLocaleString()}
+          </Alert>
+        )}
 
-      <Paper sx={{ mb: 3 }}>
-        <TableContainer>
+        <TableContainer sx={{ mb: 3 }}>
           <Table>
             <TableHead>
-              <TableRow>
-                <TableCell>Team Member</TableCell>
-                <TableCell align="right">Contribution Percentage (%)</TableCell>
-                <TableCell>Remarks</TableCell>
+              <TableRow sx={{ bgcolor: 'background.paper' }}>
+                <TableCell sx={{ color: 'text.primary', fontWeight: 600 }}>Team Member</TableCell>
+                <TableCell align="right" sx={{ color: 'text.primary', fontWeight: 600 }}>Contribution Percentage (%)</TableCell>
+                <TableCell sx={{ color: 'text.primary', fontWeight: 600 }}>Remarks</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {teamMembers.map((member) => (
                 <TableRow 
                   key={member.id}
-                  sx={member.is_current_user ? { backgroundColor: 'rgba(0, 0, 0, 0.04)' } : {}}
+                  sx={{
+                    bgcolor: member.is_current_user ? 
+                      (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(25, 118, 210, 0.04)' 
+                      : 'background.paper',
+                    '&:hover': {
+                      bgcolor: 'action.hover'
+                    }
+                  }}
                 >
-                  <TableCell>
+                  <TableCell sx={{ color: 'text.primary' }}>
                     {member.name} {member.is_current_user ? '(You)' : ''}
                   </TableCell>
                   <TableCell align="right">
@@ -227,11 +234,29 @@ export default function FeedbackForm() {
                         inputProps: { 
                           min: 0, 
                           max: 100,
-                          step: 0.01 // This restricts input to 2 decimal places
+                          step: 0.01
+                        },
+                        sx: {
+                          color: 'text.primary',
+                          bgcolor: 'background.paper',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'divider'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'primary.main'
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'primary.main'
+                          }
                         }
                       }}
                       size="small"
-                      sx={{ width: 100 }}
+                      sx={{ 
+                        width: 100,
+                        '& input': {
+                          color: 'text.primary'
+                        }
+                      }}
                       disabled={isSubmitted}
                     />
                   </TableCell>
@@ -245,14 +270,31 @@ export default function FeedbackForm() {
                       multiline
                       maxRows={2}
                       disabled={isSubmitted}
+                      InputProps={{
+                        sx: {
+                          color: 'text.primary',
+                          bgcolor: 'background.paper',
+                          '& .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'divider'
+                          },
+                          '&:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'primary.main'
+                          },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'primary.main'
+                          }
+                        }
+                      }}
                     />
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>Total</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
-                  {totalContribution.toFixed(2)}%
+                <TableCell sx={{ fontWeight: 600, color: 'text.primary' }}>Total</TableCell>
+                <TableCell align="right" sx={{ pr: 2 }}>
+                  <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>
+                    {totalContribution.toFixed(2)}%
+                  </Typography>
                   {!isSubmitted && totalContribution !== 100 && (
                     <Typography color="error" variant="caption" display="block">
                       Total must equal 100%
@@ -264,20 +306,31 @@ export default function FeedbackForm() {
             </TableBody>
           </Table>
         </TableContainer>
-      </Paper>
 
-      {!isSubmitted && (
-        <Box display="flex" justifyContent="center">
-          <Button
-            variant="contained"
-            onClick={handleSubmit}
-            disabled={totalContribution !== 100}
-            sx={{ minWidth: 200 }}
-          >
-            Submit Feedback
-          </Button>
-        </Box>
-      )}
+        {!isSubmitted && (
+          <Box display="flex" justifyContent="center">
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              disabled={totalContribution !== 100}
+              sx={{ 
+                minWidth: 200,
+                bgcolor: 'primary.main',
+                color: 'primary.contrastText',
+                '&:hover': {
+                  bgcolor: 'primary.dark'
+                },
+                '&.Mui-disabled': {
+                  bgcolor: 'action.disabledBackground',
+                  color: 'text.disabled'
+                }
+              }}
+            >
+              Submit Feedback
+            </Button>
+          </Box>
+        )}
+      </Paper>
     </Box>
   );
 }

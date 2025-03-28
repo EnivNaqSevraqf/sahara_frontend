@@ -344,7 +344,7 @@ const TADashboard: React.FC<DashboardProps> = ({ announcements, gradeables = [],
                     <ListItemButton sx={styles.listItemButton} onClick={() => handleAnnouncementClick(announcement.id)}>
                       <ListItemText 
                         primary={announcement.title}
-                        secondary={`${formatDate(announcement.created_at)} • ${announcement.created_by?.name || 'Unknown User'}`}
+                        secondary={`${formatDate(announcement.created_at)} }`}
                       />
                       <ArrowForwardIcon color="action" fontSize="small" />
                     </ListItemButton>
@@ -530,7 +530,7 @@ export default function Dashboard() {
                 >
                   <ListItemText 
                     primary={announcement.title}
-                    secondary={`${formatDate(announcement.created_at)} • ${announcement.created_by?.name || 'Unknown User'}`}
+                    secondary={`${formatDate(announcement.created_at)}`}
                   />
                   <ArrowForwardIcon color="action" fontSize="small" />
                 </ListItemButton>

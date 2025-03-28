@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -28,8 +28,16 @@ import {
   MenuItem,
   OutlinedInput,
   SelectChangeEvent,
+  TableSortLabel,
+  Divider,
+  Card,
+  CardContent,
+  Tooltip,
+  Toolbar,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import GroupsIcon from '@mui/icons-material/Groups';
 import axios from 'axios';
 
 // Configure axios base URL
@@ -55,6 +63,9 @@ interface Team {
   tas: TA[];
 }
 
+type Order = 'asc' | 'desc';
+type OrderBy = 'team_id' | 'team_name';
+
 const TeamsPage = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +84,10 @@ const TeamsPage = () => {
     message: '',
     severity: 'success',
   });
+
+  // Sorting states
+  const [order, setOrder] = useState<Order>('asc');
+  const [orderBy, setOrderBy] = useState<OrderBy>('team_id');
 
   useEffect(() => {
     fetchTeamsData();
@@ -190,92 +205,272 @@ const TeamsPage = () => {
     }
   };
 
-  return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        Teams
-      </Typography>
+  const handleRequestSort = (property: OrderBy) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
 
-      <Box sx={{ mb: 4, display: 'flex', gap: 2, alignItems: 'center' }}>
-        <TextField
-          label="Number of TAs per team"
-          type="number"
-          value={taCount}
-          onChange={(e) => setTaCount(e.target.value)}
-          sx={{ width: 200 }}
-          InputProps={{ inputProps: { min: 1 } }}
-        />
-        <Button
-          variant="contained"
-          onClick={handleMatch}
-          disabled={matchLoading}
-          sx={{ height: 56 }}
-        >
-          {matchLoading ? <CircularProgress size={24} /> : 'Allocate TAs'}
-        </Button>
+  const sortedTeams = useMemo(() => {
+    return [...teams].sort((a, b) => {
+      const aValue = a[orderBy] || '';
+      const bValue = b[orderBy] || '';
+
+      if (order === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return bValue < aValue ? -1 : bValue > aValue ? 1 : 0;
+      }
+    });
+  }, [teams, order, orderBy]);
+
+  return (
+    <Box sx={{ p: 3, width: '100%', maxWidth: '100%' }}>
+      {/* Header section */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+        <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
+          Teams Management
+        </Typography>
       </Box>
 
+      {/* TA Allocation Card - Updated with gradient style */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          mb: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+          color: 'white',
+          borderRadius: 2,
+          boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <GroupsIcon sx={{ fontSize: 50 }} />
+            </Box>
+
+            <Box>
+              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                TA Allocation
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Assign teaching assistants to student teams
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <TextField
+              label="TAs per team"
+              type="number"
+              value={taCount}
+              onChange={(e) => setTaCount(e.target.value)}
+              InputProps={{ 
+                inputProps: { min: 1 },
+                sx: { 
+                  borderRadius: 1,
+                  bgcolor: 'rgba(255, 255, 255, 0.9)',
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'transparent'
+                  },
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'transparent'
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: 'transparent'
+                  }
+                }
+              }}
+              InputLabelProps={{
+                sx: { 
+                  color: 'rgba(0, 0, 0, 0.6)',
+                  '&.Mui-focused': {
+                    color: '#3f51b5'
+                  }
+                }
+              }}
+              sx={{ width: 150 }}
+              size="medium"
+              variant="outlined"
+            />
+            <Button
+              variant="contained"
+              onClick={handleMatch}
+              disabled={matchLoading}
+              startIcon={matchLoading ? <CircularProgress size={20} color="inherit" /> : <PersonAddIcon />}
+              sx={{ 
+                height: 56, 
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                color: '#3f51b5',
+                fontWeight: 'bold',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 1)',
+                },
+                borderRadius: 1,
+                textTransform: 'none',
+                px: 3,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+              }}
+            >
+              {matchLoading ? 'Allocating...' : 'Allocate TAs'}
+            </Button>
+          </Box>
+        </Box>
+      </Paper>
+
+      {/* Teams Table */}
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
           <CircularProgress />
         </Box>
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Team ID</TableCell>
-                <TableCell>Team Name</TableCell>
-                <TableCell>Skills</TableCell>
-                <TableCell>Alloted TA</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {teams.map((team) => (
-                <TableRow key={team.team_id}>
-                  <TableCell>{team.team_id}</TableCell>
-                  <TableCell>{team.team_name}</TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {team.skills?.map((skill) => (
-                        <Chip
-                          key={skill.id}
-                          label={skill.name}
-                          sx={{
-                            backgroundColor: skill.bgColor,
-                            color: skill.color,
-                          }}
-                        />
-                      ))}
-                    </Box>
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 4,
+            borderRadius: 2,
+            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)',
+            overflow: 'hidden',
+            position: 'relative',
+          }}
+        >
+          <TableContainer>
+            <Toolbar sx={{ backgroundColor: '#f8faff' }}>
+              <Typography variant="h6" component="div">
+                Team List
+              </Typography>
+            </Toolbar>
+            <Table>
+              <TableHead>
+                <TableRow sx={{
+                  backgroundColor: '#f8faff',
+                  '& th': {
+                    fontWeight: 'bold',
+                    borderBottom: 'none',
+                  }
+                }}>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    <TableSortLabel
+                      active={orderBy === 'team_id'}
+                      direction={orderBy === 'team_id' ? order : 'asc'}
+                      onClick={() => handleRequestSort('team_id')}
+                    >
+                      Team ID
+                    </TableSortLabel>
                   </TableCell>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                      {team.tas?.map((ta) => (
-                        <Chip
-                          key={ta.id}
-                          label={ta.name}
-                          variant="outlined"
-                        />
-                      ))}
-                    </Box>
+                  <TableCell sx={{ fontWeight: 'bold' }}>
+                    <TableSortLabel
+                      active={orderBy === 'team_name'}
+                      direction={orderBy === 'team_name' ? order : 'asc'}
+                      onClick={() => handleRequestSort('team_name')}
+                    >
+                      Team Name
+                    </TableSortLabel>
                   </TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => handleEditClick(team)}>
-                      <EditIcon />
-                    </IconButton>
-                  </TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Skills</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Assigned TAs</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {sortedTeams.length > 0 ? (
+                  sortedTeams.map((team) => (
+                    <TableRow
+                      key={team.team_id}
+                      hover
+                      sx={{
+                        '&:last-child td, &:last-child th': { border: 0 },
+                        '& td': {
+                          borderBottom: '1px solid #f0f0f0',
+                          padding: '16px',
+                          transition: 'background-color 0.2s ease',
+                        },
+                        '&:hover': {
+                          backgroundColor: '#e8f0fe !important',
+                        },
+                      }}
+                    >
+                      <TableCell>{team.team_id}</TableCell>
+                      <TableCell>{team.team_name}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
+                          {team.skills?.map((skill) => (
+                            <Chip
+                              key={skill.id}
+                              label={skill.name}
+                              size="small"
+                              sx={{
+                                backgroundColor: skill.bgColor,
+                                color: skill.color,
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                              }}
+                            />
+                          ))}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
+                          {team.tas?.map((ta) => (
+                            <Chip
+                              key={ta.id}
+                              label={ta.name}
+                              variant="outlined"
+                              size="small"
+                              sx={{
+                                borderColor: '#3f51b5',
+                                color: '#3f51b5',
+                                fontSize: '0.75rem',
+                              }}
+                            />
+                          ))}
+                          {!team.tas?.length && (
+                            <Typography variant="body2" color="text.secondary">
+                              No TAs assigned
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title="Edit TA Assignments">
+                          <IconButton 
+                            onClick={() => handleEditClick(team)}
+                            sx={{
+                              color: '#3f51b5',
+                              '&:hover': {
+                                backgroundColor: 'rgba(63, 81, 181, 0.08)',
+                              }
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center" sx={{ py: 3, borderBottom: 'none' }}>
+                      <Typography variant="body1" color="text.secondary">
+                        No teams found.
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
       )}
 
+      {/* Edit Dialog */}
       <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Edit TA Assignments</DialogTitle>
-        <DialogContent>
+        <DialogContent dividers>
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Assigned TAs</InputLabel>
             <Select
@@ -289,6 +484,10 @@ const TeamsPage = () => {
                     <Chip
                       key={value}
                       label={availableTAs.find(ta => ta.id === value)?.name}
+                      sx={{
+                        backgroundColor: '#e8f0fe',
+                        color: '#3f51b5',
+                      }}
                     />
                   ))}
                 </Box>
@@ -304,7 +503,16 @@ const TeamsPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
-          <Button onClick={handleSaveEdit} variant="contained">
+          <Button 
+            onClick={handleSaveEdit} 
+            variant="contained"
+            sx={{ 
+              backgroundColor: '#3f51b5',
+              '&:hover': {
+                backgroundColor: '#303f9f',
+              }
+            }}
+          >
             Save Changes
           </Button>
         </DialogActions>

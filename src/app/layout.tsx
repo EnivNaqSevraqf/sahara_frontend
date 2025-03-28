@@ -9,6 +9,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 // import theme from "@/theme";
 
 import { MyThemeProvider } from "@/theme";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,15 +36,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-
         <AppRouterCacheProvider>
-        <NextAppProvider>
-        <MyThemeProvider>
-          {/* <CssBaseline/> */}
-          {/* <Sidebar /> */}
-        {children}
-        </MyThemeProvider>
-        </NextAppProvider>
+          <NextAppProvider>
+            <MyThemeProvider>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </MyThemeProvider>
+          </NextAppProvider>
         </AppRouterCacheProvider>
       </body>
     </html>
