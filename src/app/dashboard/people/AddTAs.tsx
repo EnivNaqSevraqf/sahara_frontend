@@ -78,110 +78,140 @@ const AddTAs = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* <Header title="ADD TAs" /> */}
-
+    <Box
+      sx={{
+        p: 3,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#ffffff', // Bright white background for better contrast
+        borderRadius: '12px',
+        boxShadow: '0 6px 12px rgba(0, 0, 0, 0.15)', // Enhanced shadow for depth
+      }}
+    >
       <Typography
         variant="h4"
         component="h2"
         align="center"
         sx={{
           mb: 4,
-          p: 2,
-          border: '1px solid #e0e0e0',
-          borderRadius: '50px',
+          color: '#1a73e8', // Bright blue for the heading
+          fontWeight: 600, // Slightly bolder font weight
         }}
       >
         Add TAs
       </Typography>
 
-      <Box
+      <Paper
         sx={{
+          width: '100%',
+          maxWidth: '600px',
+          p: 3,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: 2,
+          border: '1px solid #d1d1d1',
+          borderRadius: '12px',
+          backgroundColor: '#f7f9fc', // Light blue-gray background for the form
         }}
       >
-        <Paper
+        <Input
+          placeholder="Attach .csv file"
+          fullWidth
+          disableUnderline
+          sx={{
+            px: 2,
+            py: 1,
+            border: '1px solid #b0bec5',
+            borderRadius: '6px',
+            backgroundColor: '#e3f2fd', // Light blue background for input
+            color: '#0d47a1', // Dark blue text for input
+          }}
+          value={selectedFile ? selectedFile.name : ''}
+          readOnly
+        />
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          accept=".csv"
+          style={{ display: 'none' }}
+        />
+        <IconButton
+          onClick={handleAttachClick}
+          sx={{
+            ...buttonStyles.secondary,
+            borderRadius: '6px',
+            backgroundColor: '#0d47a1', // Darker blue matching the sidebar color
+            color: '#fff',
+            '&:hover': {
+              backgroundColor: '#002171', // Even darker blue for hover effect
+            },
+          }}
+        >
+          <AttachFileIcon />
+        </IconButton>
+      </Paper>
+
+      {selectedFile && (
+        <Alert
+          severity="success"
           sx={{
             width: '100%',
             maxWidth: '600px',
-            p: 1,
-            display: 'flex',
-            alignItems: 'center',
-            border: '1px solid #e0e0e0',
-          }}
-        >
-          <Input
-            placeholder="Attach .csv file"
-            fullWidth
-            disableUnderline
-            sx={{ px: 2 }}
-            value={selectedFile ? selectedFile.name : ''}
-            readOnly
-          />
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            accept=".csv"
-            style={{ display: 'none' }}
-          />
-          <IconButton
-            onClick={handleAttachClick}
-            sx={{
-              ...buttonStyles.secondary,
-              borderRadius: '4px',
-            }}
-          >
-            <AttachFileIcon />
-          </IconButton>
-        </Paper>
-
-        {selectedFile && (
-          <Alert 
-            severity="success" 
-            sx={{ 
-              width: '100%', 
-              maxWidth: '600px',
-            }}
-          >
-            Successfully selected file: {selectedFile.name}
-          </Alert>
-        )}
-
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-          sx={{
             mt: 2,
-            backgroundColor: '#000060',
-            color: '#fff',
-            '&:hover': {
-              backgroundColor: '#1765c1',
-            },
-            px: 4,
-            borderRadius: '4px',
+            backgroundColor: '#e8f5e9', // Light green background for success
+            color: '#2e7d32', // Dark green text for success
+            border: '1px solid #c8e6c9',
+            borderRadius: '6px',
           }}
         >
-          {isSubmitting ? 'Uploading...' : 'Upload'}
-        </Button>
+          Successfully selected file: {selectedFile.name}
+        </Alert>
+      )}
 
-        {submitStatus && (
-          <Alert 
-            severity={submitStatus.severity} 
-            sx={{ 
-              width: '100%', 
-              maxWidth: '600px',
-              mt: 2,
-            }}
-          >
-            {submitStatus.message}
-          </Alert>
-        )}
-      </Box>
+      <Button
+        variant="contained"
+        onClick={handleSubmit}
+        disabled={isSubmitting}
+        sx={{
+          mt: 2,
+          backgroundColor: '#0d47a1', // Darker blue matching the sidebar color
+          color: '#fff',
+          '&:hover': {
+            backgroundColor: '#002171', // Even darker blue for hover effect
+          },
+          px: 4,
+          py: 1.5,
+          borderRadius: '6px',
+          fontSize: '1rem',
+        }}
+      >
+        {isSubmitting ? 'Uploading...' : 'Upload'}
+      </Button>
+
+      {submitStatus && (
+        <Alert
+          severity={submitStatus.severity}
+          sx={{
+            width: '100%',
+            maxWidth: '600px',
+            mt: 2,
+            backgroundColor:
+              submitStatus.severity === 'success' ? '#e8f5e9' : '#ffebee', // Green for success, red for error
+            color:
+              submitStatus.severity === 'success' ? '#2e7d32' : '#c62828', // Dark green for success, dark red for error
+            border: '1px solid',
+            borderColor:
+              submitStatus.severity === 'success' ? '#c8e6c9' : '#ef9a9a',
+            borderRadius: '6px',
+          }}
+        >
+          {submitStatus.message}
+        </Alert>
+      )}
     </Box>
   );
 };

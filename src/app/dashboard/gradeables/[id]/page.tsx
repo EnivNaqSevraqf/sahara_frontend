@@ -22,6 +22,8 @@ import {
 } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useParams } from 'next/navigation';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import GradeIcon from '@mui/icons-material/Grade';
 
 interface StudentScore {
   user_id: number;
@@ -182,9 +184,47 @@ const GradeableScoresPage: React.FC = () => {
 
   return (
     <Box p={3}>
-      <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
-        {gradeableName} - Scores
-      </Typography>
+      {/* Gradient Header Card */}
+      <Paper 
+        elevation={0}
+        sx={{ 
+          p: 4, 
+          mb: 4, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          background: 'linear-gradient(45deg, #1976d2 30%, #42a5f5 90%)',
+          color: 'white',
+          borderRadius: 2,
+          boxShadow: '0 4px 20px rgba(25, 118, 210, 0.15)'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <GradeIcon sx={{ fontSize: 48 }} />
+          <Box>
+            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+              {gradeableName}
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.9 }}>
+              {scores.length} student submissions
+            </Typography>
+          </Box>
+        </Box>
+        
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 1,
+          bgcolor: 'rgba(255, 255, 255, 0.1)',
+          p: 2,
+          borderRadius: 2
+        }}>
+          <AssignmentIcon />
+          <Typography variant="h6" sx={{ fontWeight: 500 }}>
+            {statistics?.mean ? `Mean Score: ${statistics.mean.toFixed(2)}` : 'No scores yet'}
+          </Typography>
+        </Box>
+      </Paper>
       
       <Grid container spacing={3}>
         {/* Table Section */}
