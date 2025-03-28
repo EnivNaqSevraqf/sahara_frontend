@@ -29,9 +29,6 @@ const TATeamPairing = () => {
     <Box sx={{ p: 3 }}>
       {/* Header with notifications and profile */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h6" component="h1">
-          TA TEAM PAIRING
-        </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -47,9 +44,8 @@ const TATeamPairing = () => {
         align="center"
         sx={{
           mb: 4,
-          p: 2,
-          border: '1px solid #e0e0e0',
-          borderRadius: '50px',
+          color: '#1a73e8', // Updated color to match the People page
+          fontWeight: 500, // Consistent font weight
         }}
       >
         TA TEAM PAIRING
