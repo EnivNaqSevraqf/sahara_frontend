@@ -14,6 +14,7 @@ import ForumIcon from '@mui/icons-material/Forum';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SchoolIcon from '@mui/icons-material/School';
 import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
+import ProfileIcon from '@mui/icons-material/AccountCircle';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { ThumbUpAlt, ViewQuilt } from '@mui/icons-material';
@@ -394,7 +395,7 @@ export default function DashboardLayout({
 }>) {
   const [role, setRole] = useState<UserRole>('student');
   const [key, setKey] = useState<number>(0);
-  const router = useDemoRouter();
+  const router = useRouter();
   
   useEffect(() => {
     const checkAndSetRole = () => {
@@ -426,11 +427,17 @@ export default function DashboardLayout({
 
   function CustomToolbarActions(){
     return (
-      <LogoutButton>
-        <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
-        Logout
-      </LogoutButton>
-    )
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <button onClick={() => router.push('/dashboard/profile')}>
+          <ProfileIcon fontSize="small" sx={{ mr: 1 }} />
+          Profile
+        </button>
+        <LogoutButton>
+          <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
+          Logout
+        </LogoutButton>
+      </div>
+    );
   }
 
   function CustomAppTitle() {
