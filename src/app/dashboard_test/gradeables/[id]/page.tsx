@@ -14,18 +14,26 @@ import {
   TableSortLabel,
   Box,
   Toolbar,
-  IconButton,
-  Tooltip,
   CircularProgress,
-  Alert
+  Alert,
+  Grid,
+  Card,
+  CardContent,
 } from '@mui/material';
-//import FilterListIcon from '@mui/icons-material/FilterList';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useParams } from 'next/navigation';
 
 interface StudentScore {
   user_id: number;
   name: string;
   score: number;
+}
+
+interface ScoreStatistics {
+  mean: number;
+  median: number;
+  mode: number;
+  variance: number;
 }
 
 type Order = 'asc' | 'desc';
@@ -64,6 +72,24 @@ function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number) 
   return stabilizedThis.map((el) => el[0]);
 }
 
+const calculateStatistics = (scores: StudentScore[]): ScoreStatistics => {
+  const values = scores.map(s => s.score);
+  const mean = values.reduce((a, b) => a + b, 0) / values.length;
+  
+  const sorted = [...values].sort((a, b) => a - b);
+  const median = sorted.length % 2 === 0 
+    ? (sorted[sorted.length/2 - 1] + sorted[sorted.length/2]) / 2
+    : sorted[Math.floor(sorted.length/2)];
+  
+  const mode = values.reduce((a, b) => (
+    values.filter(v => v === a).length >= values.filter(v => v === b).length ? a : b
+  ));
+  
+  const variance = values.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / values.length;
+
+  return { mean, median, mode, variance };
+};
+
 const GradeableScoresPage: React.FC = () => {
   const [scores, setScores] = useState<StudentScore[]>([]);
   const [order, setOrder] = useState<Order>('asc');
@@ -71,6 +97,8 @@ const GradeableScoresPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [gradeableName, setGradeableName] = useState<string>('');
+  const [graphData, setGraphData] = useState<{ score: number; count: number }[]>([]);
+  const [statistics, setStatistics] = useState<ScoreStatistics>({ mean: 0, median: 0, mode: 0, variance: 0 });
   const params = useParams();
   const id = params?.id;
 
@@ -79,12 +107,7 @@ const GradeableScoresPage: React.FC = () => {
 
     const fetchScores = async () => {
       try {
-        // setLoading(true);
         const token = localStorage.getItem('token');
-        // if (!token) {
-        //   setError('Authentication required');
-        //   return;
-        // }
 
         const config = {
           headers: { 
@@ -95,11 +118,25 @@ const GradeableScoresPage: React.FC = () => {
 
         const [gradeableResponse, scoresResponse] = await Promise.all([
           axios.get(`http://localhost:8000/gradeables/${id}`, config),
-          axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)//axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)
+          axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)
         ]);
         
         setGradeableName(gradeableResponse.data.title || 'Untitled Assignment');
         setScores(scoresResponse.data);
+
+        // Calculate graph data and statistics
+        const scoreCounts = scoresResponse.data.reduce((acc: any, curr: StudentScore) => {
+          acc[curr.score] = (acc[curr.score] || 0) + 1;
+          return acc;
+        }, {});
+        
+        const graphDataArray = Object.entries(scoreCounts).map(([score, count]) => ({
+          score: Number(score),
+          count: count as number
+        }));
+        
+        setGraphData(graphDataArray);
+        setStatistics(calculateStatistics(scoresResponse.data));
         setError(null);
       } catch (error: any) {
         console.error('Error fetching scores:', error);
@@ -148,61 +185,138 @@ const GradeableScoresPage: React.FC = () => {
       <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
         {gradeableName} - Scores
       </Typography>
-      <TableContainer component={Paper}>
-        <Toolbar sx={{ backgroundColor: '#f5f9ff' }}>
-          <Box flexGrow={1}>
-            <Typography variant="h6" component="div">
-              Student Results
-            </Typography>
-          </Box>
-        </Toolbar>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
-              <TableCell sx={{ fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === 'user_id'}
-                  direction={orderBy === 'user_id' ? order : 'asc'}
-                  onClick={createSortHandler('user_id')}
-                >
-                  Student ID
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === 'name'}
-                  direction={orderBy === 'name' ? order : 'asc'}
-                  onClick={createSortHandler('name')}
-                >
-                  Name
-                </TableSortLabel>
-              </TableCell>
-              <TableCell sx={{ fontWeight: 'bold' }}>
-                <TableSortLabel
-                  active={orderBy === 'score'}
-                  direction={orderBy === 'score' ? order : 'asc'}
-                  onClick={createSortHandler('score')}
-                >
-                  Score
-                </TableSortLabel>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {stableSort(scores, getComparator(order, orderBy))
-              .map((score) => (
-                <TableRow 
-                  key={score.user_id}
-                  sx={{ '&:hover': { backgroundColor: '#f0f7ff' } }}
-                >
-                  <TableCell>{score.user_id}</TableCell>
-                  <TableCell>{score.name}</TableCell>
-                  <TableCell>{score.score}</TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      
+      <Grid container spacing={3}>
+        {/* Table Section */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ height: '100%' }}>
+            <TableContainer 
+              component={Paper} 
+              sx={{ 
+                height: '500px',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <Toolbar sx={{ 
+                backgroundColor: '#f5f9ff',
+                flex: '0 0 auto'  // Prevents toolbar from scrolling
+              }}>
+                <Box flexGrow={1}>
+                  <Typography variant="h6" component="div">
+                    Student Results
+                  </Typography>
+                </Box>
+              </Toolbar>
+              <Box sx={{ 
+                flex: '1 1 auto',
+                overflow: 'auto' // Makes the table body scrollable
+              }}>
+                <Table stickyHeader>
+                  <TableHead>
+                    <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        <TableSortLabel
+                          active={orderBy === 'user_id'}
+                          direction={orderBy === 'user_id' ? order : 'asc'}
+                          onClick={createSortHandler('user_id')}
+                        >
+                          Student ID
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        <TableSortLabel
+                          active={orderBy === 'name'}
+                          direction={orderBy === 'name' ? order : 'asc'}
+                          onClick={createSortHandler('name')}
+                        >
+                          Name
+                        </TableSortLabel>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>
+                        <TableSortLabel
+                          active={orderBy === 'score'}
+                          direction={orderBy === 'score' ? order : 'asc'}
+                          onClick={createSortHandler('score')}
+                        >
+                          Score
+                        </TableSortLabel>
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {stableSort(scores, getComparator(order, orderBy))
+                      .map((score) => (
+                        <TableRow 
+                          key={score.user_id}
+                          sx={{ '&:hover': { backgroundColor: '#f0f7ff' } }}
+                        >
+                          <TableCell>{score.user_id}</TableCell>
+                          <TableCell>{score.name}</TableCell>
+                          <TableCell>{score.score}</TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </Box>
+            </TableContainer>
+          </Card>
+        </Grid>
+
+        {/* Graph Section */}
+        <Grid item xs={12} md={6}>
+          <Card sx={{ backgroundColor: '#f8fbff', height: '500px' }}>
+            <CardContent sx={{ height: '100%', p: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ color: '#1976d2' }}>
+                Score Distribution
+              </Typography>
+              <Box sx={{ height: 'calc(100% - 40px)' }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={graphData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="score" label={{ value: 'Score', position: 'bottom' }} />
+                    <YAxis label={{ value: 'Number of Students', angle: -90, position: 'insideLeft' }} />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#1976d2" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Statistics Section */}
+        <Grid item xs={12}>
+          <Card sx={{ backgroundColor: '#f8fbff' }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom sx={{ color: '#1976d2' }}>
+                Score Statistics
+              </Typography>
+              <Grid container spacing={3}>
+                {[
+                  { label: 'Mean Score', value: statistics.mean.toFixed(2) },
+                  { label: 'Median Score', value: statistics.median.toFixed(2) },
+                  { label: 'Mode Score', value: statistics.mode.toFixed(2) },
+                  { label: 'Variance', value: statistics.variance.toFixed(2) }
+                ].map((stat) => (
+                  <Grid item xs={12} sm={6} md={3} key={stat.label}>
+                    <Card sx={{ backgroundColor: '#ffffff' }}>
+                      <CardContent>
+                        <Typography color="textSecondary" gutterBottom>
+                          {stat.label}
+                        </Typography>
+                        <Typography variant="h5" sx={{ color: '#1976d2' }}>
+                          {stat.value}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
     </Box>
   );
 };
