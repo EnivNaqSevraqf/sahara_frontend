@@ -133,11 +133,11 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Discussions',
         icon: <ForumIcon />,
       },
-      {
-        segment: 'dashboard_test/quizzes',
-        title: 'Quizzes',
-        icon: <QuizIcon />,
-      },
+      // {
+      //   segment: 'dashboard_test/quizzes',
+      //   title: 'Quizzes',
+      //   icon: <QuizIcon />,
+      // },
       {
         segment: 'dashboard_test/feedback',//delete feedback form
         title: 'Feedback Form',
@@ -192,11 +192,11 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Discussions',
         icon: <ForumIcon />,
       },
-      {
-        segment: 'dashboard_test/quizzes',
-        title: 'Quizzes',
-        icon: <QuizIcon />,
-      },
+      // {
+      //   segment: 'dashboard_test/quizzes',
+      //   title: 'Quizzes',
+      //   icon: <QuizIcon />,
+      // },
       {
         segment: 'dashboard_test/feedback',//delete feedback form
         title: 'Feedback Form',
@@ -224,16 +224,16 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Announcements',
         icon: <AnnouncementIcon />,
       },
-      {
-        segment: 'dashboard_test/project',
-        title: 'Project',
-        icon: <SchoolIcon />,
-      },
-      {
-        segment: 'dashboard_test/quizzes',
-        title: 'Quizzes',
-        icon: <QuizIcon />,
-      },
+      // {
+      //   segment: 'dashboard_test/project',
+      //   title: 'Project',
+      //   icon: <SchoolIcon />,
+      // },
+      // {
+      //   segment: 'dashboard_test/quizzes',
+      //   title: 'Quizzes',
+      //   icon: <QuizIcon />,
+      // },
       {
         segment: 'dashboard_test/forms',
         title: 'Forms',

@@ -75,14 +75,14 @@ export default function GradeablesListPage() {
   return (
     <Box p={3}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
+        <Typography variant="h4" gutterBottom sx={{ color: '#033076' }}>
           Gradeables
         </Typography>
         <Button
           variant="contained"
           color="primary"
           onClick={() => window.location.href = '/dashboard_test/gradeables/create_gradable'}
-          sx={{ mb: 2 }}
+          sx={{backgroundColor: '#033076', mb: 2 }}
         >
           Create New Gradeable
         </Button>
@@ -90,7 +90,7 @@ export default function GradeablesListPage() {
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f9ff' }}>
+            <TableRow sx={{ backgroundColor: '#033076' }}>
               <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
               {/* <TableCell sx={{ fontWeight: 'bold' }}>Due Date</TableCell> */}
               <TableCell sx={{ fontWeight: 'bold' }}>Maximum Points</TableCell>

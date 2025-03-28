@@ -78,6 +78,11 @@ interface Gradeable {
   submission_count: number;
 }
 
+interface UserProfile {
+  name: string;
+  email: string;
+}
+
 interface DashboardProps {
   announcements: Announcement[];
   assignments?: Assignment[];
@@ -269,7 +274,7 @@ const TADashboard: React.FC<DashboardProps> = ({ announcements, gradeables = [],
           <Paper elevation={0} sx={styles.paper}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
               <Typography variant="h6" component="h2" sx={styles.header}>
-                Gradeables
+                Pending Gradeables
               </Typography>
               <Button 
                 size="small"
@@ -293,8 +298,15 @@ const TADashboard: React.FC<DashboardProps> = ({ announcements, gradeables = [],
                     >
                       <ListItemText 
                         primary={gradeable.title}
+                        secondary={`${gradeable.submission_count} submissions pending`}
                       />
-                      <ArrowForwardIcon color="action" fontSize="small" />
+                      <Button 
+                        size="small" 
+                        variant="contained" 
+                        sx={{ backgroundColor: '#1976d2' }}
+                      >
+                        Grade
+                      </Button>
                     </ListItemButton>
                   </ListItem>
                 ))}
@@ -346,17 +358,17 @@ const TADashboard: React.FC<DashboardProps> = ({ announcements, gradeables = [],
     </Box>
   );
 };
-// Main Dashboard Component
+// ... (keep previous interfaces and styles)
+
 export default function Dashboard() {
   const [role, setRole] = useState<UserRole>('student');
+  const [userName, setUserName] = useState<string>('');
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
-  const [gradeables, setGradeables] = useState<Gradeable[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  // Fetch announcements function
+  // Fetch announcements function (keep previous implementation)
   const fetchAnnouncements = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -388,51 +400,24 @@ export default function Dashboard() {
     }
   };
 
-  const fetchAssignments = async () => {
+  // Fetch user name
+  const fetchUserProfile = async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }
 
-      const response = await axios.get('/assignments', {
+      const response = await axios.get<UserProfile>('/users/me', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      setAssignments(response.data);
-      setError(null);
+      setUserName(response.data.name || 'User');
     } catch (error: any) {
-      console.error('Error fetching assignments:', error);
-      setError('Failed to fetch assignments');
-      if (error.response?.status === 401) {
-        router.push('/login');
-      }
-    }
-  };
-
-  const fetchGradeables = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await axios.get('/gradeables', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      setGradeables(response.data);
-      setError(null);
-    } catch (error: any) {
-      console.error('Error fetching gradeables:', error);
-      setError('Failed to fetch gradeables');
-      if (error.response?.status === 401) {
-        router.push('/login');
-      }
+      console.error('Error fetching user profile:', error);
+      setUserName('User');
     }
   };
 
@@ -442,46 +427,123 @@ export default function Dashboard() {
       const normalizedRole = normalizeRole(storedRole as UserRole);
       setRole(normalizedRole);
       
-      // Always fetch announcements
+      // Fetch announcements and user profile
       fetchAnnouncements();
-      
-      // Fetch data based on role
-      if (normalizedRole === 'student') {
-        // Students see assignments
-        fetchAssignments();
-      } else if (normalizedRole === 'ta' || normalizedRole === 'admin') {
-        // TAs and Admins see gradeables
-        fetchGradeables();
-      }
+      fetchUserProfile();
     }
   }, []); 
 
-  const renderDashboard = () => {
-    const storedRole = localStorage.getItem('role');
-    if (!storedRole) return null;
+  // Welcome Section Component
+  const WelcomeSection = () => {
+    const getGreeting = () => {
+      const hour = new Date().getHours();
+      if (hour < 12) return 'Good Morning';
+      if (hour < 18) return 'Good Afternoon';
+      return 'Good Evening';
+    };
 
-    switch(storedRole.toLowerCase()) {
-      case 'ta':
-      case 'admin':
-      case 'professor':
-      case 'prof':
-        return (
-          <TADashboard 
-            announcements={announcements}
-            gradeables={gradeables}
-            loading={loading}
-          />
-        );
-      case 'student':
-      default:
-        return (
-          <StudentDashboard 
-            announcements={announcements} 
-            assignments={assignments} 
-            loading={loading} 
-          />
-        );
-    }
+    return (
+      <Box 
+        sx={{ 
+          width: '100%', 
+          backgroundColor: '#f0f4f8', 
+          p: 3, 
+          mb: 3,
+          borderRadius: 2 
+        }}
+      >
+        <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: '#033076' }}>
+          {getGreeting()},
+        </Typography>
+        <Typography variant="subtitle1" sx={{ color: '#555', mt: 1 }}>
+          {role === 'student' 
+            ? 'Stay organized and efficiently manage your project work, course assignments, and deadlines.' 
+            : 'Manage course activities, grade submissions, and track student progress.'}
+        </Typography>
+      </Box>
+    );
+  };
+
+  // Announcements Section Component
+  const AnnouncementsSection = () => {
+    const handleAnnouncementClick = (announcementId: number) => {
+      router.push(`/dashboard_test/announcements/${announcementId}`);
+    };
+
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+      } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+      } else {
+        return date.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric'
+        });
+      }
+    };
+
+    return (
+      <Paper elevation={0} sx={{
+        width: '100%', 
+        p: 3, 
+        border: '1px solid #e3f2fd',
+        backgroundColor: '#fbfdff',
+      }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" component="h2" sx={{ color: '#033076', fontWeight: 500 }}>
+            Recent Announcements
+          </Typography>
+          <Button 
+            size="small"
+            sx={{
+              color: '#033076',
+              '&:hover': {
+                backgroundColor: '#e3f2fd',
+              }
+            }}
+            onClick={() => router.push('/dashboard_test/announcements')}
+          >
+            View All
+          </Button>
+        </Box>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        ) : announcements.length > 0 ? (
+          <List disablePadding>
+            {announcements.map((announcement, index) => (
+              <ListItem key={announcement.id} disablePadding divider={index < announcements.length - 1}>
+                <ListItemButton 
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: '#e3f2fd',
+                    }
+                  }} 
+                  onClick={() => handleAnnouncementClick(announcement.id)}
+                >
+                  <ListItemText 
+                    primary={announcement.title}
+                    secondary={`${formatDate(announcement.created_at)} • ${announcement.created_by?.name || 'Unknown User'}`}
+                  />
+                  <ArrowForwardIcon color="action" fontSize="small" />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        ) : (
+          <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+            No recent announcements
+          </Typography>
+        )}
+      </Paper>
+    );
   };
 
   if (error) {
@@ -493,10 +555,9 @@ export default function Dashboard() {
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ p: 2 }}>
-        {renderDashboard()}
-      </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+      <WelcomeSection />
+      <AnnouncementsSection />
     </Box>
   );
 }
