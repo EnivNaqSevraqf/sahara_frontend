@@ -145,7 +145,7 @@ const TATable = () => {
     <Box sx={{ p: 3 }}>
       {/* Header with title and action buttons */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
+        <Typography variant="h4" gutterBottom sx={{ color: '#1F2E6A' }}>
           Teaching Assistants
         </Typography>
       </Box>
@@ -313,7 +313,7 @@ const TATable = () => {
             variant="contained"
             onClick={() => router.push('/dashboard/people/tas/add')}
             sx={{
-              backgroundColor: '#1976d2',
+              backgroundColor: '#1F2E6A',
               color: '#fff',
               '&:hover': {
                 backgroundColor: '#1565c0',
@@ -326,11 +326,10 @@ const TATable = () => {
             variant="outlined"
             onClick={() => router.push('/dashboard/people/tas/skills')}
             sx={{
-              borderColor: '#1976d2',
-              color: '#1976d2',
-              '&:hover': { 
-                borderColor: '#1565c0', 
-                backgroundColor: '#f0f7ff' 
+              backgroundColor: '#1F2E6A',
+              color: '#fff',
+              '&:hover': {
+                backgroundColor: '#1565c0',
               },
             }}
           >
@@ -340,11 +339,10 @@ const TATable = () => {
             variant="outlined"
             onClick={() => router.push('/dashboard/people/tas/pairing')}
             sx={{
-              borderColor: '#1976d2',
-              color: '#1976d2',
-              '&:hover': { 
-                borderColor: '#1565c0', 
-                backgroundColor: '#f0f7ff' 
+              backgroundColor: '#1F2E6A',
+              color: '#fff',
+              '&:hover': {
+                backgroundColor: '#1565c0', 
               },
             }}
           >
