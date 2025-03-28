@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from 'axios';
+import Auth from "../../../app/login/auth";
 import { 
   Box, 
   Typography, 
@@ -64,9 +65,7 @@ interface Announcement {
   created_at: string;
   url_name: string | null;
   creator_id: number;
-  created_by?: {
-    name?: string;
-  };
+  creator_name: string;
 }
 
 interface AnnouncementForm {
@@ -134,7 +133,12 @@ const AnnouncementPage = () => {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/announcements');
+      const token = localStorage.getItem('token');
+      const response = await axios.get('/announcements', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       console.log('Announcement data:', response.data);
       setAnnouncements(response.data);
     } catch (error: any) {
@@ -269,6 +273,8 @@ const AnnouncementPage = () => {
   };
 
   const handleSaveAnnouncement = async () => {
+    console.log('Role:', localStorage.getItem('role'));
+    console.log('Token:', localStorage.getItem('token'));
     if (!validateForm()) {
       return;
     }
@@ -282,8 +288,10 @@ const AnnouncementPage = () => {
         formData.append('file', announcementForm.attachment.file);
       }
 
+      const token = localStorage.getItem('token');
       const response = await axios.post('/announcements', formData, {
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
@@ -311,6 +319,19 @@ const AnnouncementPage = () => {
         } else {
           errorMessage = error.response.data.detail;
         }
+      }
+
+      if (error.response?.data?.status === 403) {
+        errorMessage = "Only professors can create announcements";
+        console.log("Pushing to dashboard_test");
+        router.push('/dashboard_test');
+        return;
+      }
+
+      if (error.response?.data?.status === 401) {
+        errorMessage = "Authentication failed";
+        Auth.logOut();
+        return;
       }
       
       setSnackbar({
@@ -341,8 +362,10 @@ const AnnouncementPage = () => {
         formData.append('file', announcementForm.attachment.file);
       }
 
+      const token = localStorage.getItem('token');
       const response = await axios.put(`/announcements/${announcementForm.id}`, formData, {
         headers: {
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
@@ -392,7 +415,12 @@ const AnnouncementPage = () => {
 
     try {
       setIsSubmitting(true);
-      await axios.delete(`/announcements/${selectedAnnouncementId}`);
+      const token = localStorage.getItem('token');
+      await axios.delete(`/announcements/${selectedAnnouncementId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       setSnackbar({
         open: true,
         message: 'Announcement deleted successfully',
@@ -401,9 +429,25 @@ const AnnouncementPage = () => {
       fetchAnnouncements();
     } catch (error: any) {
       console.error('Error deleting announcement:', error);
+
+      let errorMessage = 'Error deleting announcement';
+      console.log(error.response?.request?.status);
+      if (error.response?.request?.status === 403) {
+        console.log("Pushing to dashboard_test");
+        errorMessage = "Only professors can delete announcements";
+        router.push('/dashboard_test');
+        return;
+      }
+
+      if (error.response?.request?.status === 401) {
+        errorMessage = "Authentication failed";
+        Auth.logOut();
+        return;
+      }
+
       setSnackbar({
         open: true,
-        message: 'Failed to delete announcement',
+        message: errorMessage,
         severity: 'error'
       });
     } finally {
@@ -465,7 +509,7 @@ const AnnouncementPage = () => {
               {announcement.title}
             </Typography>
             <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-              Posted by {announcement.created_by?.name || `User ${announcement.creator_id}`} on {formatDate(announcement.created_at)}
+              Posted by {announcement.creator_name || `User ${announcement.creator_id}`} on {formatDate(announcement.created_at)}
             </Typography>
             {showDeleteButton && (
               <Box sx={{ position: 'absolute', right: '48px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 1 }}>
