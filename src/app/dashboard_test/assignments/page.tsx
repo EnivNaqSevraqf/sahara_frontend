@@ -1,223 +1,57 @@
 'use client';
-import React, { useState } from "react";
-import { 
-  Button, 
-  Card, 
-  CardContent, 
-  Typography,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle
-} from "@mui/material";
-import CloudUploadIcon from "@mui/icons-material/CloudUpload";
-import DownloadIcon from "@mui/icons-material/Download";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { CircularProgress, Box } from '@mui/material';
+import ProfessorAssignmentList from './professor';
+import StudentAssignmentList from './student';
 
-interface Assignment {
-  name: string;
-  description: string; 
-  file: File | null;
-  dueDate: string;
-}
+export default function AssignmentsList() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [role, setRole] = useState<string | null>(null);
 
-const assignments: Assignment[] = [
-  { name: "C++ Assignment", description: "placeholder", file: null, dueDate: "2025-03-07" },
-  { name: "Bash Script Assignment", description: "placeholder", file: null, dueDate: "2025-03-28" },
-  { name: "Python Programming", description: "placeholder", file: null, dueDate: "2025-04-17" },
-];
+  useEffect(() => {
+    const rrole = localStorage.getItem('role');
+    // setRole(localStorage.getItem('role'));
+    console.log("Role:", rrole);
+    
+    if (rrole) {
+      // Redirect based on role
+      // if (role === 'prof' || role === 'ta') {
+      //   // router.push('/dashboard_test/feedback/admin');
+      //   return <ProfessorSubmissionList />;
+      // } else {
+      //   // router.push('/dashboard_test/feedback/student');
 
-const AssignmentsPage: React.FC = () => {
-  const [submissions, setSubmissions] = useState<{ [key: string]: File | null }>({});
-  const [confirmationOpen, setConfirmationOpen] = useState(false);
-  const [pendingUpload, setPendingUpload] = useState<{ file: File | null, assignmentName: string | null }>({
-    file: null,
-    assignmentName: null
-  });
-
-  const handleUpload = (event: React.ChangeEvent<HTMLInputElement>, name: string) => {
-    if (event.target.files && event.target.files.length > 0) {
-      const file = event.target.files[0];
-      setPendingUpload({ file, assignmentName: name });
-      setConfirmationOpen(true);
+      // }
+      setRole(rrole);
+      console.log("Role found:", rrole);
+      setLoading(false);
+    } else {
+      // If no role is found, redirect to login
+      console.log("Redirecting to login");
+      // router.push('/login');
     }
-  };
+  }, [router]);
 
-  const handleConfirmUpload = () => {
-    if (pendingUpload.file && pendingUpload.assignmentName) {
-      const assignmentName: string = pendingUpload.assignmentName;
-      setSubmissions((prev) => ({ 
-        ...prev, 
-        [assignmentName]: pendingUpload.file 
-      }));
-    }
-    setConfirmationOpen(false);
-    setPendingUpload({ file: null, assignmentName: null });
-  };
+  if(loading) {
+    // Show loading state while checking role
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+  if(role === 'prof') {
+    return <ProfessorAssignmentList />;
+  } else if(role === 'student') {
+    return <StudentAssignmentList />;
+  }
 
-  const handleCancelUpload = () => {
-    setConfirmationOpen(false);
-    setPendingUpload({ file: null, assignmentName: null });
-  };
-
-  const handleRemove = (name: string) => {
-    setSubmissions((prev) => ({ ...prev, [name]: null }));
-  };
-
-  const handleDownload = (name: string) => {
-    const file = submissions[name];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = file.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }
-  };
-
-  const currentDate = new Date();
-
+  // Show loading state while redirecting
   return (
-    <div>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-        Ongoing Assignments
-      </Typography>
-      {assignments.map((assignment) => {
-        const dueDate = new Date(assignment.dueDate);
-        const isPast = dueDate < currentDate;
-        const submittedFile = submissions[assignment.name];
-
-        if (!isPast) {
-          return (
-            <Card key={assignment.name} style={{ marginBottom: 16, padding: 16 }}>
-              <CardContent>
-                <Typography variant="h6">{assignment.name}</Typography>
-                <Typography color="textSecondary">Description: {assignment.description}</Typography>
-                <Typography color="textSecondary">Due: {assignment.dueDate}</Typography>
-
-                {!submittedFile && (
-                  <>
-                    <input
-                      type="file"
-                      onChange={(e) => handleUpload(e, assignment.name)}
-                      accept=".txt,.pdf,.zip,.docx"
-                      style={{ display: "none" }}
-                      id={`upload-${assignment.name}`}
-                    />
-                    <label htmlFor={`upload-${assignment.name}`}>
-                      <Button
-                        component="span"
-                        variant="contained"
-                        style={{ backgroundColor: "#1E88E5", color: "white", marginTop: 10 }}
-                        startIcon={<CloudUploadIcon />}
-                      >
-                        Upload Document
-                      </Button>
-                    </label>
-                  </>
-                )}
-
-                {submittedFile && (
-                  <>
-                    <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
-                      Uploaded: {submittedFile.name}
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<DeleteIcon />}
-                      onClick={() => handleRemove(assignment.name)}
-                      style={{ marginLeft: 8, marginTop: 10 }}
-                    >
-                      Remove Document
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<DownloadIcon />}
-                      onClick={() => handleDownload(assignment.name)}
-                      style={{ marginLeft: 8, marginTop: 10 }}
-                    >
-                      Download Submission
-                    </Button>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          );
-        }
-      })}
-
-      {/* Confirmation Dialog */}
-      <Dialog
-        open={confirmationOpen}
-        onClose={handleCancelUpload}
-        aria-labelledby="upload-confirmation-dialog-title"
-        aria-describedby="upload-confirmation-dialog-description"
-      >
-        <DialogTitle id="upload-confirmation-dialog-title">
-          Confirm File Submission
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="upload-confirmation-dialog-description">
-            Are you sure you want to submit the file? You can change your submission anytime before the due date.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelUpload} color="primary">
-            No
-          </Button>
-          <Button onClick={handleConfirmUpload} color="primary" autoFocus>
-            Yes
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-        Previous Assignments
-      </Typography>
-      {assignments.map((assignment) => {
-        const dueDate = new Date(assignment.dueDate);
-        const isPast = dueDate < currentDate;
-        const submittedFile = submissions[assignment.name];
-
-        if (isPast) {
-          return (
-            <Card key={assignment.name} style={{ marginBottom: 16, padding: 16 }}>
-              <CardContent>
-                <Typography variant="h6">{assignment.name}</Typography>
-                <Typography color="textSecondary">Description: {assignment.description}</Typography>
-                <Typography color="textSecondary">Due: {assignment.dueDate}</Typography>
-                {submittedFile && (
-                  <Typography variant="body2" color="textSecondary" style={{ marginTop: 8 }}>
-                    Submitted: {submittedFile.name}
-                  </Typography>
-                )}
-                <Button
-                  variant="contained"
-                  startIcon={<DownloadIcon />}
-                  onClick={() => handleDownload(assignment.name)}
-                  disabled={!submittedFile}
-                  style={{
-                    backgroundColor: submittedFile ? "#1E88E5" : "#E0E0E0",
-                    color: submittedFile ? "white" : "#A0A0A0",
-                    marginTop: 10,
-                  }}
-                >
-                  Download Submission
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        }
-      })}
-    </div>
+    <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+      <CircularProgress />
+    </Box>
   );
-};
-
-export default AssignmentsPage;
+}

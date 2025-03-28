@@ -119,8 +119,8 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <SchoolIcon />,
       },
       {
-        segment: 'dashboard_test/submissions',
-        title: 'Documentation',
+        segment: 'dashboard_test/submission',
+        title: 'Submissions',
         icon: <AssignmentRoundedIcon />,
       },
       {
@@ -129,7 +129,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <PeopleIcon />,
       },
       {
-        segment: 'dashboard_test/discussions',
+        segment: 'dashboard_test/discussion',
         title: 'Discussions',
         icon: <ForumIcon />,
       },
@@ -176,10 +176,10 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Assignments',
         icon: <SchoolIcon />,
       },
-      //documentation
+      //documentation -> Submissions
       {
-        segment: 'dashboard_test/submissions',
-        title: 'Documentation',
+        segment: 'dashboard_test/submission',
+        title: 'Submissions',
         icon: <AssignmentRoundedIcon />,
       },
       {
@@ -188,7 +188,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <PeopleIcon />,
       },
       {
-        segment: 'dashboard_test/discussions',
+        segment: 'dashboard_test/discussion',
         title: 'Discussions',
         icon: <ForumIcon />,
       },
@@ -240,7 +240,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <ViewQuilt />,
       },
       {
-        segment: 'dashboard_test/discussions',
+        segment: 'dashboard_test/discussion',
         title: 'Discussions', 
         icon: <ForumIcon />,
       },
