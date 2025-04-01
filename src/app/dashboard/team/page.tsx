@@ -87,6 +87,16 @@ export default function TeamMembersPage() {
   const [editNameDialogOpen, setEditNameDialogOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState('');
   const [updatingName, setUpdatingName] = useState(false);
+  
+  // New state variables for team invitations
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [invitedUserId, setInvitedUserId] = useState('');
+  const [inviteSending, setInviteSending] = useState(false);
+  const [teamInvites, setTeamInvites] = useState<{team_id: number, team_name: string, team_members: string[]}[]>([]);
+  const [createTeamDialogOpen, setCreateTeamDialogOpen] = useState(false);
+  const [creatingTeam, setCreatingTeam] = useState(false);
+  const [joiningTeam, setJoiningTeam] = useState(false);
+  const [joiningTeamId, setJoiningTeamId] = useState<number | null>(null);
 
   // Sorting states
   const [order, setOrder] = useState<Order>('asc');
@@ -103,7 +113,7 @@ export default function TeamMembersPage() {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        if (response.data && response.data.team_id) {
+        if (response.data && response.data.has_team) {
           setHasTeam(true);
           setTeamId(response.data.team_id);
           setTeamName(response.data.team_name);
@@ -127,6 +137,11 @@ export default function TeamMembersPage() {
           }
         } else {
           setHasTeam(false);
+          
+          // If not in a team, get team invites
+          if (response.data && response.data.invites) {
+            setTeamInvites(response.data.invites);
+          }
         }
       } catch (err) {
         console.error('Error fetching team data:', err);
@@ -174,6 +189,19 @@ export default function TeamMembersPage() {
             }
           } else {
             setHasTeam(false);
+            
+            // Try to get invites
+            try {
+              const invitesResponse = await axios.get(`${currentConfig.apiBaseUrl}/teams/get-invites`, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+              
+              if (invitesResponse.data && invitesResponse.data.invites) {
+                setTeamInvites(invitesResponse.data.invites);
+              }
+            } catch (inviteErr) {
+              console.error('Error fetching team invites:', inviteErr);
+            }
           }
         } catch (err2) {
           console.error('Error fetching fallback data:', err2);
@@ -186,6 +214,106 @@ export default function TeamMembersPage() {
 
     fetchTeamData();
   }, []);
+
+  // Function to handle inviting a user to your team
+  const handleInviteUser = async () => {
+    if (!invitedUserId || !teamId) return;
+    
+    try {
+      setInviteSending(true);
+      const token = localStorage.getItem('token');
+      console.log('Inviting user with ID:', invitedUserId);
+      const payload = {
+        user_id: parseInt(invitedUserId),
+      };
+      console.log('Payload:', payload);
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      }
+      await axios.post(
+        `${currentConfig.apiBaseUrl}/teams/invite`,
+        payload,
+        config
+      );
+      
+      setInviteDialogOpen(false);
+      setInvitedUserId('');
+      
+      // Show success message or update UI as needed
+    } catch (err) {
+      console.error('Error inviting user:', err);
+      setError('Failed to invite user. Please try again later.');
+    } finally {
+      setInviteSending(false);
+    }
+  };
+  
+  // Function to join a team from an invite
+  const handleJoinTeam = async (teamId: number) => {
+    try {
+      setJoiningTeamId(teamId);
+      setJoiningTeam(true);
+      const token = localStorage.getItem('token');
+      const payload = {
+        team_id: teamId,
+      };
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      }
+      await axios.post(
+        `${currentConfig.apiBaseUrl}/teams/join`,
+        payload,
+        config
+      );
+      
+      // Refresh page to show new team
+      window.location.reload();
+    } catch (err) {
+      console.error('Error joining team:', err);
+      setError('Failed to join team. Please try again.');
+    } finally {
+      setJoiningTeam(false);
+    }
+  };
+  
+  // Function to create a new team
+  const handleCreateTeam = async () => {
+    if (!newTeamName.trim()) return;
+    
+    try {
+      setCreatingTeam(true);
+      const token = localStorage.getItem('token');
+      const payload = {
+        name: newTeamName.trim(),
+      };
+      const config = {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      }
+
+      await axios.post(
+        `${currentConfig.apiBaseUrl}/teams/create`,
+        payload,
+        config
+      );
+      
+      // Refresh page to show new team
+      window.location.reload();
+    } catch (err) {
+      console.error('Error creating team:', err);
+      setError('Failed to create team. Please try again.');
+    } finally {
+      setCreatingTeam(false);
+    }
+  };
 
   const handleRequestSort = (property: OrderBy) => {
     const isAsc = orderBy === property && order === 'asc';
@@ -296,7 +424,9 @@ export default function TeamMembersPage() {
         border: `1px solid ${skill.color || '#000000'}`,
       }}
       icon={iconComponents[skill.icon] ?
-        React.cloneElement(iconComponents[skill.icon] as React.ReactElement, { style: { color: skill.color } }) :
+        React.cloneElement(iconComponents[skill.icon] as React.ReactElement, { 
+          style: { color: skill.color } as React.CSSProperties 
+        }) :
         undefined
       }
     />
@@ -321,16 +451,109 @@ export default function TeamMembersPage() {
   if (!hasTeam) {
     return (
       <Box sx={{ p: 3 }}>
-        <Card>
+        <Card elevation={3} sx={{ mb: 4 }}>
           <CardContent sx={{ textAlign: 'center' }}>
             <Typography variant="h5" component="div" sx={{ mb: 2 }}>
               Not Assigned to a Team
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              You are not currently assigned to any team. Please contact your instructor or TA if you believe this is an error.
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              You are not currently in a team. You can join a team by accepting an invitation or create your own team.
             </Typography>
+            
+            <Button 
+              variant="contained" 
+              color="primary"
+              onClick={() => setCreateTeamDialogOpen(true)}
+              sx={{ mb: 2 }}
+            >
+              Create New Team
+            </Button>
           </CardContent>
         </Card>
+
+        {/* Team Invites Section */}
+        {teamInvites.length > 0 ? (
+          <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
+            <Typography variant="h6" sx={{ mb: 2, color: '#1976d2' }}>
+              Team Invitations
+            </Typography>
+            
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                    <TableCell>Team ID</TableCell>
+                    <TableCell>Team Name</TableCell>
+                    <TableCell>Team Members</TableCell>
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {teamInvites.map((invite) => (
+                    <TableRow key={invite.team_id} hover>
+                      <TableCell>{invite.team_id}</TableCell>
+                      <TableCell>{invite.team_name}</TableCell>
+                      <TableCell>{invite.team_members.join(', ')}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          onClick={() => handleJoinTeam(invite.team_id)}
+                          disabled={joiningTeam}
+                          sx={{ mr: 1 }}
+                        >
+                          {(joiningTeam && joiningTeamId === invite.team_id)? 'Joining...' : 'Accept Invite'}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        ) : (
+          <Paper elevation={3} sx={{ p: 3, borderRadius: 2, textAlign: 'center' }}>
+            <Typography variant="body1" color="text.secondary">
+              You don't have any pending team invitations.
+            </Typography>
+          </Paper>
+        )}
+        
+        {/* Create Team Dialog */}
+        <Dialog
+          open={createTeamDialogOpen}
+          onClose={() => setCreateTeamDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Create New Team</DialogTitle>
+          <DialogContent dividers>
+            <TextField
+              autoFocus
+              margin="dense"
+              id="team-name"
+              label="Team Name"
+              type="text"
+              fullWidth
+              variant="outlined"
+              value={newTeamName}
+              onChange={(e) => setNewTeamName(e.target.value)}
+              sx={{ mt: 1 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCreateTeamDialogOpen(false)} disabled={creatingTeam}>Cancel</Button>
+            <Button
+              onClick={handleCreateTeam}
+              variant="contained"
+              disabled={creatingTeam || !newTeamName.trim()}
+              startIcon={creatingTeam ? <CircularProgress size={20} /> : null}
+            >
+              {creatingTeam ? 'Creating...' : 'Create Team'}
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     );
   }
@@ -388,6 +611,20 @@ export default function TeamMembersPage() {
               </Typography>
             </Box>
           </Box>
+          
+          <Button
+            variant="contained"
+            onClick={() => setInviteDialogOpen(true)}
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.2)',
+              color: 'white',
+              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' },
+              textTransform: 'none',
+              fontWeight: 'bold'
+            }}
+          >
+            Invite User to Team
+          </Button>
         </Box>
       </Paper>
 
@@ -617,6 +854,41 @@ export default function TeamMembersPage() {
             startIcon={updatingName ? <CircularProgress size={20} /> : null}
           >
             {updatingName ? 'Updating...' : 'Update Name'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Invite User Dialog */}
+      <Dialog
+        open={inviteDialogOpen}
+        onClose={() => setInviteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Invite User to Team</DialogTitle>
+        <DialogContent dividers>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="user-id"
+            label="User ID"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={invitedUserId}
+            onChange={(e) => setInvitedUserId(e.target.value)}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setInviteDialogOpen(false)} disabled={inviteSending}>Cancel</Button>
+          <Button
+            onClick={handleInviteUser}
+            variant="contained"
+            disabled={inviteSending || !invitedUserId.trim()}
+            startIcon={inviteSending ? <CircularProgress size={20} /> : null}
+          >
+            {inviteSending ? 'Inviting...' : 'Invite User'}
           </Button>
         </DialogActions>
       </Dialog>
