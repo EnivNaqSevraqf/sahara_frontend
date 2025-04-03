@@ -1,5 +1,6 @@
 'use client';
 
+import * as React from 'react';
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -10,11 +11,29 @@ import {
   Grid,
   CircularProgress,
   Alert,
-  Chip
+  Chip,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+  OutlinedInput,
 } from '@mui/material';
 import axios from 'axios';
 import { currentConfig } from '@/config';
 import PersonIcon from '@mui/icons-material/Person';
+import TimelineIcon from '@mui/icons-material/Timeline';
+import CodeIcon from '@mui/icons-material/Code';
+import StorageIcon from '@mui/icons-material/Storage';
+import DataObjectIcon from '@mui/icons-material/DataObject';
+import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstructions';
+import WebIcon from '@mui/icons-material/Web';
+import JavascriptIcon from '@mui/icons-material/Javascript';
 
 // Configure axios base URL
 axios.defaults.baseURL = currentConfig.apiBaseUrl;
@@ -28,10 +47,33 @@ interface UserData {
   team_name: string | null;
 }
 
+interface Skill {
+  id: number;
+  name: string;
+  bgColor: string;
+  color: string;
+  icon: string;
+}
+
+// Update icon components type definition to use SvgIconProps
+const iconComponents: Record<string, React.ComponentType<{ sx?: any }>> = {
+  'WebIcon': WebIcon,
+  'JavascriptIcon': JavascriptIcon,
+  'CodeIcon': CodeIcon,
+  'StorageIcon': StorageIcon,
+  'DataObjectIcon': DataObjectIcon,
+  'IntegrationInstructionsIcon': IntegrationInstructionsIcon
+};
+
 export default function ProfilePage() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedSkillIds, setSelectedSkillIds] = useState<number[]>([]);
+  const [userSkills, setUserSkills] = useState<Skill[]>([]);
+  const [allSkills, setAllSkills] = useState<Skill[]>([]);
+  const [savingSkills, setSavingSkills] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -41,18 +83,38 @@ export default function ProfilePage() {
           throw new Error('No authentication token found');
         }
 
-        const response = await axios.get('/users/me', {
+        // Fetch user profile data
+        const userResponse = await axios.get('/users/me', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         });
+        setUserData(userResponse.data);
 
-        setUserData(response.data);
+        // Fetch all available skills from backend
+        const skillsResponse = await axios.get(`${currentConfig.apiBaseUrl}/api/skills`, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        setAllSkills(skillsResponse.data);
+
+        // Fetch user's current skills
+        const userSkillsResponse = await axios.get(`${currentConfig.apiBaseUrl}/api/users/skills`, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        setUserSkills(userSkillsResponse.data);
+        setSelectedSkillIds(userSkillsResponse.data.map((skill: Skill) => skill.id));
+
         setError(null);
       } catch (error: any) {
-        console.error('Error fetching user data:', error);
-        setError(error.response?.data?.detail || 'Failed to fetch user data');
+        console.error('Error fetching data:', error);
+        setError(error.response?.data?.detail || 'Failed to fetch data');
       } finally {
         setLoading(false);
       }
@@ -60,6 +122,78 @@ export default function ProfilePage() {
 
     fetchUserData();
   }, []);
+
+  const handleOpenSkillsDialog = () => {
+    setSelectedSkillIds(userSkills.map(skill => skill.id));
+    setDialogOpen(true);
+  };
+
+  const handleCloseSkillsDialog = () => {
+    setDialogOpen(false);
+  };
+
+  const handleSkillSelectionChange = (event: SelectChangeEvent<number[]>) => {
+    const { value } = event.target;
+    setSelectedSkillIds(typeof value === 'string' ? [] : value as number[]);
+  };
+
+  const handleUpdateSkills = async () => {
+    try {
+      setSavingSkills(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Update user skills in backend
+      await axios.put(
+        `${currentConfig.apiBaseUrl}/api/users/skills`,
+        { skill_ids: selectedSkillIds },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Fetch updated user skills
+      const updatedSkillsResponse = await axios.get(
+        `${currentConfig.apiBaseUrl}/api/users/skills`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      setUserSkills(updatedSkillsResponse.data);
+      handleCloseSkillsDialog();
+    } catch (err: any) {
+      console.error('Error updating skills:', err);
+      setError(err.response?.data?.detail || 'Failed to update skills. Please try again later.');
+    } finally {
+      setSavingSkills(false);
+    }
+  };
+
+  const renderSkillChip = (skill: Skill) => {
+    const IconComponent = iconComponents[skill.icon];
+    return (
+      <Chip
+        key={skill.id}
+        label={skill.name}
+        style={{
+          backgroundColor: skill.bgColor || '#f0f0f0',
+          color: skill.color || '#000000',
+          margin: '4px',
+          border: `1px solid ${skill.color || '#000000'}`,
+        }}
+        icon={IconComponent && <IconComponent sx={{ color: skill.color }} />}
+      />
+    );
+  };
 
   if (loading) {
     return (
@@ -172,8 +306,119 @@ export default function ProfilePage() {
               </Grid>
             </Box>
           </Grid>
+
+          {/* Skills Section - Now shown for all users */}
+          <Grid item xs={12}>
+            <Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <TimelineIcon sx={{ color: '#033076' }} />
+                  <Typography variant="h6" sx={{ color: '#033076' }}>
+                    Skills & Expertise
+                  </Typography>
+                </Box>
+
+                <Button
+                  variant="outlined"
+                  onClick={handleOpenSkillsDialog}
+                  sx={{
+                    borderColor: '#033076',
+                    color: '#033076',
+                    '&:hover': {
+                      backgroundColor: 'rgba(3, 48, 118, 0.08)',
+                    }
+                  }}
+                >
+                  Manage Skills
+                </Button>
+              </Box>
+
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                {userSkills.length > 0 ? (
+                  userSkills.map(skill => renderSkillChip(skill))
+                ) : (
+                  <Typography color="text.secondary">
+                    No skills added yet. Click "Manage Skills" to add your expertise.
+                  </Typography>
+                )}
+              </Box>
+            </Box>
+          </Grid>
         </Grid>
       </Paper>
+
+      {/* Skills Selection Dialog */}
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseSkillsDialog}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Manage Your Skills</DialogTitle>
+        <DialogContent dividers>
+          <FormControl fullWidth>
+            <InputLabel id="skills-select-label">Your Skills</InputLabel>
+            <Select
+              labelId="skills-select-label"
+              id="skills-select"
+              multiple
+              value={selectedSkillIds}
+              onChange={handleSkillSelectionChange}
+              input={<OutlinedInput label="Your Skills" />}
+              renderValue={(selected) => (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {selected.map((value) => {
+                    const skill = allSkills.find(s => s.id === value);
+                    return skill ? renderSkillChip(skill) : null;
+                  })}
+                </Box>
+              )}
+            >
+              {allSkills.map((skill) => (
+                <MenuItem key={skill.id} value={skill.id}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    gap={1}
+                    sx={{
+                      padding: '6px 10px',
+                      borderRadius: '4px',
+                      backgroundColor: skill.bgColor,
+                      color: skill.color,
+                      border: `1px solid ${skill.color}`,
+                      width: '100%'
+                    }}
+                  >
+                    {iconComponents[skill.icon] && 
+                      React.createElement(iconComponents[skill.icon], { 
+                        sx: { color: skill.color } 
+                      })
+                    }
+                    {skill.name}
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          <Box sx={{ mt: 4 }}>
+            <Typography variant="body2" color="text.secondary">
+              Select the skills that best represent your expertise. These skills will help match you with teams that need your knowledge.
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseSkillsDialog} disabled={savingSkills}>Cancel</Button>
+          <Button
+            onClick={handleUpdateSkills}
+            variant="contained"
+            disabled={savingSkills}
+            startIcon={savingSkills ? <CircularProgress size={20} /> : null}
+          >
+            {savingSkills ? 'Saving...' : 'Save Skills'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
