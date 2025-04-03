@@ -41,9 +41,10 @@ export default function ProfilePage() {
           throw new Error('No authentication token found');
         }
 
-        const response = await axios.get('/user/me', {
+        const response = await axios.get('/users/me', {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
 
