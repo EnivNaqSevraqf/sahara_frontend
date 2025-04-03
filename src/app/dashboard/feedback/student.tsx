@@ -14,8 +14,9 @@ import {
   TableRow,
   TextField,
   Button,
-  Alert,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 
 interface TeamMember {
@@ -45,7 +46,6 @@ api.interceptors.request.use((config) => {
 
 export default function FeedbackForm() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [totalContribution, setTotalContribution] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -53,6 +53,11 @@ export default function FeedbackForm() {
   const [teamId, setTeamId] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedAt, setSubmittedAt] = useState<string | null>(null);
+  const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   useEffect(() => {
     fetchTeamData();
@@ -60,7 +65,6 @@ export default function FeedbackForm() {
 
   const fetchTeamData = async () => {
     try {
-      setError(null);
       const { data } = await api.get('/feedback/students');
       
       setTeamId(data.team_id);
@@ -96,9 +100,17 @@ export default function FeedbackForm() {
       setLoading(false);
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Failed to load team data');
+        setSnackbar({
+          open: true,
+          message: err.response?.data?.detail || 'Failed to load team data',
+          severity: 'error'
+        });
       } else {
-        setError('An unexpected error occurred');
+        setSnackbar({
+          open: true,
+          message: 'An unexpected error occurred',
+          severity: 'error'
+        });
       }
       setLoading(false);
     }
@@ -133,18 +145,25 @@ export default function FeedbackForm() {
 
   const handleSubmit = async () => {
     if (!teamId) {
-      setError('No team ID found');
+      setSnackbar({
+        open: true,
+        message: 'No team ID found',
+        severity: 'error'
+      });
       return;
     }
 
     // Compare with 2 decimal places precision
     if (Math.abs(totalContribution - 100) > 0.01) {
-      setError('Total contribution must equal 100%');
+      setSnackbar({
+        open: true,
+        message: 'Total contribution must equal 100%',
+        severity: 'error'
+      });
       return;
     }
 
     try {
-      setError(null);
       await api.post('/feedback/student/submit', {
         team_id: teamId,
         details: teamMembers.map(member => ({
@@ -155,14 +174,26 @@ export default function FeedbackForm() {
       });
 
       setSuccess(true);
-      setError(null);
+      setSnackbar({
+        open: true,
+        message: 'Feedback submitted successfully!',
+        severity: 'success'
+      });
       setIsSubmitted(true);
       setSubmittedAt(new Date().toISOString());
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.detail || 'Failed to submit feedback');
+        setSnackbar({
+          open: true,
+          message: err.response?.data?.detail || 'Failed to submit feedback',
+          severity: 'error'
+        });
       } else {
-        setError('An unexpected error occurred while submitting feedback');
+        setSnackbar({
+          open: true,
+          message: 'An unexpected error occurred while submitting feedback',
+          severity: 'error'
+        });
       }
       setSuccess(false);
     }
@@ -182,18 +213,6 @@ export default function FeedbackForm() {
         <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ color: 'text.primary', fontWeight: 500 }}>
           Team Contribution Feedback - {teamName}
         </Typography>
-
-        {error && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        {success && (
-          <Alert severity="success" sx={{ mb: 2 }}>
-            Feedback submitted successfully!
-          </Alert>
-        )}
 
         {isSubmitted && (
           <Alert severity="info" sx={{ mb: 2 }}>
@@ -332,6 +351,25 @@ export default function FeedbackForm() {
           </Box>
         )}
       </Paper>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

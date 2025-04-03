@@ -19,7 +19,8 @@ import {
   DialogActions,
   Divider,
   Tooltip,
-  styled
+  styled,
+  Snackbar
 } from '@mui/material';
 import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import * as XLSX from 'xlsx';
@@ -113,10 +114,14 @@ const calculateStatistics = (submissions: FeedbackSubmission[], memberName: stri
 
 export default function AdminFeedback() {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [teams, setTeams] = useState<TeamFeedback[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<TeamFeedbackDetails | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
+    open: false,
+    message: '',
+    severity: 'error'
+  });
 
   useEffect(() => {
     fetchTeams();
@@ -131,7 +136,11 @@ export default function AdminFeedback() {
       });
       setTeams(response.data);
     } catch (error) {
-      setError('Failed to fetch teams feedback. Please try again later.');
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch teams feedback. Please try again later.',
+        severity: 'error'
+      });
       console.error('Error fetching teams feedback:', error);
     } finally {
       setLoading(false);
@@ -148,7 +157,11 @@ export default function AdminFeedback() {
       setSelectedTeam(response.data);
       setDialogOpen(true);
     } catch (error) {
-      setError('Failed to fetch team details. Please try again later.');
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch team details. Please try again later.',
+        severity: 'error'
+      });
       console.error('Error fetching team details:', error);
     } finally {
       setLoading(false);
@@ -275,8 +288,17 @@ export default function AdminFeedback() {
 
       // Save the workbook
       XLSX.writeFile(workbook, `all_teams_feedback_matrices.xlsx`);
+      setSnackbar({
+        open: true,
+        message: 'All matrices exported successfully!',
+        severity: 'success'
+      });
     } catch (error) {
-      setError('Failed to export all matrices. Please try again later.');
+      setSnackbar({
+        open: true,
+        message: 'Failed to export all matrices. Please try again later.',
+        severity: 'error'
+      });
       console.error('Error exporting all matrices:', error);
     } finally {
       setLoading(false);
@@ -358,14 +380,6 @@ export default function AdminFeedback() {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box p={3}>
-        <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
@@ -541,6 +555,25 @@ export default function AdminFeedback() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
