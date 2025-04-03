@@ -14,6 +14,8 @@ import {
   Menu,
   Avatar,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { Send as SendIcon, AttachFile as AttachFileIcon, KeyboardArrowDown } from '@mui/icons-material';
 import { currentConfig } from '@/config';
@@ -48,16 +50,16 @@ interface UserData {
 }
 
 const isSameDay = (date1: string, date2: string) => {
-  const d1 = new Date(date1);
-  const d2 = new Date(date2);
+  const d1 = convertToIST(date1);
+  const d2 = convertToIST(date2);
   return d1.getDate() === d2.getDate() &&
          d1.getMonth() === d2.getMonth() &&
          d1.getFullYear() === d2.getFullYear();
 };
 
 const formatMessageDate = (date: string) => {
-  const messageDate = new Date(date);
-  const today = new Date();
+  const messageDate = convertToIST(date);
+  const today = convertToIST(new Date().toISOString());
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
@@ -66,7 +68,13 @@ const formatMessageDate = (date: string) => {
   } else if (isSameDay(date, yesterday.toISOString())) {
     return 'Yesterday';
   }
-  return messageDate.toLocaleDateString();
+  return messageDate.toLocaleDateString('en-IN');
+};
+
+const convertToIST = (date: string) => {
+  const utcDate = new Date(date);
+  const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+  return istDate;
 };
 
 export default function DiscussionPage() {
@@ -76,6 +84,7 @@ export default function DiscussionPage() {
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [loading, setLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +92,11 @@ export default function DiscussionPage() {
   const [wsConnected, setWsConnected] = useState(false);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentChannelRef = useRef<number | null>(null);
+  const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   useEffect(() => {
     fetchUserData();
@@ -164,8 +178,13 @@ export default function DiscussionPage() {
         console.log('Setting initial channel:', data.channels[0]); // Debug log
         setSelectedChannel(data.channels[0]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching user data:', error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to fetch user data. Please try again.',
+        severity: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -174,6 +193,7 @@ export default function DiscussionPage() {
   const fetchMessages = async () => {
     if (!selectedChannel) return;
     try {
+      setMessagesLoading(true);
       const token = localStorage.getItem('token');
       const payload = {}
       const response = await axios.get(`${currentConfig.apiBaseUrl}/discussions/channels/${selectedChannel.id}/messages`,
@@ -186,8 +206,15 @@ export default function DiscussionPage() {
       console.log('Received messages:', data); // Debug log
       setMessages(data);
       scrollToBottom();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching messages:', error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to fetch messages. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setMessagesLoading(false);
     }
   };
 
@@ -285,9 +312,13 @@ export default function DiscussionPage() {
       );
       
       setNewMessage('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
-      alert('Failed to send message. Please try again.');
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to send message. Please try again.',
+        severity: 'error'
+      });
     }
   };
 
@@ -318,8 +349,13 @@ export default function DiscussionPage() {
         }
       );
       
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error uploading file:', error);
+        setSnackbar({
+          open: true,
+          message: error.response?.data?.detail || 'Failed to upload file. Please try again.',
+          severity: 'error'
+        });
       }
     };
     reader.readAsDataURL(file);
@@ -359,8 +395,11 @@ export default function DiscussionPage() {
       URL.revokeObjectURL(downloadUrl);
     } catch (error: any) {
       console.error('Error downloading file:', error);
-      const errorMessage = error.response?.data?.detail || 'Failed to download file';
-      alert(errorMessage);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to download file. Please try again.',
+        severity: 'error'
+      });
     }
   };
 
@@ -453,9 +492,29 @@ export default function DiscussionPage() {
             p: 2,
             overflow: 'auto',
             bgcolor: 'background.paper',
+            position: 'relative',
+            minHeight: '200px',
           }}
         >
-          {messages && messages.length > 0 ? (
+          {messagesLoading ? (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                bgcolor: 'background.paper',
+                zIndex: 1,
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          ) : messages && messages.length > 0 ? (
             <>
               {messages.map((message, index) => {
                 const showDateDivider = index === 0 || !isSameDay(messages[index - 1].created_at, message.created_at);
@@ -545,7 +604,11 @@ export default function DiscussionPage() {
                           </Button>
                         )}
                         <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.7 }}>
-                          {new Date(message.created_at).toLocaleTimeString()}
+                          {convertToIST(message.created_at).toLocaleTimeString('en-IN', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true 
+                          })}
                         </Typography>
                       </Paper>
                     </Box>
@@ -605,6 +668,25 @@ export default function DiscussionPage() {
           </IconButton>
         </Paper>
       </Box>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

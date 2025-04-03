@@ -8,9 +8,9 @@ import {
   IconButton,
   Alert,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import Header from './components/Header';
 import { buttonStyles } from './constants/theme';
 import axios from 'axios';
 import { currentConfig } from '@/config';
@@ -22,6 +22,8 @@ const AddStudents = () => {
     severity: 'success' | 'error';
     message: string;
   } | null>(null);
+  const [createdUsers, setCreatedUsers] = useState<string>('');
+  const [errorList, setErrorList] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,11 +37,12 @@ const AddStudents = () => {
       }
     }
   };
+
   const handleSubmit = async () => {
     if (!selectedFile) {
       setSubmitStatus({
         severity: 'error',
-        message: 'Please select a CSV file first'
+        message: 'Please select a CSV file first',
       });
       return;
     }
@@ -51,24 +54,73 @@ const AddStudents = () => {
     try {
       const response = await axios.post(`${currentConfig.apiBaseUrl}/upload-students/`, formData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data',
         },
       });
 
+      const { message, created_students, errors } = response.data;
+
+      let successMessage = message;
+      let createdUsersList = '';
+      if (created_students && created_students.length > 0) {
+        createdUsersList = created_students
+          .map(
+            (student: { name: string; email: string; username: string; temp_password: string }) =>
+              `- ${student.name} (${student.username})`
+          )
+          .join('\n');
+      }
+
+      let errorList = '';
+      if (errors && errors.length > 0) {
+        errorList = errors.map((error: string) => `- ${error}`).join('\n');
+      }
+
       setSubmitStatus({
         severity: 'success',
-        message: 'File uploaded successfully!'
+        message: successMessage,
       });
+
+      setCreatedUsers(createdUsersList);
+      setErrorList(errorList);
+
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      setSubmitStatus({
-        severity: 'error',
-        message: 'Failed to upload file. Please try again.'
-      });
+      if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status === 400) {
+          const errorMessage = error.response.data.detail;
+          if (Array.isArray(errorMessage)) {
+            setSubmitStatus({
+              severity: 'error',
+              message: `Errors: ${errorMessage.join(', ')}`,
+            });
+          } else {
+            setSubmitStatus({
+              severity: 'error',
+              message: errorMessage || 'Bad Request: Please check the file format and try again.',
+            });
+          }
+        } else if (error.response.status === 500) {
+          setSubmitStatus({
+            severity: 'error',
+            message: 'Server Error: Please try again later.',
+          });
+        } else {
+          setSubmitStatus({
+            severity: 'error',
+            message: `Unexpected Error: ${error.response.statusText || 'Please try again.'}`,
+          });
+        }
+      } else {
+        setSubmitStatus({
+          severity: 'error',
+          message: 'Network Error: Please check your connection and try again.',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -79,23 +131,37 @@ const AddStudents = () => {
   };
 
   return (
-    <Box sx={{ 
-      p: 3 }}>
-      {/* <Header title="ADD STUDENTS" /> */}
-
-      <Typography
-        variant="h4"
-        component="h2"
-        align="center"
+    <Box
+      sx={{
+        p: 3,
+        maxWidth: '1200px',
+        margin: '0 auto',
+        bgcolor: 'background.default',
+      }}
+    >
+      <Box
         sx={{
           mb: 4,
-          p: 2,
-          border: '1px solid #e0e0e0',
-          borderRadius: '50px',
+          pb: 2,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
         }}
       >
-        Add Students
-      </Typography>
+        <Typography
+          variant="h4"
+          component="h2"
+          sx={{
+            fontWeight: 'bold',
+            fontSize: '1.5rem',
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          }}
+        >
+          Add Students
+        </Typography>
+      </Box>
 
       <Box
         sx={{
@@ -141,11 +207,20 @@ const AddStudents = () => {
           </IconButton>
         </Paper>
 
+        <Typography
+          variant="body2"
+          color="textSecondary"
+          align="center"
+          sx={{ mb: 2 }}
+        >
+          Expected CSV Columns: <strong>RollNo, Name, Email</strong>
+        </Typography>
+
         {selectedFile && (
-          <Alert 
-            severity="success" 
-            sx={{ 
-              width: '100%', 
+          <Alert
+            severity="success"
+            sx={{
+              width: '100%',
               maxWidth: '600px',
             }}
           >
@@ -168,7 +243,7 @@ const AddStudents = () => {
             borderRadius: '4px',
           }}
         >
-          {isSubmitting ? 'Uploading...' : 'Upload'}
+          {isSubmitting ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Upload'}
         </Button>
 
         {submitStatus && (
@@ -178,11 +253,91 @@ const AddStudents = () => {
               width: '100%', 
               maxWidth: '600px',
               mt: 2,
+              backgroundColor: submitStatus.severity === 'success' ? '#d4edda' : '#f8d7da',
+              color: submitStatus.severity === 'success' ? '#155724' : '#721c24',
+              border: `1px solid ${submitStatus.severity === 'success' ? '#c3e6cb' : '#f5c6cb'}`
             }}
           >
-            {submitStatus.message}
+            {submitStatus.message.split('\n').map((line, index) => (
+              <Typography key={index} variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+                {line}
+              </Typography>
+            ))}
           </Alert>
         )}
+
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 2,
+            width: '100%',
+            maxWidth: '600px',
+            mt: 2,
+          }}
+        >
+          <Paper
+            sx={{
+              flex: 1,
+              maxHeight: '200px',
+              overflowY: 'auto',
+              p: 2,
+              border: '1px solid #c3e6cb',
+              backgroundColor: '#d4edda',
+              color: '#155724',
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                mb: 1.5,
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              }}
+            >
+              Created Users
+            </Typography>
+            <Typography
+              variant="body2"
+              component="pre"
+              sx={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+            >
+              {createdUsers || 'No users created yet.'}
+            </Typography>
+          </Paper>
+
+          <Paper
+            sx={{
+              flex: 1,
+              maxHeight: '200px',
+              overflowY: 'auto',
+              p: 2,
+              border: '1px solid #f5c6cb',
+              backgroundColor: '#f8d7da',
+              color: '#721c24',
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                mb: 1.5,
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              }}
+            >
+              Errors
+            </Typography>
+            <Typography
+              variant="body2"
+              component="pre"
+              sx={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+            >
+              {errorList || 'No errors.'}
+            </Typography>
+          </Paper>
+        </Box>
       </Box>
     </Box>
   );
