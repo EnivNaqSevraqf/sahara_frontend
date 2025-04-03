@@ -8,9 +8,9 @@ import {
   IconButton,
   Alert,
   Button,
+  CircularProgress,
 } from '@mui/material';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import Header from './components/Header';
 import { buttonStyles } from './constants/theme';
 import axios from 'axios';
 import { currentConfig } from '@/config';
@@ -22,6 +22,8 @@ const AddTAs = () => {
     severity: 'success' | 'error';
     message: string;
   } | null>(null);
+  const [createdUsers, setCreatedUsers] = useState<string>('');
+  const [errorList, setErrorList] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,11 +37,12 @@ const AddTAs = () => {
       }
     }
   };
+
   const handleSubmit = async () => {
     if (!selectedFile) {
       setSubmitStatus({
         severity: 'error',
-        message: 'Please select a CSV file first'
+        message: 'Please select a CSV file first',
       });
       return;
     }
@@ -49,25 +52,75 @@ const AddTAs = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await axios.post(`${currentConfig.apiBaseUrl}/people/upload-csv/`, formData, {
+      const response = await axios.post(`${currentConfig.apiBaseUrl}/upload-tas/`, formData, {
         headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'multipart/form-data',
         },
       });
 
+      const { message, created_tas, errors } = response.data;
+
+      let successMessage = message;
+      let createdUsersList = '';
+      if (created_tas && created_tas.length > 0) {
+        createdUsersList = created_tas
+          .map(
+            (ta: { name: string; email: string; username: string; temp_password: string }) =>
+              `- ${ta.name} (${ta.username})`
+          )
+          .join('\n');
+      }
+
+      let errorList = '';
+      if (errors && errors.length > 0) {
+        errorList = errors.map((error: string) => `- ${error}`).join('\n');
+      }
+
       setSubmitStatus({
         severity: 'success',
-        message: 'File uploaded successfully!'
+        message: successMessage,
       });
+
+      setCreatedUsers(createdUsersList);
+      setErrorList(errorList);
+
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     } catch (error) {
-      setSubmitStatus({
-        severity: 'error',
-        message: 'Failed to upload file. Please try again.'
-      });
+      if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status === 400) {
+          const errorMessage = error.response.data.detail;
+          if (Array.isArray(errorMessage)) {
+            setSubmitStatus({
+              severity: 'error',
+              message: `Errors: ${errorMessage.join(', ')}`,
+            });
+          } else {
+            setSubmitStatus({
+              severity: 'error',
+              message: errorMessage || 'Bad Request: Please check the file format and try again.',
+            });
+          }
+        } else if (error.response.status === 500) {
+          setSubmitStatus({
+            severity: 'error',
+            message: 'Server Error: Please try again later.',
+          });
+        } else {
+          setSubmitStatus({
+            severity: 'error',
+            message: `Unexpected Error: ${error.response.statusText || 'Please try again.'}`,
+          });
+        }
+      } else {
+        setSubmitStatus({
+          severity: 'error',
+          message: 'Network Error: Please check your connection and try again.',
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -81,137 +134,211 @@ const AddTAs = () => {
     <Box
       sx={{
         p: 3,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 4,
-        backgroundColor: '#ffffff', // Bright white background for better contrast
-        borderRadius: '12px',
-        boxShadow: '0 6px 12px rgba(0, 0, 0, 0.15)', // Enhanced shadow for depth
+        maxWidth: '1200px',
+        margin: '0 auto',
+        bgcolor: 'background.default',
       }}
     >
-      <Typography
-        variant="h4"
-        component="h2"
-        align="center"
+      <Box
         sx={{
           mb: 4,
-          color: '#1a73e8', // Bright blue for the heading
-          fontWeight: 600, // Slightly bolder font weight
+          pb: 2,
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
         }}
       >
-        Add TAs
-      </Typography>
+        <Typography
+          variant="h4"
+          component="h2"
+          sx={{
+            fontWeight: 'bold',
+            fontSize: '1.5rem',
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          }}
+        >
+          Add Teaching Assistants
+        </Typography>
+      </Box>
 
-      <Paper
+      <Box
         sx={{
-          width: '100%',
-          maxWidth: '600px',
-          p: 3,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: 2,
-          border: '1px solid #d1d1d1',
-          borderRadius: '12px',
-          backgroundColor: '#f7f9fc', // Light blue-gray background for the form
         }}
       >
-        <Input
-          placeholder="Attach .csv file"
-          fullWidth
-          disableUnderline
+        <Paper
           sx={{
-            px: 2,
-            py: 1,
-            border: '1px solid #b0bec5',
-            borderRadius: '6px',
-            backgroundColor: '#e3f2fd', // Light blue background for input
-            color: '#0d47a1', // Dark blue text for input
+            width: '100%',
+            maxWidth: '600px',
+            p: 1,
+            display: 'flex',
+            alignItems: 'center',
+            border: '1px solid #e0e0e0',
           }}
-          value={selectedFile ? selectedFile.name : ''}
-          readOnly
-        />
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileSelect}
-          accept=".csv"
-          style={{ display: 'none' }}
-        />
-        <IconButton
-          onClick={handleAttachClick}
+        >
+          <Input
+            placeholder="Attach .csv file"
+            fullWidth
+            disableUnderline
+            sx={{ px: 2 }}
+            value={selectedFile ? selectedFile.name : ''}
+            readOnly
+          />
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept=".csv"
+            style={{ display: 'none' }}
+          />
+          <IconButton
+            onClick={handleAttachClick}
+            sx={{
+              ...buttonStyles.secondary,
+              borderRadius: '4px',
+            }}
+          >
+            <AttachFileIcon />
+          </IconButton>
+        </Paper>
+
+        <Typography
+          variant="body2"
+          color="textSecondary"
+          align="center"
+          sx={{ mb: 2 }}
+        >
+          Expected CSV Columns: <strong>Name, Email</strong>
+        </Typography>
+
+        {selectedFile && (
+          <Alert
+            severity="success"
+            sx={{
+              width: '100%',
+              maxWidth: '600px',
+            }}
+          >
+            Successfully selected file: {selectedFile.name}
+          </Alert>
+        )}
+
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
           sx={{
-            ...buttonStyles.secondary,
-            borderRadius: '6px',
-            backgroundColor: '#0d47a1', // Darker blue matching the sidebar color
+            mt: 2,
+            backgroundColor: '#000060',
             color: '#fff',
             '&:hover': {
-              backgroundColor: '#002171', // Even darker blue for hover effect
+              backgroundColor: '#1765c1',
             },
+            px: 4,
+            borderRadius: '4px',
           }}
         >
-          <AttachFileIcon />
-        </IconButton>
-      </Paper>
+          {isSubmitting ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Upload'}
+        </Button>
 
-      {selectedFile && (
-        <Alert
-          severity="success"
+        {submitStatus && (
+          <Alert 
+            severity={submitStatus.severity} 
+            sx={{ 
+              width: '100%', 
+              maxWidth: '600px',
+              mt: 2,
+              backgroundColor: submitStatus.severity === 'success' ? '#d4edda' : '#f8d7da',
+              color: submitStatus.severity === 'success' ? '#155724' : '#721c24',
+              border: `1px solid ${submitStatus.severity === 'success' ? '#c3e6cb' : '#f5c6cb'}`
+            }}
+          >
+            {submitStatus.message.split('\n').map((line, index) => (
+              <Typography key={index} variant="body2" sx={{ whiteSpace: 'pre-line' }}>
+                {line}
+              </Typography>
+            ))}
+          </Alert>
+        )}
+
+        <Box
           sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 2,
             width: '100%',
             maxWidth: '600px',
             mt: 2,
-            backgroundColor: '#e8f5e9', // Light green background for success
-            color: '#2e7d32', // Dark green text for success
-            border: '1px solid #c8e6c9',
-            borderRadius: '6px',
           }}
         >
-          Successfully selected file: {selectedFile.name}
-        </Alert>
-      )}
+          <Paper
+            sx={{
+              flex: 1,
+              maxHeight: '200px',
+              overflowY: 'auto',
+              p: 2,
+              border: '1px solid #c3e6cb',
+              backgroundColor: '#d4edda',
+              color: '#155724',
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                mb: 1.5,
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              }}
+            >
+              Created TAs
+            </Typography>
+            <Typography
+              variant="body2"
+              component="pre"
+              sx={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+            >
+              {createdUsers || 'No TAs created yet.'}
+            </Typography>
+          </Paper>
 
-      <Button
-        variant="contained"
-        onClick={handleSubmit}
-        disabled={isSubmitting}
-        sx={{
-          mt: 2,
-          backgroundColor: '#0d47a1', // Darker blue matching the sidebar color
-          color: '#fff',
-          '&:hover': {
-            backgroundColor: '#002171', // Even darker blue for hover effect
-          },
-          px: 4,
-          py: 1.5,
-          borderRadius: '6px',
-          fontSize: '1rem',
-        }}
-      >
-        {isSubmitting ? 'Uploading...' : 'Upload'}
-      </Button>
-
-      {submitStatus && (
-        <Alert
-          severity={submitStatus.severity}
-          sx={{
-            width: '100%',
-            maxWidth: '600px',
-            mt: 2,
-            backgroundColor:
-              submitStatus.severity === 'success' ? '#e8f5e9' : '#ffebee', // Green for success, red for error
-            color:
-              submitStatus.severity === 'success' ? '#2e7d32' : '#c62828', // Dark green for success, dark red for error
-            border: '1px solid',
-            borderColor:
-              submitStatus.severity === 'success' ? '#c8e6c9' : '#ef9a9a',
-            borderRadius: '6px',
-          }}
-        >
-          {submitStatus.message}
-        </Alert>
-      )}
+          <Paper
+            sx={{
+              flex: 1,
+              maxHeight: '200px',
+              overflowY: 'auto',
+              p: 2,
+              border: '1px solid #f5c6cb',
+              backgroundColor: '#f8d7da',
+              color: '#721c24',
+            }}
+          >
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: '1.1rem',
+                fontWeight: 600,
+                mb: 1.5,
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              }}
+            >
+              Errors
+            </Typography>
+            <Typography
+              variant="body2"
+              component="pre"
+              sx={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+            >
+              {errorList || 'No errors.'}
+            </Typography>
+          </Paper>
+        </Box>
+      </Box>
     </Box>
   );
 };
