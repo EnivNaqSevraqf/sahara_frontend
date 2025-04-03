@@ -142,7 +142,7 @@ const PeoplePage = () => {
           sx={{ backgroundColor: '#033076', color: 'white', '&:hover': { backgroundColor: '#02225a' } }}
           onClick={() => router.push('/dashboard/people/add')}
         >
-          Add People
+          Add Students
         </Button>
       </Box>
       
