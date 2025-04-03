@@ -43,7 +43,8 @@ export default function ProfilePage() {
 
         const response = await axios.get('/user/me', {
           headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
 
