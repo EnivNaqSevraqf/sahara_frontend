@@ -34,11 +34,20 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
 
     try {
       const response = await axios.post(`${currentConfig.apiBaseUrl}/request-otp`, { email });
-      setMessage({
-        type: 'success',
-        text: 'A verification code has been sent to your email.'
-      });
-      setStep(2);
+      
+      // Check the status returned from the backend
+      if (response.data.status === 'user_not_found') {
+        setMessage({
+          type: 'error',
+          text: 'We could not find an account with that email address. Please check your email or register for a new account.'
+        });
+      } else {
+        setMessage({
+          type: 'success',
+          text: 'A verification code has been sent to your email.'
+        });
+        setStep(2);
+      }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         setMessage({
@@ -173,8 +182,6 @@ export default function ForgotPassword({ open, handleClose }: ForgotPasswordProp
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-
-              
 
               {message.text && (
                 <Alert severity={message.type as 'error' | 'success'}>
