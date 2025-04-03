@@ -48,16 +48,16 @@ interface UserData {
 }
 
 const isSameDay = (date1: string, date2: string) => {
-  const d1 = new Date(date1);
-  const d2 = new Date(date2);
+  const d1 = convertToIST(date1);
+  const d2 = convertToIST(date2);
   return d1.getDate() === d2.getDate() &&
          d1.getMonth() === d2.getMonth() &&
          d1.getFullYear() === d2.getFullYear();
 };
 
 const formatMessageDate = (date: string) => {
-  const messageDate = new Date(date);
-  const today = new Date();
+  const messageDate = convertToIST(date);
+  const today = convertToIST(new Date().toISOString());
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
@@ -66,7 +66,13 @@ const formatMessageDate = (date: string) => {
   } else if (isSameDay(date, yesterday.toISOString())) {
     return 'Yesterday';
   }
-  return messageDate.toLocaleDateString();
+  return messageDate.toLocaleDateString('en-IN');
+};
+
+const convertToIST = (date: string) => {
+  const utcDate = new Date(date);
+  const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+  return istDate;
 };
 
 export default function DiscussionPage() {
@@ -545,7 +551,11 @@ export default function DiscussionPage() {
                           </Button>
                         )}
                         <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.7 }}>
-                          {new Date(message.created_at).toLocaleTimeString()}
+                          {convertToIST(message.created_at).toLocaleTimeString('en-IN', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true 
+                          })}
                         </Typography>
                       </Paper>
                     </Box>
