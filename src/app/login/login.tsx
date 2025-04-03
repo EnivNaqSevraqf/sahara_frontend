@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Auth from "./auth";
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import AccountCircleOutlinedIcon from '@mui/icons-material/AccountCircleOutlined';
 import ForgotPassword from "./ForgotPassword";
 import { TextField, Button, Typography, Box, Link, FormControl, InputLabel, MenuItem, Select, CircularProgress, InputAdornment } from "@mui/material";
 import axios from 'axios';
@@ -116,31 +118,66 @@ const LoginComponent = () => {
         alignItems: "center",
         justifyContent: "center",
         minHeight: "100vh",
-        backgroundColor: "#f0f0f0",
+        background: "linear-gradient(to bottom right, #1e40af, #312e81, #581c87)",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Background elements similar to landing page */}
+      <div className="absolute inset-0 bg-black opacity-30"></div>
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5"></div>
+      <div 
+        className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10"
+        style={{
+          transform: `translate(${Math.random() * 20}px, ${Math.random() * 20}px)`,
+        }}
+      ></div>
+      <div 
+        className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10"
+        style={{
+          transform: `translate(${Math.random() * -20}px, ${Math.random() * -20}px)`,
+        }}
+      ></div>
+      <div 
+        className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10"
+        style={{
+          transform: `translate(${Math.random() * 10}px, ${Math.random() * 10}px)`,
+        }}
+      ></div>
+
       <Box
         component="form"
         onSubmit={handleSubmit}
         sx={{
-          width: "600px",
+          width: "500px",
           padding: "40px",
-          borderRadius: "30px",
-          backgroundColor: "white",
-          border: "2px solid #000080",
-          boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)",
+          borderRadius: "20px",
+          backgroundColor: "rgba(255, 255, 255, 0.1)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(255, 255, 255, 0.2)",
+          boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
           textAlign: "center",
+          position: "relative",
+          zIndex: 10,
         }}
       >
-
         <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
-          <Image 
-            src="/sahara_logo.svg" 
-            alt="SAHARA" 
-            width={300} 
-            height={100} 
-            priority
-          />
+          <Box sx={{ 
+            filter: 'brightness(0) invert(1)',
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'scale(1.02)',
+              filter: 'brightness(0) invert(1)',
+            }
+          }}>
+            <Image 
+              src="/sahara_logo.svg" 
+              alt="SAHARA" 
+              width={300} 
+              height={100} 
+              priority
+            />
+          </Box>
         </Box>
   
         <Box sx={{ display: 'flex', mb: 2 }}>
@@ -148,33 +185,43 @@ const LoginComponent = () => {
             sx={{ 
               width: '50px', 
               height: '56px', 
-              backgroundColor: '#E8E8E8', 
+              background: "linear-gradient(to bottom right, #3b82f6, #6366f1)",
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              borderTopLeftRadius: '4px',
-              borderBottomLeftRadius: '4px'
+              borderTopLeftRadius: '8px',
+              borderBottomLeftRadius: '8px',
+              color: "white"
             }}
           >
-            <PersonIcon sx={{ fontSize: 24 }} />
+            <AccountCircleOutlinedIcon sx={{ fontSize: 24 }} />
           </Box>
           <TextField
-          fullWidth
-          placeholder="Username"
-          value={credentials.username}
-          onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
-          variant="outlined"
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderTopLeftRadius: '0px',
-              borderBottomLeftRadius: '0px',
-            },
-            '& .MuiInputBase-input': {
-              color: '#000', 
-    }
-  }}
-/>
-
+            fullWidth
+            placeholder="Username"
+            value={credentials.username}
+            onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+            variant="outlined"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderTopLeftRadius: '0px',
+                borderBottomLeftRadius: '0px',
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#3b82f6',
+                },
+              },
+              '& .MuiInputBase-input': {
+                color: '#1e293b', 
+              }
+            }}
+          />
         </Box>
   
         <Box sx={{ display: 'flex', mb: 3 }}>
@@ -182,15 +229,16 @@ const LoginComponent = () => {
             sx={{ 
               width: '50px', 
               height: '56px', 
-              backgroundColor: '#E8E8E8', 
+              background: "linear-gradient(to bottom right, #3b82f6, #6366f1)",
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center',
-              borderTopLeftRadius: '4px',
-              borderBottomLeftRadius: '4px'
+              borderTopLeftRadius: '8px',
+              borderBottomLeftRadius: '8px',
+              color: "white"
             }}
           >
-            <span style={{ fontSize: '20px' }}>🔒</span>
+            <LockOutlinedIcon sx={{ fontSize: 24 }} />
           </Box>
           <TextField
             fullWidth
@@ -203,17 +251,33 @@ const LoginComponent = () => {
               '& .MuiOutlinedInput-root': {
                 borderTopLeftRadius: '0px',
                 borderBottomLeftRadius: '0px',
+                backgroundColor: "rgba(255, 255, 255, 0.9)",
+                '& fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.3)',
+                },
+                '&:hover fieldset': {
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#3b82f6',
+                },
               },
               '& .MuiInputBase-input': {
-                color: '#000', 
+                color: '#1e293b', 
               }
             }}
           />
-
         </Box>
   
         {error && (
-          <Box sx={{ color: "red", mb: 2 }}>
+          <Box sx={{ 
+            color: "#ef4444", 
+            mb: 2, 
+            p: 1, 
+            borderRadius: "4px", 
+            backgroundColor: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.2)"
+          }}>
             {error}
           </Box>
         )}
@@ -224,16 +288,17 @@ const LoginComponent = () => {
           disabled={loading || !credentials.username || !credentials.password}
           sx={{
             mt: 2,
-            mb: 3, // Add margin bottom for spacing
-            backgroundColor: "#033076",
+            mb: 3,
+            background: "linear-gradient(to right, #3b82f6, #6366f1)",
             color: "white",
-            borderRadius: "4px",
+            borderRadius: "8px",
             padding: "12px 0",
+            fontWeight: 600,
             '&:hover': {
-              backgroundColor: "#000060",
+              background: "linear-gradient(to right, #2563eb, #4f46e5)",
             },
             '&:disabled': {
-              backgroundColor: "#cccccc",
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
             }
           }}
         >
@@ -243,27 +308,24 @@ const LoginComponent = () => {
           display: "flex", 
           justifyContent: "flex-end", 
           mb: 2,
-          mt: 2 // Add margin top for additional spacing
+          mt: 2
         }}>
           <Button
-            variant="outlined"
+            variant="text"
             onClick={() => setForgotPasswordOpen(true)}
             sx={{
-              backgroundColor: '#033076',
-              color: '#FFFFFF',
-              borderRadius: '4px',
+              color: '#93c5fd',
               textTransform: 'none',
               '&:hover': {
-                backgroundColor: '#02225a',
+                backgroundColor: 'rgba(147, 197, 253, 0.1)',
               }
             }}
           >
             Forgot password?
           </Button>
         </Box>
-        </Box>
-        <ForgotPassword open={forgotPasswordOpen} handleClose={() => setForgotPasswordOpen(false)} />
-      
+      </Box>
+      <ForgotPassword open={forgotPasswordOpen} handleClose={() => setForgotPasswordOpen(false)} />
     </Box>
   );
 }
