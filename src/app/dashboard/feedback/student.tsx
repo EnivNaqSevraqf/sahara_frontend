@@ -137,7 +137,8 @@ export default function FeedbackForm() {
       return;
     }
 
-    if (totalContribution !== 100) {
+    // Compare with 2 decimal places precision
+    if (Math.abs(totalContribution - 100) > 0.01) {
       setError('Total contribution must equal 100%');
       return;
     }
@@ -295,7 +296,7 @@ export default function FeedbackForm() {
                   <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>
                     {totalContribution.toFixed(2)}%
                   </Typography>
-                  {!isSubmitted && totalContribution !== 100 && (
+                  {!isSubmitted && Math.abs(totalContribution - 100) > 0.01 && (
                     <Typography color="error" variant="caption" display="block">
                       Total must equal 100%
                     </Typography>
@@ -312,7 +313,7 @@ export default function FeedbackForm() {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={totalContribution !== 100}
+              disabled={Math.abs(totalContribution - 100) > 0.01}
               sx={{ 
                 minWidth: 200,
                 bgcolor: 'primary.main',
