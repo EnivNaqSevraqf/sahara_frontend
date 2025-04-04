@@ -88,11 +88,19 @@ const UpdateSubmittable: React.FC = () => {
       // Create FormData for file upload
       const formData = new FormData();
       formData.append('title', submittable.title);
-      formData.append('deadline', submittable.deadline);
-      formData.append('description', submittable.description);
+      
+      // Format dates to ISO 8601 with UTC timezone
+      const deadlineDate = new Date(submittable.deadline);
+      const formattedDeadline = deadlineDate.toISOString();
+      formData.append('deadline', formattedDeadline);
+
       if (submittable.opens_at) {
-        formData.append('opens_at', submittable.opens_at);
+        const opensAtDate = new Date(submittable.opens_at);
+        const formattedOpensAt = opensAtDate.toISOString();
+        formData.append('opens_at', formattedOpensAt);
       }
+
+      formData.append('description', submittable.description);
 
       await axios.put(`/submittables/${submittableId}`, formData, {
         headers: {
@@ -126,7 +134,14 @@ const UpdateSubmittable: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!submittable) return;
     const { name, value } = e.target;
-    setSubmittable(prev => prev ? { ...prev, [name]: value } : null);
+    
+    // For date fields, ensure the value includes seconds and milliseconds
+    if (name === 'deadline' || name === 'opens_at') {
+      const date = new Date(value);
+      setSubmittable(prev => prev ? { ...prev, [name]: date.toISOString().slice(0, 16) } : null);
+    } else {
+      setSubmittable(prev => prev ? { ...prev, [name]: value } : null);
+    }
   };
 
   if (loading) {

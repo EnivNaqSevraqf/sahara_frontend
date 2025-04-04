@@ -340,6 +340,19 @@ export default function ProfessorSubmissionList() {
     }
   };
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }) + ", " + date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
   const isSubmissionAllowed = (doc: SubmittableType) => {
     const now = new Date();
     const opensAt = doc.opens_at ? new Date(doc.opens_at) : null;
@@ -359,19 +372,6 @@ export default function ProfessorSubmissionList() {
     const now = new Date();
     const deadline = new Date(doc.deadline);
     return now > deadline;
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }) + ", " + date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
   };
 
   // Split submittables into categories
