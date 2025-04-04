@@ -408,7 +408,7 @@ export default function Dashboard() {
         throw new Error('No authentication token found');
       }
 
-      const response = await axios.get<UserProfile>('/users/me', {
+      const response = await axios.get<UserProfile>('/api/users/me', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

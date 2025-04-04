@@ -84,7 +84,7 @@ export default function ProfilePage() {
         }
 
         // Fetch user profile data
-        const userResponse = await axios.get('/users/me', {
+        const userResponse = await axios.get('/api/users/me', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
