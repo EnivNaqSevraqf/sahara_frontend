@@ -49,21 +49,15 @@ export default function Home() {
           }}
         ></div>
         <div className="relative z-10 text-center px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
-          <div className="inline-block mb-6">
-            <span className="inline-flex items-center px-4 py-1.5 rounded-full text-sm font-medium bg-white/10 text-white backdrop-blur-sm">
-              <span className="w-2 h-2 mr-2 bg-green-400 rounded-full animate-pulse"></span>
-              AI-powered learning insights
-            </span>
-          </div>
           <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white mb-8 tracking-tight flex items-center justify-center gap-6">
-            <span>Welcome to</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">Welcome to</span>
             <Image 
               src="/logo.svg" 
               alt="Sahara" 
-              width={240} 
-              height={100} 
+              width={250} 
+              height={130} 
               priority
-              className="filter drop-shadow-lg -mt-8"
+              className="filter drop-shadow-lg -mt-10"
             />
           </h1>
           <p className="text-xl sm:text-2xl text-gray-200 mb-12 max-w-3xl mx-auto leading-relaxed">

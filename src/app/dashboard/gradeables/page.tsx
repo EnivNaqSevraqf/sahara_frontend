@@ -82,13 +82,6 @@ export default function GradeablesListPage() {
 
   return (
     <Box p={3} sx={{ width: '100%', maxWidth: '100%' }}>
-      {/* Header section */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" gutterBottom sx={{ color: '#1976d2' }}>
-          Gradeables
-        </Typography>
-      </Box>
-
       {/* Gradeables header with gradient */}
       <Paper
         elevation={0}

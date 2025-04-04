@@ -30,10 +30,11 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
-import AnnouncementIcon from '@mui/icons-material/Announcement';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import TiptapEditor from '@/components/TiptapEditor';
 import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000';
@@ -484,7 +485,19 @@ const AnnouncementPage = () => {
             mb: 2 
           }}>
             <Box sx={{ flex: 1 }}>
-              <Typography variant="h6" gutterBottom>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1.25rem',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.4,
+                  color: '#1a1a1a',
+                  mb: 1.5
+                }}
+              >
                 {announcement.title}
               </Typography>
               <Box sx={{ 
@@ -492,8 +505,21 @@ const AnnouncementPage = () => {
                 alignItems: 'center', 
                 justifyContent: 'space-between'
               }}>
-                <Typography variant="caption" color="text.secondary">
-                  Posted by {announcement.creator_name || `User ${announcement.creator_id}`} • {formatDate(announcement.created_at)}
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    fontFamily: 'Inter, sans-serif',
+                    color: '#666666',
+                    fontWeight: 500,
+                    fontSize: '0.85rem',
+                    letterSpacing: '0.02em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}
+                >
+                  <PersonIcon fontSize="small" />
+                  {announcement.creator_name || `User ${announcement.creator_id}`} • {formatDate(announcement.created_at)}
                 </Typography>
                 <IconButton
                   size="small"
@@ -527,6 +553,13 @@ const AnnouncementPage = () => {
             <Box sx={{ mt: 2 }}>
               <div 
                 className="rich-text-content"
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '1rem',
+                  lineHeight: 1.7,
+                  color: '#333333',
+                  fontWeight: 400
+                }}
                 dangerouslySetInnerHTML={{ __html: announcement.content }}
               />
 
@@ -537,6 +570,13 @@ const AnnouncementPage = () => {
                     size="small"
                     startIcon={<DownloadIcon />}
                     onClick={() => handleDownload(announcement)}
+                    sx={{
+                      fontFamily: 'Inter, sans-serif',
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      letterSpacing: '0.02em',
+                      fontSize: '0.875rem'
+                    }}
                   >
                     Download Attachment
                   </Button>
@@ -567,7 +607,7 @@ const AnnouncementPage = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <AnnouncementIcon sx={{ fontSize: 48 }} />
+          <CampaignIcon sx={{ fontSize: 48, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }} />
           <Box>
             <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
               Course Announcements
