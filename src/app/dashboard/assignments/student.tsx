@@ -641,7 +641,7 @@ export default function StudentAssignmentList() {
                 onClick={() => handleUploadClick(index)}
                 disabled={!isAllowed}
               >
-                Submit Document
+                Submit Assignment
               </Button>
             )}
           </CardActions>
@@ -673,23 +673,6 @@ export default function StudentAssignmentList() {
       margin: '0 auto',
       bgcolor: 'background.default'
     }}>
-      {/* Course navigation */}
-      <Box sx={{ 
-        mb: 4, 
-        pb: 2, 
-        borderBottom: '1px solid', 
-        borderColor: 'divider',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1
-      }}>
-        <AssignmentIcon color="primary" />
-        <Typography variant="body2" component="div">
-          <span style={{ color: '#3f51b5', cursor: 'pointer', fontWeight: 500 }}>Course Home</span> / 
-          <span style={{ cursor: 'pointer', color: 'text.secondary' }}> Submissions</span>
-        </Typography>
-      </Box>
-      
       {/* Progress chart */}
       <Paper 
         elevation={0}
@@ -726,7 +709,7 @@ export default function StudentAssignmentList() {
                 justifyContent: 'center',
               }}
             >
-              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h5" component="div" sx={{ fontWeight: 'bold' }}>
                 {`${completionPercentage}%`}
               </Typography>
             </Box>
@@ -734,10 +717,10 @@ export default function StudentAssignmentList() {
           
           <Box>
             <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
-              Project Progress
+              Assignment Progress
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              {assignables.filter(doc => doc.submission_status?.has_submitted).length} of {assignables.length} documents submitted
+              {assignables.filter(doc => doc.submission_status?.has_submitted).length} of {assignables.length} assignments submitted
             </Typography>
           </Box>
         </Box>
@@ -753,8 +736,8 @@ export default function StudentAssignmentList() {
           <TimelineIcon />
           <Typography variant="h6" sx={{ fontWeight: 500 }}>
             {completionPercentage === 100 
-              ? 'All documents submitted!' 
-              : `${assignables.length - assignables.filter(doc => doc.submission_status?.has_submitted).length} documents remaining`}
+              ? 'All assignments submitted!' 
+              : `${assignables.length - assignables.filter(doc => doc.submission_status?.has_submitted).length} assignments remaining`}
           </Typography>
         </Box>
       </Paper>
@@ -774,7 +757,7 @@ export default function StudentAssignmentList() {
               color: 'primary.main'
             }}
           >
-            <AssignmentIcon /> Ongoing/Upcoming Documents
+            <AssignmentIcon /> Upcoming/Ongoing Assignments
           </Typography>
           
           <Grid container spacing={2}>
@@ -808,7 +791,7 @@ export default function StudentAssignmentList() {
               color: 'text.secondary'
             }}
           >
-            <AssignmentIcon /> Previous Documents
+            <AssignmentIcon /> Previous Assignments
           </Typography>
           
           <Grid container spacing={2}>

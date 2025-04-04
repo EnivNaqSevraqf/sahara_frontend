@@ -673,23 +673,6 @@ export default function StudentSubmissionList() {
       margin: '0 auto',
       bgcolor: 'background.default'
     }}>
-      {/* Course navigation */}
-      <Box sx={{ 
-        mb: 4, 
-        pb: 2, 
-        borderBottom: '1px solid', 
-        borderColor: 'divider',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 1
-      }}>
-        <AssignmentIcon color="primary" />
-        <Typography variant="body2" component="div">
-          <span style={{ color: '#3f51b5', cursor: 'pointer', fontWeight: 500 }}>Course Home</span> / 
-          <span style={{ cursor: 'pointer', color: 'text.secondary' }}> Submissions</span>
-        </Typography>
-      </Box>
-      
       {/* Progress chart */}
       <Paper 
         elevation={0}
@@ -726,7 +709,7 @@ export default function StudentSubmissionList() {
                 justifyContent: 'center',
               }}
             >
-              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
+              <Typography variant="h5" component="div" sx={{ fontWeight: 'bold' }}>
                 {`${completionPercentage}%`}
               </Typography>
             </Box>

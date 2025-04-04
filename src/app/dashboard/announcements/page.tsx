@@ -19,29 +19,22 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Divider,
+  Collapse,
   Card,
-  CardContent,
-  CardActions,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Avatar
+  CardContent
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import EditIcon from '@mui/icons-material/Edit';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DownloadIcon from '@mui/icons-material/Download';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import CampaignIcon from '@mui/icons-material/Campaign';
 import TiptapEditor from '@/components/TiptapEditor';
 import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000';
@@ -468,148 +461,201 @@ const AnnouncementPage = () => {
   };
 
   const AnnouncementCard = ({ announcement, onDelete, showDeleteButton }: { announcement: Announcement; onDelete: (id: number) => void; showDeleteButton: boolean }) => {
-    console.log('Announcement data:', announcement);
     return (
-      <Accordion 
-        expanded={expandedAnnouncementId === announcement.id}
-        onChange={() => setExpandedAnnouncementId(expandedAnnouncementId === announcement.id ? null : announcement.id)}
+      <Card 
         sx={{ 
-          mb: 1, 
-          borderRadius: '12px', 
-          '&:before': { display: 'none' }, 
-          overflow: 'hidden',
-          '&.Mui-expanded': {
-            borderRadius: '12px',
-          }
+          mb: 2,
+          borderLeft: 4,
+          borderColor: 'primary.main',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            cursor: 'pointer'
+          },
+          maxWidth: '1200px',
+          mx: 'auto',
+          width: '100%'
         }}
+        onClick={() => setExpandedAnnouncementId(
+          expandedAnnouncementId === announcement.id ? null : announcement.id
+        )}
       >
-        <AccordionSummary
-          expandIcon={<ExpandMoreIcon sx={{ color: 'white' }} />}
-          aria-controls={`announcement-${announcement.id}-content`}
-          id={`announcement-${announcement.id}-header`}
-          sx={{
-            backgroundColor: '#033076',
-            '&:hover': {
-              backgroundColor: '#022555',
-            },
-            '.MuiAccordionSummary-content': {
-              margin: '12px 0',
-            },
-            borderRadius: '12px',
-            '&.Mui-expanded': {
-              borderRadius: '12px 12px 0 0',
-            }
-          }}
-        >
+        <CardContent>
           <Box sx={{ 
             display: 'flex', 
-            flexDirection: 'column',
-            width: '100%',
-            pr: 2 
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            mb: 2 
           }}>
-            <Typography variant="h6" sx={{ color: 'white' }}>
-              {announcement.title}
-            </Typography>
-            <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-              Posted by {announcement.creator_name || `User ${announcement.creator_id}`} on {formatDate(announcement.created_at)}
-            </Typography>
-            {showDeleteButton && (
-              <Box sx={{ position: 'absolute', right: '48px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: 1 }}>
-                <Box
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(announcement.id);
-                  }}
-                  sx={{
+            <Box sx={{ flex: 1 }}>
+              <Typography 
+                variant="h6" 
+                gutterBottom
+                sx={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: 700,
+                  fontSize: '1.25rem',
+                  letterSpacing: '-0.02em',
+                  lineHeight: 1.4,
+                  color: '#1a1a1a',
+                  mb: 1.5
+                }}
+              >
+                {announcement.title}
+              </Typography>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between'
+              }}>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    fontFamily: 'Inter, sans-serif',
+                    color: '#666666',
+                    fontWeight: 500,
+                    fontSize: '0.85rem',
+                    letterSpacing: '0.02em',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    }
+                    gap: 1
                   }}
                 >
-                  <DeleteIcon fontSize="small" />
-                </Box>
+                  <PersonIcon fontSize="small" />
+                  {announcement.creator_name || `User ${announcement.creator_id}`} • {formatDate(announcement.created_at)}
+                </Typography>
+                <IconButton
+                  size="small"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedAnnouncementId(
+                      expandedAnnouncementId === announcement.id ? null : announcement.id
+                    );
+                  }}
+                  sx={{ ml: 2 }}
+                >
+                  {expandedAnnouncementId === announcement.id ? 
+                    <ExpandLessIcon fontSize="small" /> : 
+                    <ExpandMoreIcon fontSize="small" />
+                  }
+                </IconButton>
               </Box>
+            </Box>
+            {showDeleteButton && (
+              <IconButton
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(announcement.id);
+                }}
+                size="small"
+                sx={{ ml: 2 }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
             )}
           </Box>
-        </AccordionSummary>
-        <AccordionDetails sx={{ 
-          borderBottomLeftRadius: '12px', 
-          borderBottomRightRadius: '12px',
-          '&.Mui-expanded': {
-            borderRadius: '0 0 12px 12px',
-          }
-        }}>
-          <div 
-            className="rich-text-content"
-            dangerouslySetInnerHTML={{ 
-              __html: announcement.content.replace(
-                /href="([^"]*)"/g, 
-                (match, url) => {
-                  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:')) {
-                    return `href="${url}" target="_blank" rel="noopener noreferrer"`;
-                  }
-                  return `href="https://${url}" target="_blank" rel="noopener noreferrer"`;
-                }
-              )
-            }} 
-          />
 
-          {announcement.url_name && (
-            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<AttachFileIcon />}
-                href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/uploads/${announcement.url_name}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                View Attachment
-              </Button>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<DownloadIcon />}
-                onClick={() => handleDownload(announcement)}
-              >
-                Download
-              </Button>
+          <Collapse in={expandedAnnouncementId === announcement.id}>
+            <Box sx={{ mt: 2 }}>
+              <div 
+                className="rich-text-content"
+                style={{
+                  fontFamily: 'Inter, sans-serif',
+                  fontSize: '1rem',
+                  lineHeight: 1.7,
+                  color: '#333333',
+                  fontWeight: 400
+                }}
+                dangerouslySetInnerHTML={{ __html: announcement.content }}
+              />
+
+              {announcement.url_name && (
+                <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<DownloadIcon />}
+                    onClick={() => handleDownload(announcement)}
+                    sx={{
+                      fontFamily: 'Inter, sans-serif',
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      letterSpacing: '0.02em',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    Download Attachment
+                  </Button>
+                </Box>
+              )}
             </Box>
-          )}
-        </AccordionDetails>
-      </Accordion>
+          </Collapse>
+        </CardContent>
+      </Card>
     );
   };
 
   return (
     <Box sx={{ p: 3, maxWidth: '1200px', margin: '0 auto' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: '#033076' }}>
-          Announcements
-        </Typography>
-        {isProfessor && (
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<AddIcon />}
-            onClick={handleCreateAnnouncement}
-            sx={{ px: 3, py: 1, borderRadius: '24px', backgroundColor: '#033076', '&:hover': { backgroundColor: '#022555' } }}
-          >
-            Create Announcement
-          </Button>
-        )}
-      </Box>
+      {/* Header Section */}
+      <Paper 
+        elevation={0}
+        sx={{ 
+          p: 4, 
+          mb: 4, 
+          display: 'flex', 
+          flexDirection: 'column',
+          background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+          color: 'white',
+          borderRadius: 2,
+          boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <CampaignIcon sx={{ fontSize: 50, color: 'white' }} />
+            </Box>
 
+            <Box>
+              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Course Announcements
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                {isProfessor ? 'View and manage course announcements' : 'View course announcements'}
+              </Typography>
+            </Box>
+          </Box>
+
+          {isProfessor && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateAnnouncement}
+              sx={{ 
+                height: 48, 
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                color: '#3f51b5',
+                fontWeight: 'bold',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 1)',
+                },
+                borderRadius: 1,
+                textTransform: 'none',
+                px: 3,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+              }}
+            >
+              Create Announcement
+            </Button>
+          )}
+        </Box>
+      </Paper>
+
+      {/* Announcements List */}
       {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
       ) : announcements.length === 0 ? (
@@ -627,17 +673,16 @@ const AnnouncementPage = () => {
           </Typography>
         </Paper>
       ) : (
-        <Grid container spacing={3}>
+        <Box>
           {announcements.map((announcement) => (
-            <Grid item xs={12} key={announcement.id}>
-              <AnnouncementCard
-                announcement={announcement}
-                onDelete={handleDeleteClick}
-                showDeleteButton={isProfessor}
-              />
-            </Grid>
+            <AnnouncementCard
+              key={announcement.id}
+              announcement={announcement}
+              onDelete={handleDeleteClick}
+              showDeleteButton={isProfessor}
+            />
           ))}
-        </Grid>
+        </Box>
       )}
 
       {/* Create Announcement Dialog */}
@@ -869,4 +914,4 @@ const AnnouncementPage = () => {
   );
 };
 
-export default AnnouncementPage; 
+export default AnnouncementPage;

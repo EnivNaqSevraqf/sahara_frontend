@@ -14,6 +14,8 @@ import {
   Menu,
   Avatar,
   CircularProgress,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import { Send as SendIcon, AttachFile as AttachFileIcon, KeyboardArrowDown } from '@mui/icons-material';
 import { currentConfig } from '@/config';
@@ -48,16 +50,17 @@ interface UserData {
 }
 
 const isSameDay = (date1: string, date2: string) => {
-  const d1 = new Date(date1);
-  const d2 = new Date(date2);
+  const d1 = convertToIST(date1);
+  const d2 = convertToIST(date2);
   return d1.getDate() === d2.getDate() &&
          d1.getMonth() === d2.getMonth() &&
          d1.getFullYear() === d2.getFullYear();
 };
 
 const formatMessageDate = (date: string) => {
-  const messageDate = new Date(date);
-  const today = new Date();
+  const messageDate = convertToIST(date);
+  const today = convertToIST(new Date().toISOString());
+  today.setDate(today.getDate() - 1);
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
@@ -66,7 +69,13 @@ const formatMessageDate = (date: string) => {
   } else if (isSameDay(date, yesterday.toISOString())) {
     return 'Yesterday';
   }
-  return messageDate.toLocaleDateString();
+  return messageDate.toLocaleDateString('en-IN');
+};
+
+const convertToIST = (date: string) => {
+  const utcDate = new Date(date);
+  const istDate = new Date(utcDate.getTime() + (5.5 * 60 * 60 * 1000));
+  return istDate;
 };
 
 export default function DiscussionPage() {
@@ -76,6 +85,7 @@ export default function DiscussionPage() {
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [loading, setLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -83,6 +93,11 @@ export default function DiscussionPage() {
   const [wsConnected, setWsConnected] = useState(false);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentChannelRef = useRef<number | null>(null);
+  const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
+    open: false,
+    message: '',
+    severity: 'success'
+  });
 
   useEffect(() => {
     fetchUserData();
@@ -164,8 +179,13 @@ export default function DiscussionPage() {
         console.log('Setting initial channel:', data.channels[0]); // Debug log
         setSelectedChannel(data.channels[0]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching user data:', error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to fetch user data. Please try again.',
+        severity: 'error'
+      });
     } finally {
       setLoading(false);
     }
@@ -174,6 +194,7 @@ export default function DiscussionPage() {
   const fetchMessages = async () => {
     if (!selectedChannel) return;
     try {
+      setMessagesLoading(true);
       const token = localStorage.getItem('token');
       const payload = {}
       const response = await axios.get(`${currentConfig.apiBaseUrl}/discussions/channels/${selectedChannel.id}/messages`,
@@ -186,8 +207,15 @@ export default function DiscussionPage() {
       console.log('Received messages:', data); // Debug log
       setMessages(data);
       scrollToBottom();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching messages:', error);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to fetch messages. Please try again.',
+        severity: 'error'
+      });
+    } finally {
+      setMessagesLoading(false);
     }
   };
 
@@ -285,9 +313,13 @@ export default function DiscussionPage() {
       );
       
       setNewMessage('');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
-      alert('Failed to send message. Please try again.');
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to send message. Please try again.',
+        severity: 'error'
+      });
     }
   };
 
@@ -318,8 +350,13 @@ export default function DiscussionPage() {
         }
       );
       
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error uploading file:', error);
+        setSnackbar({
+          open: true,
+          message: error.response?.data?.detail || 'Failed to upload file. Please try again.',
+          severity: 'error'
+        });
       }
     };
     reader.readAsDataURL(file);
@@ -359,8 +396,11 @@ export default function DiscussionPage() {
       URL.revokeObjectURL(downloadUrl);
     } catch (error: any) {
       console.error('Error downloading file:', error);
-      const errorMessage = error.response?.data?.detail || 'Failed to download file';
-      alert(errorMessage);
+      setSnackbar({
+        open: true,
+        message: error.response?.data?.detail || 'Failed to download file. Please try again.',
+        severity: 'error'
+      });
     }
   };
 
@@ -387,75 +427,68 @@ export default function DiscussionPage() {
     <Container 
       maxWidth="lg" 
       sx={{ 
-        height: '100vh', 
+        height: 'calc(100vh - 64px)', // Account for app bar height
         display: 'flex', 
         flexDirection: 'column', 
         py: 2,
-        position: 'relative', // Add relative positioning
+        position: 'relative',
       }}
     >
-      <Box 
-        sx={{ 
-          position: 'sticky',  // Make header sticky
-          top: 0,
-          zIndex: 1,
-          bgcolor: 'background.default',
-          pb: 2
+      <Paper 
+        elevation={1}
+        sx={{
+          p: 2,
+          mb: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
         }}
       >
+        <Typography variant="h6" component="h1">
+          Discussion
+        </Typography>
         <Button
           endIcon={<KeyboardArrowDown />}
           onClick={(e) => setAnchorEl(e.currentTarget)}
-          variant="contained"
+          variant="outlined"
+          size="small"
           sx={{ textTransform: 'none' }}
         >
           {selectedChannel?.name || 'Select Channel'}
         </Button>
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
-        >
-          {userData?.channels && userData.channels.map((channel) => (
-            <MenuItem
-              key={channel.id}
-              onClick={() => {
-                setAnchorEl(null);
-                if (channel.id !== selectedChannel?.id) {
-                  setWsConnected(false);
-                  setIsConnecting(false);
-                  currentChannelRef.current = channel.id;
-                  setSelectedChannel(channel);
-                }
-              }}
-            >
-              {channel.name}
-            </MenuItem>
-          ))}
-        </Menu>
-      </Box>
+      </Paper>
 
-      <Box 
+      <Paper 
+        elevation={1}
         sx={{ 
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          minHeight: 0, // Important for proper scrolling
+          overflow: 'hidden',
           position: 'relative'
         }}
       >
-        <Paper
+        <Box 
           ref={messageContainerRef}
-          elevation={3}
           sx={{
             flex: 1,
-            mb: 2,
             p: 2,
             overflow: 'auto',
-            bgcolor: 'background.paper',
+            bgcolor: 'background.default',
           }}
         >
-          {messages && messages.length > 0 ? (
+          {messagesLoading ? (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100%',
+              }}
+            >
+              <CircularProgress />
+            </Box>
+          ) : messages && messages.length > 0 ? (
             <>
               {messages.map((message, index) => {
                 const showDateDivider = index === 0 || !isSameDay(messages[index - 1].created_at, message.created_at);
@@ -498,54 +531,62 @@ export default function DiscussionPage() {
                     >
                       <Avatar 
                         sx={{ 
+                          width: 32,
+                          height: 32,
+                          fontSize: '0.875rem',
                           bgcolor: isOwnMessage ? 'primary.main' : 'secondary.main',
-                          mr: 1,
-                          ml: 1,
+                          mr: isOwnMessage ? 0 : 1,
+                          ml: isOwnMessage ? 1 : 0,
                         }}
                       >
                         {message.sender_name[0].toUpperCase()}
                       </Avatar>
                       <Paper
+                        elevation={0}
                         sx={{
-                          p: 1.5, // Reduced padding to make it shorter
-                          maxWidth: '85%', // Increased from 70% to make it wider
-                          minWidth: '200px', // Added minimum width
+                          p: 1.5,
+                          maxWidth: '85%',
+                          minWidth: '100px',
                           bgcolor: (theme) => isOwnMessage 
-                            ? theme.palette.mode === 'dark'
-                              ? 'primary.dark'
-                              : 'primary.main'
+                            ? theme.palette.primary.main
                             : theme.palette.mode === 'dark'
-                              ? '#1f2e6a'
-                              : '#1f2e6a',
-                          color: '#ffffff',
-                          boxShadow: (theme) => theme.palette.mode === 'dark'
-                            ? '0 2px 4px rgba(0,0,0,0.2)'
-                            : '0 2px 4px rgba(0,0,0,0.1)',
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'rgba(0, 0, 0, 0.05)',
+                          color: (theme) => isOwnMessage
+                            ? theme.palette.primary.contrastText
+                            : theme.palette.text.primary,
+                          borderRadius: 2,
                         }}
                       >
-                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', opacity: 0.9, mb: 0.5 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 500, display: 'block', mb: 0.5 }}>
                           {message.sender_name}
                         </Typography>
                         {message.message_type === 'text' ? (
-                          <Typography sx={{ opacity: 0.95, lineHeight: 1.4 }}>{message.content}</Typography> // Added lineHeight to make text more compact
+                          <Typography variant="body2">{message.content}</Typography>
                         ) : (
                           <Button
-                            variant="text"
+                            size="small"
+                            startIcon={<AttachFileIcon />}
                             onClick={() => handleFileDownload(message.file_name || '')}
                             sx={{ 
-                              color: '#ffffff',
-                              opacity: 0.9,
+                              color: 'inherit',
+                              textTransform: 'none',
+                              p: 0,
                               '&:hover': {
-                                opacity: 1,
-                                textDecoration: 'underline'
+                                textDecoration: 'underline',
+                                background: 'none'
                               }
                             }}
                           >
-                            📎 {message.file_name}
+                            {message.file_name}
                           </Button>
                         )}
-                        <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.7 }}>
-                          {new Date(message.created_at).toLocaleTimeString()}
+                        <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.7 }}>
+                          {convertToIST(message.created_at).toLocaleTimeString('en-IN', { 
+                            hour: '2-digit', 
+                            minute: '2-digit',
+                            hour12: true 
+                          })}
                         </Typography>
                       </Paper>
                     </Box>
@@ -554,26 +595,27 @@ export default function DiscussionPage() {
               })}
             </>
           ) : (
-            <Typography align="center" color="text.secondary">
+            <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
               No messages in this channel
             </Typography>
           )}
-        </Paper>
+        </Box>
 
         <Paper
           component="form"
+          elevation={0}
           sx={{
-            p: '2px 4px',
+            p: 1,
             display: 'flex',
             alignItems: 'center',
-            width: '100%',
+            gap: 1,
+            borderTop: 1,
+            borderColor: 'divider',
             bgcolor: 'background.paper',
-            position: 'sticky',
-            bottom: 0,
           }}
         >
           <InputBase
-            sx={{ ml: 1, flex: 1 }}
+            sx={{ flex: 1, px: 1 }}
             placeholder="Type a message"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -591,20 +633,68 @@ export default function DiscussionPage() {
             onChange={handleFileUpload}
           />
           <IconButton
-            color="primary"
+            size="small"
             onClick={() => fileInputRef.current?.click()}
           >
             <AttachFileIcon />
           </IconButton>
           <IconButton
+            size="small"
             color="primary"
-            sx={{ p: '10px' }}
             onClick={handleSendMessage}
+            disabled={!newMessage.trim()}
           >
             <SendIcon />
           </IconButton>
         </Paper>
-      </Box>
+      </Paper>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+        PaperProps={{
+          elevation: 1,
+          sx: { minWidth: 180 }
+        }}
+      >
+        {userData?.channels && userData.channels.map((channel) => (
+          <MenuItem
+            key={channel.id}
+            onClick={() => {
+              setAnchorEl(null);
+              if (channel.id !== selectedChannel?.id) {
+                setWsConnected(false);
+                setIsConnecting(false);
+                currentChannelRef.current = channel.id;
+                setSelectedChannel(channel);
+              }
+            }}
+            selected={channel.id === selectedChannel?.id}
+          >
+            {channel.name}
+          </MenuItem>
+        ))}
+      </Menu>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

@@ -27,7 +27,7 @@ import * as XLSX from 'xlsx';
 import { useRouter } from 'next/navigation';
 import { currentConfig } from '@/config';
 import { tableStyles } from './constants/theme';
-import type { Student } from './types';
+import type { Student, Role } from './types';
 import { SelectChangeEvent } from '@mui/material/Select';
 
 const PeoplePage = () => {
@@ -38,6 +38,31 @@ const PeoplePage = () => {
   const [filter, setFilter] = useState('');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [orderBy, setOrderBy] = useState<keyof Student>('name');
+
+  const getRoleBadgeStyles = (role: Role) => {
+    switch (role) {
+      case 'Student':
+        return {
+          backgroundColor: '#e8f5e9',
+          color: '#2e7d32'
+        };
+      case 'Professor':
+        return {
+          backgroundColor: '#fff8e1',
+          color: '#f57f17'
+        };
+      case 'TA':
+        return {
+          backgroundColor: '#e3f2fd',
+          color: '#1565c0'
+        };
+      default:
+        return {
+          backgroundColor: '#f5f5f5',
+          color: '#757575'
+        };
+    }
+  };
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -142,7 +167,7 @@ const PeoplePage = () => {
           sx={{ backgroundColor: '#033076', color: 'white', '&:hover': { backgroundColor: '#02225a' } }}
           onClick={() => router.push('/dashboard/people/add')}
         >
-          Add People
+          Add Students
         </Button>
       </Box>
       
@@ -245,16 +270,7 @@ const PeoplePage = () => {
                       borderRadius: '12px',
                       fontSize: '0.75rem',
                       fontWeight: 'bold',
-                      backgroundColor: student.role === 'Student' 
-                        ? '#e8f5e9' 
-                        : student.role === 'Professor' 
-                          ? '#fff8e1' 
-                          : '#e3f2fd',
-                      color: student.role === 'Student' 
-                        ? '#2e7d32' 
-                        : student.role === 'Professor' 
-                          ? '#f57f17' 
-                          : '#1565c0',
+                      ...getRoleBadgeStyles(student.role)
                     }}
                   >
                     {student.role}
