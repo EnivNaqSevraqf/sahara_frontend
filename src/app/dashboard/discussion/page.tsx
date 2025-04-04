@@ -60,6 +60,7 @@ const isSameDay = (date1: string, date2: string) => {
 const formatMessageDate = (date: string) => {
   const messageDate = convertToIST(date);
   const today = convertToIST(new Date().toISOString());
+  today.setDate(today.getDate() - 1);
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
@@ -426,74 +427,54 @@ export default function DiscussionPage() {
     <Container 
       maxWidth="lg" 
       sx={{ 
-        height: '100vh', 
+        height: 'calc(100vh - 64px)', // Account for app bar height
         display: 'flex', 
         flexDirection: 'column', 
         py: 2,
-        position: 'relative', // Add relative positioning
+        position: 'relative',
       }}
     >
-      <Box 
-        sx={{ 
-          position: 'sticky',  // Make header sticky
-          top: 0,
-          zIndex: 1,
-          bgcolor: 'background.default',
-          pb: 2
+      <Paper 
+        elevation={1}
+        sx={{
+          p: 2,
+          mb: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between'
         }}
       >
+        <Typography variant="h6" component="h1">
+          Discussion
+        </Typography>
         <Button
           endIcon={<KeyboardArrowDown />}
           onClick={(e) => setAnchorEl(e.currentTarget)}
-          variant="contained"
+          variant="outlined"
+          size="small"
           sx={{ textTransform: 'none' }}
         >
           {selectedChannel?.name || 'Select Channel'}
         </Button>
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
-        >
-          {userData?.channels && userData.channels.map((channel) => (
-            <MenuItem
-              key={channel.id}
-              onClick={() => {
-                setAnchorEl(null);
-                if (channel.id !== selectedChannel?.id) {
-                  setWsConnected(false);
-                  setIsConnecting(false);
-                  currentChannelRef.current = channel.id;
-                  setSelectedChannel(channel);
-                }
-              }}
-            >
-              {channel.name}
-            </MenuItem>
-          ))}
-        </Menu>
-      </Box>
+      </Paper>
 
-      <Box 
+      <Paper 
+        elevation={1}
         sx={{ 
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          minHeight: 0, // Important for proper scrolling
+          overflow: 'hidden',
           position: 'relative'
         }}
       >
-        <Paper
+        <Box 
           ref={messageContainerRef}
-          elevation={3}
           sx={{
             flex: 1,
-            mb: 2,
             p: 2,
             overflow: 'auto',
-            bgcolor: 'background.paper',
-            position: 'relative',
-            minHeight: '200px',
+            bgcolor: 'background.default',
           }}
         >
           {messagesLoading ? (
@@ -503,13 +484,6 @@ export default function DiscussionPage() {
                 justifyContent: 'center',
                 alignItems: 'center',
                 height: '100%',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                bgcolor: 'background.paper',
-                zIndex: 1,
               }}
             >
               <CircularProgress />
@@ -557,53 +531,57 @@ export default function DiscussionPage() {
                     >
                       <Avatar 
                         sx={{ 
+                          width: 32,
+                          height: 32,
+                          fontSize: '0.875rem',
                           bgcolor: isOwnMessage ? 'primary.main' : 'secondary.main',
-                          mr: 1,
-                          ml: 1,
+                          mr: isOwnMessage ? 0 : 1,
+                          ml: isOwnMessage ? 1 : 0,
                         }}
                       >
                         {message.sender_name[0].toUpperCase()}
                       </Avatar>
                       <Paper
+                        elevation={0}
                         sx={{
-                          p: 1.5, // Reduced padding to make it shorter
-                          maxWidth: '85%', // Increased from 70% to make it wider
-                          minWidth: '200px', // Added minimum width
+                          p: 1.5,
+                          maxWidth: '85%',
+                          minWidth: '100px',
                           bgcolor: (theme) => isOwnMessage 
-                            ? theme.palette.mode === 'dark'
-                              ? 'primary.dark'
-                              : 'primary.main'
+                            ? theme.palette.primary.main
                             : theme.palette.mode === 'dark'
-                              ? '#1f2e6a'
-                              : '#1f2e6a',
-                          color: '#ffffff',
-                          boxShadow: (theme) => theme.palette.mode === 'dark'
-                            ? '0 2px 4px rgba(0,0,0,0.2)'
-                            : '0 2px 4px rgba(0,0,0,0.1)',
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'rgba(0, 0, 0, 0.05)',
+                          color: (theme) => isOwnMessage
+                            ? theme.palette.primary.contrastText
+                            : theme.palette.text.primary,
+                          borderRadius: 2,
                         }}
                       >
-                        <Typography variant="subtitle2" sx={{ fontWeight: 'bold', opacity: 0.9, mb: 0.5 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 500, display: 'block', mb: 0.5 }}>
                           {message.sender_name}
                         </Typography>
                         {message.message_type === 'text' ? (
-                          <Typography sx={{ opacity: 0.95, lineHeight: 1.4 }}>{message.content}</Typography> // Added lineHeight to make text more compact
+                          <Typography variant="body2">{message.content}</Typography>
                         ) : (
                           <Button
-                            variant="text"
+                            size="small"
+                            startIcon={<AttachFileIcon />}
                             onClick={() => handleFileDownload(message.file_name || '')}
                             sx={{ 
-                              color: '#ffffff',
-                              opacity: 0.9,
+                              color: 'inherit',
+                              textTransform: 'none',
+                              p: 0,
                               '&:hover': {
-                                opacity: 1,
-                                textDecoration: 'underline'
+                                textDecoration: 'underline',
+                                background: 'none'
                               }
                             }}
                           >
-                            📎 {message.file_name}
+                            {message.file_name}
                           </Button>
                         )}
-                        <Typography variant="caption" display="block" sx={{ mt: 0.5, opacity: 0.7 }}>
+                        <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.7 }}>
                           {convertToIST(message.created_at).toLocaleTimeString('en-IN', { 
                             hour: '2-digit', 
                             minute: '2-digit',
@@ -617,26 +595,27 @@ export default function DiscussionPage() {
               })}
             </>
           ) : (
-            <Typography align="center" color="text.secondary">
+            <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
               No messages in this channel
             </Typography>
           )}
-        </Paper>
+        </Box>
 
         <Paper
           component="form"
+          elevation={0}
           sx={{
-            p: '2px 4px',
+            p: 1,
             display: 'flex',
             alignItems: 'center',
-            width: '100%',
+            gap: 1,
+            borderTop: 1,
+            borderColor: 'divider',
             bgcolor: 'background.paper',
-            position: 'sticky',
-            bottom: 0,
           }}
         >
           <InputBase
-            sx={{ ml: 1, flex: 1 }}
+            sx={{ flex: 1, px: 1 }}
             placeholder="Type a message"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -654,20 +633,49 @@ export default function DiscussionPage() {
             onChange={handleFileUpload}
           />
           <IconButton
-            color="primary"
+            size="small"
             onClick={() => fileInputRef.current?.click()}
           >
             <AttachFileIcon />
           </IconButton>
           <IconButton
+            size="small"
             color="primary"
-            sx={{ p: '10px' }}
             onClick={handleSendMessage}
+            disabled={!newMessage.trim()}
           >
             <SendIcon />
           </IconButton>
         </Paper>
-      </Box>
+      </Paper>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+        PaperProps={{
+          elevation: 1,
+          sx: { minWidth: 180 }
+        }}
+      >
+        {userData?.channels && userData.channels.map((channel) => (
+          <MenuItem
+            key={channel.id}
+            onClick={() => {
+              setAnchorEl(null);
+              if (channel.id !== selectedChannel?.id) {
+                setWsConnected(false);
+                setIsConnecting(false);
+                currentChannelRef.current = channel.id;
+                setSelectedChannel(channel);
+              }
+            }}
+            selected={channel.id === selectedChannel?.id}
+          >
+            {channel.name}
+          </MenuItem>
+        ))}
+      </Menu>
 
       {/* Snackbar for notifications */}
       <Snackbar

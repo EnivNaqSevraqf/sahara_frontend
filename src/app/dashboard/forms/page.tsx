@@ -28,6 +28,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { currentConfig } from '@/config';
+import TimelineIcon from '@mui/icons-material/Timeline';
 
 interface Form {
   id: string;
@@ -297,7 +298,7 @@ export default function FormPage() {
                 justifyContent: 'center',
               }}
             >
-              <Typography variant="h6" component="div" color="text.secondary">
+              <Typography variant="body1" component="div" color="text.secondary">
                 {`${completionPercentage}%`}
               </Typography>
             </Box>
@@ -321,7 +322,7 @@ export default function FormPage() {
           </Typography>
         </Box>
       </Paper>
-      
+
       {/* Ongoing Forms */}
       {ongoingForms.length > 0 && (
         <>
