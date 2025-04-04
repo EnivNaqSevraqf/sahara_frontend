@@ -52,6 +52,8 @@
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "stream-browserify": "^3.0.0",
+    "survey-core": "^1.9.120",
+    "survey-react-ui": "^1.9.120",
     "util": "^0.12.5",
     "xlsx": "^0.18.5"
   },

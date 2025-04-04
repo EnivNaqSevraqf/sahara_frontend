@@ -470,12 +470,16 @@ const AnnouncementPage = () => {
           transition: 'all 0.3s ease',
           '&:hover': {
             transform: 'translateY(-2px)',
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            cursor: 'pointer'
           },
           maxWidth: '1200px',
           mx: 'auto',
           width: '100%'
         }}
+        onClick={() => setExpandedAnnouncementId(
+          expandedAnnouncementId === announcement.id ? null : announcement.id
+        )}
       >
         <CardContent>
           <Box sx={{ 
@@ -523,9 +527,12 @@ const AnnouncementPage = () => {
                 </Typography>
                 <IconButton
                   size="small"
-                  onClick={() => setExpandedAnnouncementId(
-                    expandedAnnouncementId === announcement.id ? null : announcement.id
-                  )}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setExpandedAnnouncementId(
+                      expandedAnnouncementId === announcement.id ? null : announcement.id
+                    );
+                  }}
                   sx={{ ml: 2 }}
                 >
                   {expandedAnnouncementId === announcement.id ? 
@@ -598,37 +605,51 @@ const AnnouncementPage = () => {
           p: 4, 
           mb: 4, 
           display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between',
+          flexDirection: 'column',
           background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
           color: 'white',
           borderRadius: 2,
           boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <CampaignIcon sx={{ fontSize: 48, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }} />
-          <Box>
-            <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
-              Course Announcements
-            </Typography>
-            {isProfessor && (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={handleCreateAnnouncement}
-                sx={{ 
-                  mt: 2,
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.3)'
-                  }
-                }}
-              >
-                Create Announcement
-              </Button>
-            )}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <CampaignIcon sx={{ fontSize: 50, color: 'white' }} />
+            </Box>
+
+            <Box>
+              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Course Announcements
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                {isProfessor ? 'View and manage course announcements' : 'View course announcements'}
+              </Typography>
+            </Box>
           </Box>
+
+          {isProfessor && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleCreateAnnouncement}
+              sx={{ 
+                height: 48, 
+                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                color: '#3f51b5',
+                fontWeight: 'bold',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 1)',
+                },
+                borderRadius: 1,
+                textTransform: 'none',
+                px: 3,
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+              }}
+            >
+              Create Announcement
+            </Button>
+          )}
         </Box>
       </Paper>
 
