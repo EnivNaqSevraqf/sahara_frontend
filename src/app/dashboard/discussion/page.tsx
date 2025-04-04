@@ -60,6 +60,7 @@ const isSameDay = (date1: string, date2: string) => {
 const formatMessageDate = (date: string) => {
   const messageDate = convertToIST(date);
   const today = convertToIST(new Date().toISOString());
+  today.setDate(today.getDate() - 1);
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
 
