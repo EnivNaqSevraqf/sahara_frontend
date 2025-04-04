@@ -291,9 +291,9 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
 
 // Theme configuration
 const dashboardTheme = createTheme({
-  cssVariables: {
-    colorSchemeSelector: 'data-toolpad-color-scheme',
-  },
+  // cssVariables: {
+  //   colorSchemeSelector: 'data-toolpad-color-scheme',
+  // },
   colorSchemes: { light: true, dark: false },
   breakpoints: {
     values: {
