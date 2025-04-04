@@ -428,7 +428,16 @@ export default function DashboardLayout({
 
   function CustomToolbarActions() {
     const router = useRouter();
-    const username = localStorage.getItem('username') || 'User';
+    const [username, setUsername] = useState('User');
+
+    useEffect(() => {
+      // Only access localStorage on the client side
+      const storedUsername = localStorage.getItem('username');
+      if (storedUsername) {
+        setUsername(storedUsername);
+      }
+    }, []);
+
     const firstName = username.split(' ')[0];
 
     return (
