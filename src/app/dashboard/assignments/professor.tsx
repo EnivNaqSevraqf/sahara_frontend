@@ -99,6 +99,7 @@ export default function ProfessorAssignmentList() {
   const [assignments, setAssignments] = useState<AssignmentType[]>([]);
   const [assignmentsDialogOpen, setAssignmentsDialogOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAssignables();
@@ -405,18 +406,24 @@ export default function ProfessorAssignmentList() {
   };
 
   const handleDeleteSubmittable = async (assignableId: number) => {
-    try {
-      if (!window.confirm('Are you sure you want to delete this assignable? This action cannot be undone.')) {
-        return;
-      }
+    setDeleteDialogOpen(assignableId);
+  };
 
-      await axios.delete(`/assignables/${assignableId}`, {
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialogOpen) return;
+    
+    try {
+      await axios.delete(`/assignables/${deleteDialogOpen}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      // Refresh submittables list
+      // Refresh assignables list
       await fetchAssignables();
       
       setSnackbar({
@@ -431,6 +438,8 @@ export default function ProfessorAssignmentList() {
         message: err.response?.data?.detail || 'Failed to delete assignment. Please try again.',
         severity: 'error'
       });
+    } finally {
+      setDeleteDialogOpen(null);
     }
   };
 
@@ -784,7 +793,7 @@ export default function ProfessorAssignmentList() {
                   variant="outlined"
                   color="error"
                   startIcon={<DeleteIcon sx={{ fontSize: '1.2rem' }} />}
-                  onClick={() => handleDeleteAssignment(doc.id)}
+                  onClick={() => handleDeleteSubmittable(doc.id)}
                   sx={{ 
                     textTransform: 'none',
                     fontSize: '0.95rem',
@@ -1049,6 +1058,63 @@ export default function ProfessorAssignmentList() {
             }}
           >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen !== null}
+        onClose={handleDeleteCancel}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            minWidth: '400px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          pb: 1,
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          fontWeight: 600,
+          fontSize: '1.25rem'
+        }}>
+          Delete Assignment
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ 
+            color: 'text.secondary',
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            fontSize: '0.95rem'
+          }}>
+            Are you sure you want to delete this assignment? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 1.5 }}>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{
+              textTransform: 'none',
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontWeight: 500,
+              color: 'text.secondary'
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+            sx={{
+              textTransform: 'none',
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontWeight: 600,
+              px: 3
+            }}
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

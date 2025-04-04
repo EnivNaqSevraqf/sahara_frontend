@@ -57,7 +57,7 @@ interface SubmittableType {
 }
 
 export default function StudentSubmissionList() {
-  const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const fileInputRefs = React.useRef<Map<number, HTMLInputElement | null>>(new Map());
   const [submittables, setSubmittables] = useState<SubmittableType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -118,9 +118,10 @@ export default function StudentSubmissionList() {
     }
   };
 
-  const handleUploadClick = (index: number) => {
-    if (fileInputRefs.current[index]) {
-      fileInputRefs.current[index]?.click();
+  const handleUploadClick = (submissionId: number) => {
+    const inputRef = fileInputRefs.current.get(submissionId);
+    if (inputRef) {
+      inputRef.click();
     }
   };
 
@@ -129,7 +130,18 @@ export default function StudentSubmissionList() {
 
     const file = event.target.files[0];
     const formData = new FormData();
-    formData.append('file', file);  // Changed from 'files' to 'file' to match backend
+    formData.append('file', file);
+
+    // Find the current submittable to log its dates
+    const currentSubmittable = submittables.find(s => s.id === submittableId);
+    if (currentSubmittable) {
+      console.log('Submission Timing Debug:');
+      console.log('Current time:', new Date().toISOString());
+      console.log('Submission opens at:', currentSubmittable.opens_at || 'No opening date');
+      console.log('Submission deadline:', currentSubmittable.deadline);
+      console.log('Is submission allowed:', isSubmissionAllowed(currentSubmittable));
+      console.log('Submission ID:', submittableId);
+    }
 
     try {
       setLoading(true);
@@ -152,11 +164,12 @@ export default function StudentSubmissionList() {
         message: 'File submitted successfully!',
         severity: 'success'
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting file:', err);
+      const errorMessage = err.response?.data?.detail || 'Failed to submit file. Please try again.';
       setSnackbar({
         open: true,
-        message: 'Failed to submit file. Please try again.',
+        message: errorMessage,
         severity: 'error'
       });
     } finally {
@@ -615,7 +628,7 @@ export default function StudentSubmissionList() {
           <CardActions sx={{ justifyContent: 'flex-end', p: 3, bgcolor: 'background.paper' }}>
             <input
               type="file"
-              ref={(el) => { fileInputRefs.current[index] = el; }}
+              ref={(el) => { fileInputRefs.current.set(doc.id, el); }}
               onChange={(e) => handleFileChange(e, doc.id)}
               style={{ display: 'none' }}
               accept=".pdf,.doc,.docx,.txt"
@@ -638,7 +651,7 @@ export default function StudentSubmissionList() {
                 color="primary"
                 size="small"
                 startIcon={<AttachFileIcon />}
-                onClick={() => handleUploadClick(index)}
+                onClick={() => handleUploadClick(doc.id)}
                 disabled={!isAllowed}
               >
                 Submit Document

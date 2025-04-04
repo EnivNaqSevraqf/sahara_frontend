@@ -57,7 +57,7 @@ interface AssignableType {
 }
 
 export default function StudentAssignmentList() {
-  const fileInputRefs = React.useRef<(HTMLInputElement | null)[]>([]);
+  const fileInputRefs = React.useRef<Map<number, HTMLInputElement | null>>(new Map());
   const [assignables, setAssignables] = useState<AssignableType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -118,9 +118,10 @@ export default function StudentAssignmentList() {
     }
   };
 
-  const handleUploadClick = (index: number) => {
-    if (fileInputRefs.current[index]) {
-      fileInputRefs.current[index]?.click();
+  const handleUploadClick = (assignmentId: number) => {
+    const inputRef = fileInputRefs.current.get(assignmentId);
+    if (inputRef) {
+      inputRef.click();
     }
   };
 
@@ -130,6 +131,17 @@ export default function StudentAssignmentList() {
     const file = event.target.files[0];
     const formData = new FormData();
     formData.append('file', file);
+
+    // Find the current assignable to log its dates
+    const currentAssignable = assignables.find(a => a.id === assignableId);
+    if (currentAssignable) {
+      console.log('Assignment Timing Debug:');
+      console.log('Current time:', new Date().toISOString());
+      console.log('Assignment opens at:', currentAssignable.opens_at || 'No opening date');
+      console.log('Assignment deadline:', currentAssignable.deadline);
+      console.log('Is submission allowed:', isSubmissionAllowed(currentAssignable));
+      console.log('Assignment ID:', assignableId);
+    }
 
     try {
       setLoading(true);
@@ -616,7 +628,7 @@ export default function StudentAssignmentList() {
           <CardActions sx={{ justifyContent: 'flex-end', p: 3, bgcolor: 'background.paper' }}>
             <input
               type="file"
-              ref={(el) => { fileInputRefs.current[index] = el; }}
+              ref={(el) => { fileInputRefs.current.set(doc.id, el); }}
               onChange={(e) => handleFileChange(e, doc.id)}
               style={{ display: 'none' }}
               accept=".pdf,.doc,.docx,.txt"
@@ -639,7 +651,7 @@ export default function StudentAssignmentList() {
                 color="primary"
                 size="small"
                 startIcon={<AttachFileIcon />}
-                onClick={() => handleUploadClick(index)}
+                onClick={() => handleUploadClick(doc.id)}
                 disabled={!isAllowed}
               >
                 Submit Assignment
