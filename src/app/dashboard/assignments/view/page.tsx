@@ -309,9 +309,6 @@ export default function AssignmentView () {
             Back to List
           </Button>
         </Box>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          {assignable?.description}
-        </Typography>
         <Grid container spacing={3}>
           <Grid item xs={12} md={4}>
             <Card sx={{ 

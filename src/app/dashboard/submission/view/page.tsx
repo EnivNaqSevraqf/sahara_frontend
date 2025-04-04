@@ -33,6 +33,7 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import DownloadIcon from '@mui/icons-material/Download';
 import DeleteIcon from '@mui/icons-material/Delete';
 import GradeIcon from '@mui/icons-material/Grade';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { currentConfig } from '@/config';
 
@@ -48,6 +49,11 @@ interface SubmissionType {
   file: {
     file_url: string;
     original_filename: string;
+  };
+  user?: {
+    id: number;
+    name: string;
+    email: string;
   };
 }
 
@@ -273,197 +279,223 @@ export default function SubmissionView() {
   }
 
   return (
-    <Box p={3}>
-      <Grid container spacing={3}>
-        {/* Submittable Details */}
-        <Grid item xs={12}>
-          <Card elevation={0} sx={{ 
-            background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
-            color: 'white',
-            borderRadius: 2,
-            boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+    <Box sx={{ p: 3, maxWidth: '1200px', margin: '0 auto' }}>
+      {/* Header Section */}
+      <Box sx={{ mb: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" sx={{ 
+            fontWeight: 700, 
+            color: '#1a237e',
           }}>
-            <CardContent>
-              <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
-                {submittable.title}
-              </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9, mb: 3 }}>
-                {submittable.description}
-              </Typography>
-              <Box display="flex" gap={2} flexWrap="wrap">
-                <Chip
-                  icon={<AccessTimeIcon />}
-                  label={`Opens: ${formatDate(submittable.opens_at || '')}`}
-                  sx={{ 
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    '& .MuiChip-icon': { color: 'white' }
-                  }}
-                />
-                <Chip
-                  icon={<AccessTimeIcon />}
-                  label={`Deadline: ${formatDate(submittable.deadline)}`}
-                  sx={{ 
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    '& .MuiChip-icon': { color: 'white' }
-                  }}
-                />
-                <Chip
-                  icon={<GradeIcon />}
-                  label={`Max Score: ${submittable.max_score}`}
-                  sx={{ 
-                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                    color: 'white',
-                    '& .MuiChip-icon': { color: 'white' }
-                  }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Submissions List */}
-        <Grid item xs={12}>
-          <Card elevation={0} sx={{ 
-            borderRadius: 2,
-            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
-            border: '1px solid',
-            borderColor: 'divider'
-          }}>
-            <CardContent>
-              <Box display="flex" alignItems="center" justifyContent="space-between" mb={3}>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                  Submissions ({submissions.length})
+            {submittable?.title}
+          </Typography>
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIcon />}
+            onClick={() => router.back()}
+            sx={{ 
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 3,
+              py: 1,
+              borderColor: '#033076',
+              color: '#033076',
+              '&:hover': {
+                borderColor: '#033076',
+                bgcolor: 'rgba(3, 48, 118, 0.04)'
+              }
+            }}
+          >
+            Back to List
+          </Button>
+        </Box>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ 
+              height: '100%',
+              background: 'linear-gradient(135deg, #033076 0%, #1565C0 100%)',
+              boxShadow: '0 4px 20px rgba(3, 48, 118, 0.2)',
+              borderRadius: 2,
+              color: 'white'
+            }}>
+              <CardContent>
+                <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                  Total Submissions
                 </Typography>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  startIcon={<AttachFileIcon />}
-                  onClick={() => router.back()}
-                  sx={{ 
-                    textTransform: 'none',
-                    borderRadius: 1.5,
-                    px: 3
-                  }}
-                >
-                  Back to List
-                </Button>
-              </Box>
-              <List>
-                {submissions.map((submission) => (
-                  <ListItem 
-                    key={submission.id} 
-                    divider
-                    sx={{
-                      borderRadius: 2,
-                      mb: 1,
-                      '&:hover': {
-                        bgcolor: 'action.hover'
-                      }
-                    }}
-                  >
-                    <ListItemText
-                      primary={
-                        <Box display="flex" alignItems="center" gap={2}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                            {submission.file.original_filename}
-                          </Typography>
-                        </Box>
-                      }
-                      secondary={
-                        <Box mt={1}>
-                          <Typography variant="body2" color="text.secondary">
-                            Team ID: {submission.team_id}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Submitted: {formatDate(submission.submitted_on)}
-                          </Typography>
-                          <Typography 
-                            variant="body2" 
-                            color={submission.score !== null ? 'success.main' : 'text.secondary'}
-                            sx={{ fontWeight: submission.score !== null ? 500 : 400 }}
-                          >
-                            Score: {submission.score !== null ? `${submission.score}/${submission.max_score}` : 'Not graded'}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                    <ListItemSecondaryAction>
-                      <Box display="flex" gap={1}>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<DownloadIcon />}
-                          onClick={() => handleSubmissionDownload(submission.id, submission.file.original_filename)}
-                          sx={{ 
-                            textTransform: 'none',
-                            borderRadius: 1.5
-                          }}
-                        >
-                          Download
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          color="primary"
-                          onClick={() => handleGradeClick(submission)}
-                          sx={{ 
-                            textTransform: 'none',
-                            borderRadius: 1.5
-                          }}
-                        >
-                          Grade
-                        </Button>
-                        <IconButton
-                          edge="end"
-                          onClick={() => handleDeleteSubmission(submission.id)}
-                          color="error"
-                          sx={{ 
-                            '&:hover': {
-                              bgcolor: 'error.50'
-                            }
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Box>
-                    </ListItemSecondaryAction>
-                  </ListItem>
-                ))}
-                {submissions.length === 0 && (
-                  <ListItem>
-                    <ListItemText
-                      primary={
-                        <Typography 
-                          variant="h6" 
-                          color="text.secondary" 
-                          align="center"
-                          sx={{ 
-                            py: 4,
-                            fontWeight: 500
-                          }}
-                        >
-                          No submissions yet
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography 
-                          variant="body2" 
-                          color="text.secondary" 
-                          align="center"
-                        >
-                          Submissions will appear here once students submit their work
-                        </Typography>
-                      }
-                    />
-                  </ListItem>
-                )}
-              </List>
-            </CardContent>
-          </Card>
+                <Typography variant="h3" sx={{ mt: 1, fontWeight: 600 }}>
+                  {submissions.length}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ 
+              height: '100%',
+              background: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
+              boxShadow: '0 4px 20px rgba(26, 35, 126, 0.2)',
+              borderRadius: 2,
+              color: 'white'
+            }}>
+              <CardContent>
+                <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                  Graded Submissions
+                </Typography>
+                <Typography variant="h3" sx={{ mt: 1, fontWeight: 600 }}>
+                  {submissions.filter(s => s.score !== null).length}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ 
+              height: '100%',
+              background: 'linear-gradient(135deg, #1B5E20 0%, #2E7D32 100%)',
+              boxShadow: '0 4px 20px rgba(27, 94, 32, 0.2)',
+              borderRadius: 2,
+              color: 'white'
+            }}>
+              <CardContent>
+                <Typography variant="subtitle2" sx={{ color: 'rgba(255, 255, 255, 0.8)' }}>
+                  Average Score
+                </Typography>
+                <Typography variant="h3" sx={{ mt: 1, fontWeight: 600 }}>
+                  {submissions.filter(s => s.score !== null).length > 0 
+                    ? (submissions.reduce((acc, curr) => acc + (curr.score || 0), 0) / 
+                       submissions.filter(s => s.score !== null).length).toFixed(1)
+                    : '-'}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         </Grid>
-      </Grid>
+      </Box>
+
+      {/* Submissions List */}
+      <Card sx={{ 
+        borderRadius: 2,
+        boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+        overflow: 'hidden'
+      }}>
+        <Box sx={{ 
+          p: 2, 
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          bgcolor: '#F8FAFC'
+        }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Submissions
+          </Typography>
+        </Box>
+        <List sx={{ p: 0 }}>
+          {submissions.map((submission) => (
+            <ListItem 
+              key={submission.id} 
+              sx={{
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+                '&:last-child': {
+                  borderBottom: 'none'
+                },
+                p: 2,
+                '&:hover': {
+                  bgcolor: 'rgba(0,0,0,0.02)'
+                }
+              }}
+            >
+              <Grid container alignItems="center" spacing={2}>
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 500, mb: 0.5 }}>
+                      {submission.user?.name || `Team ${submission.team_id}`}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {submission.user?.email || submission.file.original_filename}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      Submitted on
+                    </Typography>
+                    <Typography variant="body1">
+                      {formatDate(submission.submitted_on)}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={2}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                      Score
+                    </Typography>
+                    <Typography 
+                      variant="body1" 
+                      sx={{ 
+                        color: submission.score !== null ? '#2E7D32' : 'text.secondary',
+                        fontWeight: submission.score !== null ? 600 : 400
+                      }}
+                    >
+                      {submission.score !== null ? `${submission.score}/${submission.max_score}` : 'Not graded'}
+                    </Typography>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={2}>
+                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleSubmissionDownload(submission.id, submission.file.original_filename)}
+                      sx={{ 
+                        textTransform: 'none',
+                        borderRadius: 2,
+                        borderColor: '#033076',
+                        color: '#033076',
+                        minWidth: '100px',
+                        height: '36px',
+                        '&:hover': {
+                          borderColor: '#033076',
+                          bgcolor: 'rgba(3, 48, 118, 0.04)'
+                        }
+                      }}
+                    >
+                      Download
+                    </Button>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleGradeClick(submission)}
+                      sx={{ 
+                        textTransform: 'none',
+                        borderRadius: 2,
+                        bgcolor: '#033076',
+                        minWidth: '100px',
+                        height: '36px',
+                        '&:hover': {
+                          bgcolor: '#032558'
+                        }
+                      }}
+                    >
+                      Grade
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </ListItem>
+          ))}
+          {submissions.length === 0 && (
+            <ListItem sx={{ py: 8 }}>
+              <Box sx={{ width: '100%', textAlign: 'center' }}>
+                <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
+                  No submissions yet
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Submissions will appear here once students submit their work
+                </Typography>
+              </Box>
+            </ListItem>
+          )}
+        </List>
+      </Card>
 
       {/* Grade Dialog */}
       <Dialog 
@@ -472,7 +504,7 @@ export default function SubmissionView() {
         PaperProps={{
           sx: {
             borderRadius: 2,
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
           }
         }}
       >
@@ -482,16 +514,20 @@ export default function SubmissionView() {
           pb: 2,
           fontWeight: 600
         }}>
-          Grade Submission
+          Grade Assignment
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <Box>
-            <Typography variant="body1" gutterBottom>
-              Enter score (max: {selectedSubmission?.max_score})
+            <Typography variant="subtitle1" gutterBottom>
+              Student: {selectedSubmission?.user?.name || `Team ${selectedSubmission?.team_id}`}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" gutterBottom>
+              {selectedSubmission?.user?.email || selectedSubmission?.file.original_filename}
             </Typography>
             <TextField
               fullWidth
               type="number"
+              label={`Score (max: ${selectedSubmission?.max_score})`}
               value={gradeScore}
               onChange={(e) => setGradeScore(e.target.value)}
               inputProps={{
@@ -538,7 +574,7 @@ export default function SubmissionView() {
           sx={{ 
             width: '100%',
             borderRadius: 2,
-            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
           }}
         >
           {snackbar.message}

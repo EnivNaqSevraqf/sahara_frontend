@@ -129,7 +129,7 @@ export default function StudentAssignmentList() {
 
     const file = event.target.files[0];
     const formData = new FormData();
-    formData.append('file', file);  // Changed from 'files' to 'file' to match backend
+    formData.append('file', file);
 
     try {
       setLoading(true);
@@ -144,7 +144,7 @@ export default function StudentAssignmentList() {
         }
       );
 
-      // Refresh submittables to get updated status
+      // Refresh assignables to get updated status
       await fetchAssignables();
       
       setSnackbar({
@@ -152,11 +152,12 @@ export default function StudentAssignmentList() {
         message: 'File submitted successfully!',
         severity: 'success'
       });
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error submitting file:', err);
+      const errorMessage = err.response?.data?.detail || 'Failed to submit file. Please try again.';
       setSnackbar({
         open: true,
-        message: 'Failed to submit file. Please try again.',
+        message: errorMessage,
         severity: 'error'
       });
     } finally {
