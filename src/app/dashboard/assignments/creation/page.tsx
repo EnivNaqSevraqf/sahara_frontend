@@ -530,26 +530,39 @@ const EventCreationApp: React.FC = () => {
             </Grid>
 
             <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handlePublishEvent}
-                disabled={loading}
-                startIcon={loading ? <CircularProgress size={20} /> : null}
-                sx={{
-                  textTransform: 'none',
-                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-                  fontWeight: 600,
-                  height: 48,
-                  px: 4,
-                  backgroundColor: '#3f51b5',
-                  '&:hover': {
-                    backgroundColor: '#303f9f'
-                  }
-                }}
-              >
-                Create Assignment
-              </Button>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => window.location.href = '/dashboard/assignments'}
+                  sx={{
+                    textTransform: 'none',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 500
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handlePublishEvent}
+                  disabled={loading}
+                  startIcon={loading ? <CircularProgress size={20} /> : null}
+                  sx={{
+                    textTransform: 'none',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 600,
+                    height: 48,
+                    px: 4,
+                    backgroundColor: '#3f51b5',
+                    '&:hover': {
+                      backgroundColor: '#303f9f'
+                    }
+                  }}
+                >
+                  {loading ? 'Creating...' : 'Create Assignment'}
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         </Paper>
