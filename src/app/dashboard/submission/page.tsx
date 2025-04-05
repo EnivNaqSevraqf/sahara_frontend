@@ -42,7 +42,7 @@ export default function SubmissionsList() {
       </Box>
     );
   }
-  if(role === 'prof') {
+  if(role === 'prof' || role === 'ta') {
     return <ProfessorSubmissionList />;
   } else if(role === 'student') {
     return <StudentSubmissionList />;

@@ -49,6 +49,7 @@ export default function FormPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [completionPercentage, setCompletionPercentage] = useState(0);
+  const [role, setRole] = useState<string>('student');
   const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
     open: false,
     message: '',
@@ -61,6 +62,11 @@ export default function FormPage() {
 
   useEffect(() => {
     fetchForms();
+    // Get user role from localStorage
+    const userRole = localStorage.getItem('role');
+    if (userRole) {
+      setRole(userRole);
+    }
   }, []);
 
   useEffect(() => {
@@ -258,20 +264,22 @@ export default function FormPage() {
           <span style={{ cursor: 'pointer' }}> Forms</span>
         </Typography>
 
-        <Button
-          variant="contained"
-          onClick={() => router.push('/dashboard/forms/create_form')}
-          sx={{
-            backgroundColor: '#033076',
-            '&:hover': {
-              backgroundColor: '#022055',
-            },
-            textTransform: 'none',
-            px: 3
-          }}
-        >
-          Create Form
-        </Button>
+        {(role === 'prof' || role === 'admin') && (
+          <Button
+            variant="contained"
+            onClick={() => router.push('/dashboard/forms/create_form')}
+            sx={{
+              backgroundColor: '#033076',
+              '&:hover': {
+                backgroundColor: '#022055',
+              },
+              textTransform: 'none',
+              px: 3
+            }}
+          >
+            Create Form
+          </Button>
+        )}
       </Box>
       
       {/* Progress chart */}
