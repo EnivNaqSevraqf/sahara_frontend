@@ -253,35 +253,52 @@ const EventCreationApp: React.FC = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <Box sx={{ width: '100%', p: 2 }}>
-        {/* Course navigation */}
-        <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Typography variant="body2" component="div">
-            <span style={{ color: '#1F2E6A', cursor: 'pointer' }}>Course Home</span> / 
-            <span style={{ cursor: 'pointer' }}> Create Submission</span>
-          </Typography>
-        </Box>
-
-        {/* Blue Banner */}
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            p: 3, 
-            mb: 4, 
-            backgroundColor: '#1F2E6A',
+      <Box sx={{ width: '100%', p: 3 }}>
+        {/* Gradeables header with gradient */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            mb: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
             color: 'white',
-            borderRadius: 2
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
           }}
         >
-          <Typography variant="h4" component="h1" gutterBottom>
-            Create New Submittable
-          </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.9 }}>
-            Create a new submittable for your students to complete.
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+                <CloudUpload sx={{ fontSize: 50 }} />
+              </Box>
+
+              <Box>
+                <Typography variant="h4" component="div" sx={{ 
+                  fontWeight: 'bold', 
+                  mb: 1,
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}>
+                  Create Submittable
+                </Typography>
+                <Typography variant="body1" sx={{ 
+                  opacity: 0.9,
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                }}>
+                  Create a new submittable for your students to complete
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
         </Paper>
 
-        <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+        <Paper elevation={3} sx={{ 
+          p: 3, 
+          mb: 4,
+          borderRadius: 2,
+          boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)'
+        }}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
               <TextField
@@ -290,6 +307,14 @@ const EventCreationApp: React.FC = () => {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
+                sx={{
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  },
+                  '& .MuiInputBase-input': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }
+                }}
               />
             </Grid>
 
@@ -310,7 +335,8 @@ const EventCreationApp: React.FC = () => {
                   placeholder: "Enter maximum possible score (e.g., 100)",
                   style: { 
                     WebkitAppearance: 'none',
-                    MozAppearance: 'textfield'
+                    MozAppearance: 'textfield',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                   }
                 }}
                 helperText="Enter the maximum possible score for this submittable"
@@ -319,6 +345,15 @@ const EventCreationApp: React.FC = () => {
                   '& input[type=number]': {
                     WebkitAppearance: 'none',
                     MozAppearance: 'textfield'
+                  },
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  },
+                  '& .MuiInputBase-input': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  },
+                  '& .MuiFormHelperText-root': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                   }
                 }}
               />
@@ -336,7 +371,15 @@ const EventCreationApp: React.FC = () => {
                   textField: {
                     fullWidth: true,
                     required: true,
-                    sx: { mb: 2 },
+                    sx: { 
+                      mb: 2,
+                      '& .MuiInputLabel-root': {
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      },
+                      '& .MuiInputBase-input': {
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }
+                    },
                     placeholder: "MMM D, YYYY hh:mm AM/PM",
                     inputProps: {
                       pattern: "[0-9/: ]*[AaPp][Mm]?",
@@ -372,7 +415,15 @@ const EventCreationApp: React.FC = () => {
                   textField: {
                     fullWidth: true,
                     required: true,
-                    sx: { mb: 2 },
+                    sx: { 
+                      mb: 2,
+                      '& .MuiInputLabel-root': {
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      },
+                      '& .MuiInputBase-input': {
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }
+                    },
                     placeholder: "MMM D, YYYY hh:mm AM/PM",
                     inputProps: {
                       pattern: "[0-9/: ]*[AaPp][Mm]?",
@@ -406,12 +457,23 @@ const EventCreationApp: React.FC = () => {
                 onChange={(e) => setDescription(e.target.value)}
                 variant="outlined"
                 required
-                sx={{ mb: 2 }}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  },
+                  '& .MuiInputBase-input': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }
+                }}
               />
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>
+              <Typography variant="subtitle1" gutterBottom sx={{
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                fontWeight: 500
+              }}>
                 Reference File (Optional)
               </Typography>
               {referenceFile ? (
@@ -419,13 +481,23 @@ const EventCreationApp: React.FC = () => {
                   <Chip
                     label={referenceFile.name}
                     onDelete={() => setReferenceFile(null)}
-                    sx={{ mr: 1 }}
+                    sx={{ 
+                      mr: 1,
+                      '& .MuiChip-label': {
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                      }
+                    }}
                   />
                   <Button
                     variant="outlined"
                     component="label"
                     startIcon={<AttachFile />}
                     size="small"
+                    sx={{
+                      textTransform: 'none',
+                      fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                      fontWeight: 500
+                    }}
                   >
                     Change Reference File
                     <input
@@ -440,7 +512,12 @@ const EventCreationApp: React.FC = () => {
                   variant="outlined"
                   component="label"
                   startIcon={<AttachFile />}
-                  sx={{ mb: 2 }}
+                  sx={{ 
+                    mb: 2,
+                    textTransform: 'none',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 500
+                  }}
                 >
                   Upload Reference File
                   <input
@@ -453,16 +530,39 @@ const EventCreationApp: React.FC = () => {
             </Grid>
 
             <Grid item xs={12}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handlePublishEvent}
-                disabled={loading}
-                startIcon={loading ? <CircularProgress size={20} /> : null}
-                sx={{ backgroundColor: '#1F2E6A' }}
-              >
-                Create Submittable
-              </Button>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => window.location.href = '/dashboard/submission'}
+                  sx={{
+                    textTransform: 'none',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 500
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handlePublishEvent}
+                  disabled={loading}
+                  startIcon={loading ? <CircularProgress size={20} /> : null}
+                  sx={{
+                    textTransform: 'none',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 600,
+                    height: 48,
+                    px: 4,
+                    backgroundColor: '#3f51b5',
+                    '&:hover': {
+                      backgroundColor: '#303f9f'
+                    }
+                  }}
+                >
+                  {loading ? 'Creating...' : 'Create Submittable'}
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         </Paper>
@@ -473,7 +573,15 @@ const EventCreationApp: React.FC = () => {
           autoHideDuration={6000}
           onClose={() => setSnackbar({ ...snackbar, open: false })}
         >
-          <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
+          <Alert 
+            severity={snackbar.severity} 
+            sx={{ 
+              width: '100%',
+              '& .MuiAlert-message': {
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }
+            }}
+          >
             {snackbar.message}
           </Alert>
         </Snackbar>
