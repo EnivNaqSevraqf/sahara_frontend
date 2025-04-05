@@ -209,7 +209,7 @@ export default function Dashboard() {
       });
 
       // Sort by due date and get upcoming ones
-      const upcomingAssignments = response.data.upcoming;
+      const upcomingAssignments = response.data.open;
       const sortedAssignments = upcomingAssignments.sort((a: Assignment, b: Assignment) => 
         new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
       );
@@ -307,7 +307,7 @@ export default function Dashboard() {
         throw new Error('No authentication token found');
       }
 
-      const response = await axios.get<UserProfile>('/api/users/me', {
+      const response = await axios.get<UserProfile>('/users/me', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -345,6 +345,7 @@ export default function Dashboard() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+    console.log("Formatted date:", date, " from string:", dateString);
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
@@ -966,7 +967,7 @@ export default function Dashboard() {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <AssignmentIcon sx={{ color: '#3f51b5' }} />
             <Typography variant="h6" sx={{ fontWeight: 500, color: '#3f51b5' }}>
-              Upcoming Assignments
+              Ongoing Assignments
             </Typography>
           </Box>
           <Button 
@@ -1018,7 +1019,7 @@ export default function Dashboard() {
                             sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
                           >
                             <TodayIcon fontSize="small" />
-                            Due: {formatDate(assignment.due_date)}
+                            Due: {formatDate(assignment.deadline)}
                           </Typography>
                           <Typography 
                             component="span" 
@@ -1026,7 +1027,7 @@ export default function Dashboard() {
                             color="warning.main"
                             sx={{ ml: 2, fontWeight: 500 }}
                           >
-                            {getTimeRemaining(assignment.due_date)}
+                            {getTimeRemaining(assignment.deadline)}
                           </Typography>
                         </Box>
                       }

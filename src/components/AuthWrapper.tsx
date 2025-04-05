@@ -19,7 +19,7 @@ export default function AuthWrapper({ children }: { children: React.ReactNode })
       '/dashboard/people/student': ['prof', 'admin','ta'],
       '/dashboard/people/skills': ['prof', 'admin', 'ta'],
       '/dashboard/people/add': ['prof', 'admin', 'ta'],
-      '/dashboard/forms': ['prof', 'admin'],
+      '/dashboard/forms/create_form': ['prof', 'admin'],
       '/dashboard/submission/creation': ['prof', 'admin', 'ta'],
       '/dashboard/submission/update': ['prof', 'admin', 'ta'],
       '/dashboard/submission/view': ['prof', 'admin', 'ta'],

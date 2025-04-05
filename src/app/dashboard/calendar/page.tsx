@@ -1,6 +1,6 @@
 'use client';
 import * as React from "react";
-import {Stack, Button} from "@mui/material";
+import {Stack, Button, Grid, Card, CardContent, Typography} from "@mui/material";
 import { Scheduler } from "@aldabil/react-scheduler";
 // import {
 //     EventActions,
@@ -12,6 +12,10 @@ import { RemoteQuery, EventActions, ProcessedEvent } from "@aldabil/react-schedu
 import { currentConfig } from '@/config';
 import { headers } from "next/headers";
 import { Router } from "next/router";
+
+const profColor = "#0044ff"; // Red color for prof events
+const teamColor = "#00ff99"; // Green color for team events
+const personalColor = "#ffb300"; // Blue color for personal events
 
 export default function Calendar(){
     const [Events, setEvents] = React.useState<ProcessedEvent[]>([]);
@@ -26,7 +30,7 @@ export default function Calendar(){
         const token = localStorage.getItem("token");
         const config = {
             headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Authorization": `Bearer ${localStorage.getItem("token")}`,
                 "Content-Type": "application/json",
             },
         }
@@ -45,13 +49,13 @@ export default function Calendar(){
                     events[i].editable = false; // Disable editing for non-admin users
                     events[i].deletable = false; // Disable deletion for non-admin users
                 }
-                events[i].color = "#FF0000"; // Red color for global events
+                events[i].color = profColor; // Red color for global events
             }
             else if(events[i].type === "team"){
-                events[i].color = "#00FF00"; // Green color for team events
+                events[i].color = teamColor; // Green color for team events
             }
             else if(events[i].type === "personal"){
-                events[i].color = "#0000FF"; // Blue color for personal events
+                events[i].color = personalColor; // Blue color for personal events
             }
 
         }
@@ -91,7 +95,7 @@ export default function Calendar(){
         // const events = [...Events, event];
         // setEvents(events);
         // console.log("Events:", events);
-        event.color = event.type === "global" ? "#FF0000" : event.type === "team" ? "#00FF00" : "#0000FF";
+        event.color = event.type === "global" ? profColor : event.type === "team" ? teamColor : personalColor;
         
         return new Promise((res, rej) => {
             if (action === "edit") {
@@ -243,15 +247,65 @@ export default function Calendar(){
 
     return (
         <Stack spacing={2}>
+            <Grid container spacing={3} sx={{ mb: 2 }}>
+                <Grid item xs={12} md={4}>
+                    <Card sx={{ 
+                        height: '100%',
+                        background: 'linear-gradient(135deg, #0044ff 0%, #2979FF 100%)',
+                        boxShadow: '0 4px 20px rgba(0, 68, 255, 0.2)',
+                        borderRadius: 2,
+                        color: 'white'
+                    }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <div style={{ width: 20, height: 20, backgroundColor: profColor, borderRadius: '50%', border: '2px solid rgba(255, 255, 255, 0.8)' }}></div>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                Global Events
+                            </Typography>
+                        </CardContent>
+                    </Card>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <Card sx={{ 
+                        height: '100%',
+                        background: 'linear-gradient(135deg, #00ff99 0%, #00CC77 100%)',
+                        boxShadow: '0 4px 20px rgba(0, 255, 153, 0.2)',
+                        borderRadius: 2,
+                        color: 'white'
+                    }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <div style={{ width: 20, height: 20, backgroundColor: teamColor, borderRadius: '50%', border: '2px solid rgba(255, 255, 255, 0.8)' }}></div>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                Team Events
+                            </Typography>
+                        </CardContent>
+                    </Card>
+                </Grid>
+                <Grid item xs={12} md={4}>
+                    <Card sx={{ 
+                        height: '100%',
+                        background: 'linear-gradient(135deg, #ffb300 0%, #FF9800 100%)',
+                        boxShadow: '0 4px 20px rgba(255, 179, 0, 0.2)',
+                        borderRadius: 2,
+                        color: 'white'
+                    }}>
+                        <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <div style={{ width: 20, height: 20, backgroundColor: personalColor, borderRadius: '50%', border: '2px solid rgba(255, 255, 255, 0.8)' }}></div>
+                            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                                Personal Events
+                            </Typography>
+                        </CardContent>
+                    </Card>
+                </Grid>
+            </Grid>
 
-        {fields != null && <Scheduler
-            view="month"
-            getRemoteEvents={fetchEevents}
-            events={Events}
-            onDelete={handleDelete}
-            onConfirm={handleConfirm}
-            fields={fields}
-        />}
+            {fields != null && <Scheduler
+                view="month"
+                getRemoteEvents={fetchEevents}
+                events={Events}
+                onDelete={handleDelete}
+                onConfirm={handleConfirm}
+                fields={fields}
+            />}
         </Stack>
     );
 }

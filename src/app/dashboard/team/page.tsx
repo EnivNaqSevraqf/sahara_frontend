@@ -243,9 +243,9 @@ export default function TeamMembersPage() {
       setInvitedUserId('');
       
       // Show success message or update UI as needed
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error inviting user:', err);
-      setError(`Failed to invite user. ${err.response.data.detail || 'Please try again.'}`);
+      setError(`Failed to invite user. ${err.response?.data?.detail || 'Please try again.'}`);
     } finally {
       setInviteSending(false);
     }
