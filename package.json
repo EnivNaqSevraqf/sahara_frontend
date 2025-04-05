@@ -36,6 +36,7 @@
     "axios": "^1.8.4",
     "buffer": "^6.0.3",
     "dayjs": "^1.11.13",
+    "jwt-decode": "^4.0.0",
     "katex": "^0.16.21",
     "mui-color-input": "^6.0.0",
     "mui-tiptap": "^1.18.0",
