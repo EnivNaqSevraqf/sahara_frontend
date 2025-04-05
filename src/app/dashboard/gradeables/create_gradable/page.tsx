@@ -238,7 +238,7 @@ const CreateGradeable: React.FC = () => {
 
       // Create gradeable
       const gradeableResponse = await axios.post(
-        'http://localhost:8000/gradeables/create',
+        '/gradeables/create',
         formData,
         {
           headers: {

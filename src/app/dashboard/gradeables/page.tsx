@@ -50,7 +50,7 @@ export default function GradeablesListPage() {
           headers: { Authorization: `Bearer ${token}` }
         };
 
-        const response = await axios.get('http://localhost:8000/gradeables', config);
+        const response = await axios.get('/gradeables', config);
         setGradeables(response.data);
         setError(null);
       } catch (error: any) {

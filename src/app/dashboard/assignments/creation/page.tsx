@@ -42,9 +42,6 @@ import {
 } from '@mui/icons-material';
 import axios from 'axios';
 
-// Configure axios base URL to handle different ports
-axios.defaults.baseURL = 'http://localhost:8000';
-
 // Define Event interface with optional opensAt field
 interface Event {
   id: number;

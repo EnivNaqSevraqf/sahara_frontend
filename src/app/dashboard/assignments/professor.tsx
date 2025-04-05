@@ -41,8 +41,6 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import TimelineIcon from '@mui/icons-material/Timeline';
 
 // Configure axios base URL
-axios.defaults.baseURL = 'http://localhost:8000';
-
 interface AssignmentType {
   id: number;
   user_id: number;

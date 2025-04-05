@@ -37,8 +37,6 @@ import { useMediaQuery } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 
 // Configure axios base URL
-axios.defaults.baseURL = 'http://localhost:8000';
-
 // Constants for file validation
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];

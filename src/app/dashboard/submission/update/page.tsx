@@ -19,8 +19,6 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 
-// Configure axios base URL
-axios.defaults.baseURL = 'http://localhost:8000';
 
 interface SubmittableType {
   id: number;

@@ -119,8 +119,8 @@ const GradeableScoresPage: React.FC = () => {
         };
 
         const [gradeableResponse, scoresResponse] = await Promise.all([
-          axios.get(`http://localhost:8000/gradeables/${id}`, config),
-          axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)
+          axios.get(`/gradeables/${id}`, config),
+          axios.get(`/gradeables/${id}/scores`, config)
         ]);
         
         setGradeableName(gradeableResponse.data.title || 'Untitled Assignment');

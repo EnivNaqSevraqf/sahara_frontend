@@ -33,9 +33,6 @@ import AnnouncementIcon from '@mui/icons-material/Announcement';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ForumIcon from '@mui/icons-material/Forum';
 
-// Configure axios base URL
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
 // Add request interceptor to handle errors
 axios.interceptors.request.use(
   (config) => {

@@ -41,7 +41,6 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import axios from 'axios';
 
 // Configure axios base URL
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 interface Skill {
   id: number;
