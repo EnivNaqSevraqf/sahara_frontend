@@ -79,6 +79,19 @@ const UpdateAssignable: React.FC = () => {
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!assignable) return;
+    const { name, value } = e.target;
+    
+    // For date fields, ensure the value includes seconds and milliseconds
+    if (name === 'deadline' || name === 'opens_at') {
+      const date = new Date(value);
+      setAssignable(prev => prev ? { ...prev, [name]: date.toISOString().slice(0, 16) } : null);
+    } else {
+      setAssignable(prev => prev ? { ...prev, [name]: value } : null);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignable) return;
@@ -89,11 +102,19 @@ const UpdateAssignable: React.FC = () => {
       // Create FormData for file upload
       const formData = new FormData();
       formData.append('title', assignable.title);
-      formData.append('deadline', assignable.deadline);
-      formData.append('description', assignable.description);
+      
+      // Format dates to ISO 8601 with UTC timezone
+      const deadlineDate = new Date(assignable.deadline);
+      const formattedDeadline = deadlineDate.toISOString();
+      formData.append('deadline', formattedDeadline);
+
       if (assignable.opens_at) {
-        formData.append('opens_at', assignable.opens_at);
+        const opensAtDate = new Date(assignable.opens_at);
+        const formattedOpensAt = opensAtDate.toISOString();
+        formData.append('opens_at', formattedOpensAt);
       }
+
+      formData.append('description', assignable.description);
 
       await axios.put(`/assignables/${assignableId}`, formData, {
         headers: {
@@ -122,12 +143,6 @@ const UpdateAssignable: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!assignable) return;
-    const { name, value } = e.target;
-    setAssignable(prev => prev ? { ...prev, [name]: value } : null);
   };
 
   if (loading) {
