@@ -116,15 +116,63 @@ const TeamsPage = () => {
 
   const fetchAvailableTAs = async () => {
     try {
+      console.log("Fetching all available TAs...");
+      
+      // Fetch all people from the endpoint
       const response = await axios.get('/people/', {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
+      
+      console.log("All people data:", response.data);
+      
+      // Filter to get only TAs
       const tas = response.data.filter((user: any) => user.role === 'TA');
+      console.log("Filtered TAs:", tas);
+      
+      // Set the available TAs state
       setAvailableTAs(tas.map((ta: any) => ({ id: ta.id, name: ta.name })));
+      
+      // Also fetch teams to ensure we have all TAs that might be assigned to teams
+      // This ensures we have TAs that might not be correctly marked in the /people endpoint
+      const teamsResponse = await axios.get('/match', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      
+      // Extract all TAs from all teams
+      const teamTAs: TA[] = [];
+      teamsResponse.data.teams.forEach((team: Team) => {
+        team.tas.forEach(ta => {
+          if (!teamTAs.some(existingTA => existingTA.id === ta.id)) {
+            teamTAs.push(ta);
+          }
+        });
+      });
+      
+      console.log("TAs from teams:", teamTAs);
+      
+      // Merge the two TA lists (from /people and from /match)
+      const mergedTAs = [...tas.map((ta: any) => ({ id: ta.id, name: ta.name }))];
+      
+      // Add any TAs from teams that aren't in the /people response
+      teamTAs.forEach(ta => {
+        if (!mergedTAs.some(existingTA => existingTA.id === ta.id)) {
+          mergedTAs.push(ta);
+        }
+      });
+      
+      console.log("Final merged TA list:", mergedTAs);
+      setAvailableTAs(mergedTAs);
     } catch (error) {
       console.error('Error fetching TAs:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to fetch TA data',
+        severity: 'error',
+      });
     }
   };
 
@@ -164,6 +212,29 @@ const TeamsPage = () => {
   };
 
   const handleEditClick = (team: Team) => {
+    console.log("Editing team:", team);
+    console.log("Team's TAs:", team.tas);
+    console.log("Available TAs in dropdown:", availableTAs);
+    
+    // Check for TA data mismatches
+    const missingTAs = team.tas.filter(teamTA => 
+      !availableTAs.some(availableTA => availableTA.id === teamTA.id)
+    );
+    
+    if (missingTAs.length > 0) {
+      console.log("TAs in team not found in availableTAs:", missingTAs);
+      
+      // Add missing TAs to availableTAs
+      const updatedAvailableTAs = [...availableTAs];
+      missingTAs.forEach(ta => {
+        if (!updatedAvailableTAs.some(existingTA => existingTA.id === ta.id)) {
+          updatedAvailableTAs.push(ta);
+        }
+      });
+      
+      setAvailableTAs(updatedAvailableTAs);
+    }
+    
     setEditingTeam(team);
     setSelectedTAs(team.tas.map(ta => ta.id));
     setOpenEditDialog(true);
@@ -480,16 +551,19 @@ const TeamsPage = () => {
               input={<OutlinedInput label="Assigned TAs" />}
               renderValue={(selected) => (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value) => (
-                    <Chip
-                      key={value}
-                      label={availableTAs.find(ta => ta.id === value)?.name}
-                      sx={{
-                        backgroundColor: '#e8f0fe',
-                        color: '#3f51b5',
-                      }}
-                    />
-                  ))}
+                  {selected.map((value) => {
+                    const ta = availableTAs.find(ta => ta.id === value);
+                    return (
+                      <Chip
+                        key={value}
+                        label={ta?.name || `TA ID: ${value}`} // Fallback for missing TAs
+                        sx={{
+                          backgroundColor: ta ? '#e8f0fe' : '#ffebee',
+                          color: ta ? '#3f51b5' : '#d32f2f',
+                        }}
+                      />
+                    );
+                  })}
                 </Box>
               )}
             >
