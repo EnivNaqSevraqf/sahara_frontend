@@ -32,10 +32,9 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ForumIcon from '@mui/icons-material/Forum';
+import { currentConfig } from '@/config';
 
-// Configure axios base URL
-axios.defaults.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 // Add request interceptor to handle errors
 axios.interceptors.request.use(
   (config) => {

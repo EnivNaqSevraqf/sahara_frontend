@@ -18,10 +18,9 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
-
+import { currentConfig } from '@/config';
 // Configure axios base URL
-axios.defaults.baseURL = 'http://localhost:8000';
-
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 interface AssignableType {
   id: number;
   title: string;

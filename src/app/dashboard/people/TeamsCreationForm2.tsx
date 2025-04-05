@@ -54,7 +54,7 @@ const TeamsCreationForm2 = () => {
     setIsSubmitting(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/teams/upload-csv/', formData, {
+      const response = await axios.post('/teams/upload-csv/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

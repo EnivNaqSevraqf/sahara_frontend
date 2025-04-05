@@ -17,6 +17,7 @@ import {
   Alert,
   CircularProgress,
 } from '@mui/material';
+import { currentConfig } from '@/config';
 
 interface TeamMember {
   id: number;
@@ -28,7 +29,7 @@ interface TeamMember {
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: currentConfig.apiBaseUrl,
   headers: {
     'Content-Type': 'application/json',
   },

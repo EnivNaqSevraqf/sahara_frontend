@@ -19,6 +19,10 @@ import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
+import { currentConfig } from '@/config';
+
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
+
 
 interface SubmitStatus {
   severity: 'success' | 'error';
@@ -238,7 +242,7 @@ const CreateGradeable: React.FC = () => {
 
       // Create gradeable
       const gradeableResponse = await axios.post(
-        'http://localhost:8000/gradeables/create',
+        '/gradeables/create',
         formData,
         {
           headers: {

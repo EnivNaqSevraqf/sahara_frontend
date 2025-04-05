@@ -23,6 +23,9 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import { useRouter } from 'next/navigation';
+import { currentConfig } from '@/config';
+
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 interface IGradeable {
   id: string;
@@ -50,7 +53,7 @@ export default function GradeablesListPage() {
           headers: { Authorization: `Bearer ${token}` }
         };
 
-        const response = await axios.get('http://localhost:8000/gradeables', config);
+        const response = await axios.get('/gradeables', config);
         setGradeables(response.data);
         setError(null);
       } catch (error: any) {

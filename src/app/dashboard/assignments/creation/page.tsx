@@ -41,10 +41,9 @@ import {
   CheckCircle
 } from '@mui/icons-material';
 import axios from 'axios';
-
-// Configure axios base URL to handle different ports
-axios.defaults.baseURL = 'http://localhost:8000';
-
+import { currentConfig } from '@/config';
+// Configure axios base URL
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 // Define Event interface with optional opensAt field
 interface Event {
   id: number;

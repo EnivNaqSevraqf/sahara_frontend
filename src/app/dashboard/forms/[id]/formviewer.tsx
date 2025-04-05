@@ -10,6 +10,8 @@ import { LayeredDarkPanelless } from "survey-core/themes";
 import { ContrastLight } from "survey-core/themes";
 import { currentConfig } from '@/config';
 
+// Configure axios base URL
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 interface FormViewerProps {
   params: {

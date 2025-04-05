@@ -30,6 +30,8 @@ import dayjs from 'dayjs';
 import { currentConfig } from '@/config';
 import TimelineIcon from '@mui/icons-material/Timeline';
 
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
+
 interface Form {
   id: string;
   form_name: string;

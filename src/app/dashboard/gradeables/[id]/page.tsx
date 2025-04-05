@@ -24,6 +24,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useParams } from 'next/navigation';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GradeIcon from '@mui/icons-material/Grade';
+import { currentConfig } from '@/config';
+
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 interface StudentScore {
   user_id: number;
@@ -119,8 +122,8 @@ const GradeableScoresPage: React.FC = () => {
         };
 
         const [gradeableResponse, scoresResponse] = await Promise.all([
-          axios.get(`http://localhost:8000/gradeables/${id}`, config),
-          axios.get(`http://localhost:8000/gradeables/${id}/scores`, config)
+          axios.get(`/gradeables/${id}`, config),
+          axios.get(`/gradeables/${id}/scores`, config)
         ]);
         
         setGradeableName(gradeableResponse.data.title || 'Untitled Assignment');

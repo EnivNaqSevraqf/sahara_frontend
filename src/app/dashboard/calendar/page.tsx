@@ -12,7 +12,8 @@ import { RemoteQuery, EventActions, ProcessedEvent } from "@aldabil/react-schedu
 import { currentConfig } from '@/config';
 import { headers } from "next/headers";
 import { Router } from "next/router";
-
+// Configure axios base URL
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 const profColor = "#0044ff"; // Red color for prof events
 const teamColor = "#00ff99"; // Green color for team events
 const personalColor = "#ffb300"; // Blue color for personal events
