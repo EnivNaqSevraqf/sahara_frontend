@@ -45,6 +45,8 @@ import WebIcon from '@mui/icons-material/Web';
 import JavascriptIcon from '@mui/icons-material/Javascript';
 import EditIcon from '@mui/icons-material/Edit';
 
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
+
 interface TeamMember {
   id: number;
   name: string;

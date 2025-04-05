@@ -35,8 +35,10 @@ import TiptapEditor from '@/components/TiptapEditor';
 import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
+import { currentConfig } from '@/config';
 
 // Configure axios base URL
+axios.defaults.baseURL = currentConfig.apiBaseUrl
 // Constants for file validation
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_FILE_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];

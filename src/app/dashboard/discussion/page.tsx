@@ -19,7 +19,8 @@ import {
 } from '@mui/material';
 import { Send as SendIcon, AttachFile as AttachFileIcon, KeyboardArrowDown } from '@mui/icons-material';
 import { currentConfig } from '@/config';
-
+// Configure axios base URL
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 interface Channel {
   id: number;
   name: string;

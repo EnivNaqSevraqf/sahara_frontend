@@ -23,6 +23,9 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import { useRouter } from 'next/navigation';
+import { currentConfig } from '@/config';
+
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 interface IGradeable {
   id: string;

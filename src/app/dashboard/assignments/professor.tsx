@@ -39,8 +39,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import { useRouter } from 'next/navigation';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import TimelineIcon from '@mui/icons-material/Timeline';
-
+import { currentConfig } from '@/config';
 // Configure axios base URL
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 interface AssignmentType {
   id: number;
   user_id: number;

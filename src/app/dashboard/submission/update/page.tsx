@@ -18,7 +18,8 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
-
+import { currentConfig } from '@/config';
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 interface SubmittableType {
   id: number;

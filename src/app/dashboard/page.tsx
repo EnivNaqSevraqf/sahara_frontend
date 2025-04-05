@@ -32,7 +32,9 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ForumIcon from '@mui/icons-material/Forum';
+import { currentConfig } from '@/config';
 
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 // Add request interceptor to handle errors
 axios.interceptors.request.use(
   (config) => {

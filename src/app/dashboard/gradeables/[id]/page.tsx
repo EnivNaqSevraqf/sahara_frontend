@@ -24,6 +24,9 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useParams } from 'next/navigation';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import GradeIcon from '@mui/icons-material/Grade';
+import { currentConfig } from '@/config';
+
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 interface StudentScore {
   user_id: number;

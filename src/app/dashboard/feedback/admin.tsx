@@ -26,7 +26,8 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 import { currentConfig } from '@/config';
-
+// Configure axios base URL
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 const MatrixCell = styled(TableCell)(({ theme }) => ({
   padding: theme.spacing(1),
   textAlign: 'center',
