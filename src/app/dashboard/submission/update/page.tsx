@@ -17,6 +17,7 @@ import {
   Grid
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/Edit';
 
 // Configure axios base URL
 axios.defaults.baseURL = 'http://localhost:8000';
@@ -88,11 +89,19 @@ const UpdateSubmittable: React.FC = () => {
       // Create FormData for file upload
       const formData = new FormData();
       formData.append('title', submittable.title);
-      formData.append('deadline', submittable.deadline);
-      formData.append('description', submittable.description);
+      
+      // Format dates to ISO 8601 with UTC timezone
+      const deadlineDate = new Date(submittable.deadline);
+      const formattedDeadline = deadlineDate.toISOString();
+      formData.append('deadline', formattedDeadline);
+
       if (submittable.opens_at) {
-        formData.append('opens_at', submittable.opens_at);
+        const opensAtDate = new Date(submittable.opens_at);
+        const formattedOpensAt = opensAtDate.toISOString();
+        formData.append('opens_at', formattedOpensAt);
       }
+
+      formData.append('description', submittable.description);
 
       await axios.put(`/submittables/${submittableId}`, formData, {
         headers: {
@@ -126,7 +135,14 @@ const UpdateSubmittable: React.FC = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!submittable) return;
     const { name, value } = e.target;
-    setSubmittable(prev => prev ? { ...prev, [name]: value } : null);
+    
+    // For date fields, ensure the value includes seconds and milliseconds
+    if (name === 'deadline' || name === 'opens_at') {
+      const date = new Date(value);
+      setSubmittable(prev => prev ? { ...prev, [name]: date.toISOString().slice(0, 16) } : null);
+    } else {
+      setSubmittable(prev => prev ? { ...prev, [name]: value } : null);
+    }
   };
 
   if (loading) {
@@ -153,35 +169,52 @@ const UpdateSubmittable: React.FC = () => {
   }
 
   return (
-    <Box sx={{ width: '100%', p: 2 }}>
-      {/* Course navigation */}
-      <Box sx={{ mb: 3, pb: 1, borderBottom: '1px solid', borderColor: 'divider' }}>
-        <Typography variant="body2" component="div">
-          <span style={{ color: '#3f51b5', cursor: 'pointer' }}>Course Home</span> / 
-          <span style={{ cursor: 'pointer' }}> Update Submittable</span>
-        </Typography>
-      </Box>
-
-      {/* Blue Banner */}
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          p: 3, 
-          mb: 4, 
-          backgroundColor: '#1976d2',
+    <Box sx={{ width: '100%', p: 3 }}>
+      {/* Gradeables header with gradient */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          mb: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
           color: 'white',
-          borderRadius: 2
+          borderRadius: 2,
+          boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
         }}
       >
-        <Typography variant="h4" component="h1" gutterBottom>
-          Update Submittable
-        </Typography>
-        <Typography variant="body1" sx={{ opacity: 0.9 }}>
-          Update the details of your submittable.
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <EditIcon sx={{ fontSize: 50 }} />
+            </Box>
+
+            <Box>
+              <Typography variant="h4" component="div" sx={{ 
+                fontWeight: 'bold', 
+                mb: 1,
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}>
+                Update Submittable
+              </Typography>
+              <Typography variant="body1" sx={{ 
+                opacity: 0.9,
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+              }}>
+                Update the details of your submittable
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
       </Paper>
 
-      <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
+      <Paper elevation={3} sx={{ 
+        p: 3, 
+        mb: 4,
+        borderRadius: 2,
+        boxShadow: '0 2px 10px rgba(0, 0, 0, 0.08)'
+      }}>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
@@ -192,7 +225,15 @@ const UpdateSubmittable: React.FC = () => {
                 onChange={handleChange}
                 required
                 fullWidth
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  },
+                  '& .MuiInputBase-input': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }
+                }}
               />
             </Grid>
 
@@ -206,7 +247,15 @@ const UpdateSubmittable: React.FC = () => {
                 required
                 fullWidth
                 InputLabelProps={{ shrink: true }}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  },
+                  '& .MuiInputBase-input': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }
+                }}
               />
             </Grid>
 
@@ -219,7 +268,15 @@ const UpdateSubmittable: React.FC = () => {
                 onChange={handleChange}
                 fullWidth
                 InputLabelProps={{ shrink: true }}
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  },
+                  '& .MuiInputBase-input': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }
+                }}
               />
             </Grid>
 
@@ -233,13 +290,24 @@ const UpdateSubmittable: React.FC = () => {
                 multiline
                 rows={4}
                 fullWidth
-                sx={{ mb: 2 }}
+                sx={{
+                  mb: 2,
+                  '& .MuiInputLabel-root': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  },
+                  '& .MuiInputBase-input': {
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+                  }
+                }}
               />
             </Grid>
 
             {submittable?.reference_files && submittable.reference_files.length > 0 && (
               <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
+                <Typography variant="subtitle1" gutterBottom sx={{
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                  fontWeight: 500
+                }}>
                   Reference Files:
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
@@ -251,7 +319,8 @@ const UpdateSubmittable: React.FC = () => {
                         bgcolor: 'action.hover',
                         p: 1,
                         borderRadius: 1,
-                        display: 'inline-block'
+                        display: 'inline-block',
+                        fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
                       }}
                     >
                       {file.original_filename}
@@ -267,6 +336,11 @@ const UpdateSubmittable: React.FC = () => {
                   variant="outlined"
                   onClick={() => router.push('/dashboard/submission')}
                   disabled={saving}
+                  sx={{
+                    textTransform: 'none',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 500
+                  }}
                 >
                   Cancel
                 </Button>
@@ -276,6 +350,17 @@ const UpdateSubmittable: React.FC = () => {
                   color="primary"
                   disabled={saving}
                   startIcon={saving ? <CircularProgress size={20} /> : null}
+                  sx={{
+                    textTransform: 'none',
+                    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                    fontWeight: 600,
+                    height: 48,
+                    px: 4,
+                    backgroundColor: '#3f51b5',
+                    '&:hover': {
+                      backgroundColor: '#303f9f'
+                    }
+                  }}
                 >
                   {saving ? 'Updating...' : 'Update Submittable'}
                 </Button>
@@ -290,7 +375,15 @@ const UpdateSubmittable: React.FC = () => {
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
       >
-        <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
+        <Alert 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            '& .MuiAlert-message': {
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }
+          }}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>

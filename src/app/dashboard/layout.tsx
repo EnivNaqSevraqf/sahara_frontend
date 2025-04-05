@@ -190,7 +190,7 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         icon: <AnnouncementIcon />,
       },
       {
-        segment: 'dashboard/scores',
+        segment: 'dashboard/gradeables',
         title: 'Gradeables',
         icon: <AssignmentRoundedIcon />,
       },

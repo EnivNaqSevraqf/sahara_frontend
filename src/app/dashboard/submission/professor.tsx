@@ -100,6 +100,7 @@ export default function ProfessorSubmissionList() {
   const [submissions, setSubmissions] = useState<SubmissionType[]>([]);
   const [submissionsDialogOpen, setSubmissionsDialogOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<number | null>(null);
 
   useEffect(() => {
     fetchSubmittables();
@@ -340,6 +341,19 @@ export default function ProfessorSubmissionList() {
     }
   };
 
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    }) + ", " + date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
+
   const isSubmissionAllowed = (doc: SubmittableType) => {
     const now = new Date();
     const opensAt = doc.opens_at ? new Date(doc.opens_at) : null;
@@ -359,19 +373,6 @@ export default function ProfessorSubmissionList() {
     const now = new Date();
     const deadline = new Date(doc.deadline);
     return now > deadline;
-  };
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    }) + ", " + date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
   };
 
   // Split submittables into categories
@@ -409,12 +410,18 @@ export default function ProfessorSubmissionList() {
   };
 
   const handleDeleteSubmittable = async (submittableId: number) => {
-    try {
-      if (!window.confirm('Are you sure you want to delete this submittable? This action cannot be undone.')) {
-        return;
-      }
+    setDeleteDialogOpen(submittableId);
+  };
 
-      await axios.delete(`/submittables/${submittableId}`, {
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialogOpen) return;
+    
+    try {
+      await axios.delete(`/submittables/${deleteDialogOpen}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -435,6 +442,8 @@ export default function ProfessorSubmissionList() {
         message: err.response?.data?.detail || 'Failed to delete submittable. Please try again.',
         severity: 'error'
       });
+    } finally {
+      setDeleteDialogOpen(null);
     }
   };
 
@@ -834,38 +843,58 @@ export default function ProfessorSubmissionList() {
       margin: '0 auto',
       bgcolor: 'background.default'
     }}>
-      {/* Course navigation */}
-      <Box sx={{ 
-        mb: 4, 
-        pb: 2, 
-        borderBottom: '1px solid', 
-        borderColor: 'divider',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AssignmentIcon color="primary" />
-          <Typography variant="body2" component="div">
-            <span style={{ color: '#3f51b5', cursor: 'pointer', fontWeight: 500 }}>Course Home</span> / 
-            <span style={{ cursor: 'pointer', color: 'text.secondary' }}> Submissions</span>
-          </Typography>
+      {/* Submissions header with gradient */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          mb: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+          color: 'white',
+          borderRadius: 2,
+          boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <AssignmentIcon sx={{ fontSize: 50 }} />
+            </Box>
+
+            <Box>
+              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Submissions
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Create and manage course submissions
+              </Typography>
+            </Box>
+          </Box>
+
+          <Button
+            variant="contained"
+            onClick={handleCreateSubmittable}
+            startIcon={<CloudUploadIcon />}
+            sx={{ 
+              height: 48, 
+              bgcolor: 'rgba(255, 255, 255, 0.9)',
+              color: '#3f51b5',
+              fontWeight: 'bold',
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 1)',
+              },
+              borderRadius: 1,
+              textTransform: 'none',
+              px: 3,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+            }}
+          >
+            Create Submittable
+          </Button>
         </Box>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<CloudUploadIcon />}
-          onClick={handleCreateSubmittable}
-          sx={{
-            borderRadius: 1,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-          }}
-        >
-          Create Submittable
-        </Button>
-      </Box>
+      </Paper>
       
       {/* Ongoing/Upcoming Documents */}
       {(ongoingSubmittables.length > 0 || upcomingSubmittables.length > 0) && (
@@ -879,7 +908,7 @@ export default function ProfessorSubmissionList() {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              color: 'primary.main'
+              color: '#033076'
             }}
           >
             <AssignmentIcon /> Ongoing/Upcoming Documents
@@ -1033,6 +1062,63 @@ export default function ProfessorSubmissionList() {
             }}
           >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen !== null}
+        onClose={handleDeleteCancel}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            minWidth: '400px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          pb: 1,
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          fontWeight: 600,
+          fontSize: '1.25rem'
+        }}>
+          Delete Submittable
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ 
+            color: 'text.secondary',
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            fontSize: '0.95rem'
+          }}>
+            Are you sure you want to delete this submittable? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 1.5 }}>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{
+              textTransform: 'none',
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontWeight: 500,
+              color: 'text.secondary'
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+            sx={{
+              textTransform: 'none',
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontWeight: 600,
+              px: 3
+            }}
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

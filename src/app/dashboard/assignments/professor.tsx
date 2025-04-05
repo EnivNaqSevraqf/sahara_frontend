@@ -99,6 +99,7 @@ export default function ProfessorAssignmentList() {
   const [assignments, setAssignments] = useState<AssignmentType[]>([]);
   const [assignmentsDialogOpen, setAssignmentsDialogOpen] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<number | null>(null);
 
   useEffect(() => {
     fetchAssignables();
@@ -405,18 +406,24 @@ export default function ProfessorAssignmentList() {
   };
 
   const handleDeleteSubmittable = async (assignableId: number) => {
-    try {
-      if (!window.confirm('Are you sure you want to delete this assignable? This action cannot be undone.')) {
-        return;
-      }
+    setDeleteDialogOpen(assignableId);
+  };
 
-      await axios.delete(`/assignables/${assignableId}`, {
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteDialogOpen) return;
+    
+    try {
+      await axios.delete(`/assignables/${deleteDialogOpen}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
 
-      // Refresh submittables list
+      // Refresh assignables list
       await fetchAssignables();
       
       setSnackbar({
@@ -431,6 +438,8 @@ export default function ProfessorAssignmentList() {
         message: err.response?.data?.detail || 'Failed to delete assignment. Please try again.',
         severity: 'error'
       });
+    } finally {
+      setDeleteDialogOpen(null);
     }
   };
 
@@ -784,7 +793,7 @@ export default function ProfessorAssignmentList() {
                   variant="outlined"
                   color="error"
                   startIcon={<DeleteIcon sx={{ fontSize: '1.2rem' }} />}
-                  onClick={() => handleDeleteAssignment(doc.id)}
+                  onClick={() => handleDeleteSubmittable(doc.id)}
                   sx={{ 
                     textTransform: 'none',
                     fontSize: '0.95rem',
@@ -830,38 +839,58 @@ export default function ProfessorAssignmentList() {
       margin: '0 auto',
       bgcolor: 'background.default'
     }}>
-      {/* Course navigation */}
-      <Box sx={{ 
-        mb: 4, 
-        pb: 2, 
-        borderBottom: '1px solid', 
-        borderColor: 'divider',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <AssignmentIcon color="primary" />
-          <Typography variant="body2" component="div">
-            <span style={{ color: '#3f51b5', cursor: 'pointer', fontWeight: 500 }}>Course Home</span> / 
-            <span style={{ cursor: 'pointer', color: 'text.secondary' }}> Assignments</span>
-          </Typography>
+      {/* Gradeables header with gradient */}
+      <Paper
+        elevation={0}
+        sx={{
+          p: 4,
+          mb: 4,
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+          color: 'white',
+          borderRadius: 2,
+          boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <AssignmentIcon sx={{ fontSize: 50 }} />
+            </Box>
+
+            <Box>
+              <Typography variant="h4" component="div" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Assignments
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Create and manage course assignments
+              </Typography>
+            </Box>
+          </Box>
+
+          <Button
+            variant="contained"
+            onClick={handleCreateAssignment}
+            startIcon={<CloudUploadIcon />}
+            sx={{ 
+              height: 48, 
+              bgcolor: 'rgba(255, 255, 255, 0.9)',
+              color: '#3f51b5',
+              fontWeight: 'bold',
+              '&:hover': {
+                bgcolor: 'rgba(255, 255, 255, 1)',
+              },
+              borderRadius: 1,
+              textTransform: 'none',
+              px: 3,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+            }}
+          >
+            Create Assignment
+          </Button>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<CloudUploadIcon />}
-          onClick={handleCreateAssignment}
-          sx={{
-            borderRadius: 1,
-            textTransform: 'none',
-            fontWeight: 600,
-            backgroundColor: '#033076',
-            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
-          }}
-        >
-          Create Assignment
-        </Button>
-      </Box>
+      </Paper>
       
       {/* Ongoing/Upcoming Documents */}
       {(ongoingAssignables.length > 0 || upcomingAssignables.length > 0) && (
@@ -1029,6 +1058,63 @@ export default function ProfessorAssignmentList() {
             }}
           >
             Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen !== null}
+        onClose={handleDeleteCancel}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+            minWidth: '400px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          pb: 1,
+          fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+          fontWeight: 600,
+          fontSize: '1.25rem'
+        }}>
+          Delete Assignment
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ 
+            color: 'text.secondary',
+            fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+            fontSize: '0.95rem'
+          }}>
+            Are you sure you want to delete this assignment? This action cannot be undone.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, pt: 1.5 }}>
+          <Button
+            onClick={handleDeleteCancel}
+            sx={{
+              textTransform: 'none',
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontWeight: 500,
+              color: 'text.secondary'
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color="error"
+            sx={{
+              textTransform: 'none',
+              fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+              fontWeight: 600,
+              px: 3
+            }}
+          >
+            Delete
           </Button>
         </DialogActions>
       </Dialog>

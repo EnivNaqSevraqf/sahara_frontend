@@ -247,6 +247,38 @@ const AnnouncementPage = () => {
     }
   };
 
+  const handleViewAttachment = async (announcement: Announcement) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`/announcements/${announcement.id}/download`, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Accept': '*/*'
+        }
+      });
+      
+      // Create blob URL with the correct content type
+      const blob = new Blob([response.data], { type: response.headers['content-type'] });
+      const url = window.URL.createObjectURL(blob);
+      
+      // Open in new tab
+      window.open(url, '_blank');
+      
+      // Cleanup blob URL after a delay to ensure it's loaded in the new tab
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+    } catch (error: any) {
+      console.error('Error viewing file:', error);
+      setSnackbar({
+        open: true,
+        message: 'Failed to view file',
+        severity: 'error'
+      });
+    }
+  };
+
   const validateForm = (): boolean => {
     const errors: {
       title?: boolean;
@@ -466,7 +498,7 @@ const AnnouncementPage = () => {
         sx={{ 
           mb: 2,
           borderLeft: 4,
-          borderColor: 'primary.main',
+          borderColor: '#1876D1',
           transition: 'all 0.3s ease',
           '&:hover': {
             transform: 'translateY(-2px)',
@@ -576,7 +608,10 @@ const AnnouncementPage = () => {
                     variant="outlined"
                     size="small"
                     startIcon={<DownloadIcon />}
-                    onClick={() => handleDownload(announcement)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(announcement);
+                    }}
                     sx={{
                       fontFamily: 'Inter, sans-serif',
                       textTransform: 'none',
@@ -586,6 +621,24 @@ const AnnouncementPage = () => {
                     }}
                   >
                     Download Attachment
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<AttachFileIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewAttachment(announcement);
+                    }}
+                    sx={{
+                      fontFamily: 'Inter, sans-serif',
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      letterSpacing: '0.02em',
+                      fontSize: '0.875rem'
+                    }}
+                  >
+                    View Attachment
                   </Button>
                 </Box>
               )}
