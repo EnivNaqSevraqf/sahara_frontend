@@ -8,48 +8,58 @@ import { Scheduler } from "@aldabil/react-scheduler";
 //     ViewEvent
 //   } from "@aldabil/react-scheduler/types";
 import axios from "axios";
-import { ProcessedEvent } from "@aldabil/react-scheduler/types";
+import { RemoteQuery, EventActions, ProcessedEvent } from "@aldabil/react-scheduler/types";
 import { currentConfig } from '@/config';
+import { headers } from "next/headers";
+import { Router } from "next/router";
 
 export default function Calendar(){
     const [Events, setEvents] = React.useState<ProcessedEvent[]>([]);
-    const fetchEevents = async () => {
-        const response = await axios.get("http://localhost:3000/api/events");
-        setEvents(response.data);
-    }; 
+    const [role, setRole] = React.useState<string>("");
+    const [userId, setUserId] = React.useState<string>("");
+    const [fields, setFields] = React.useState<any[] | null>(null);
 
-    const handleUpdate = () => {
-        console.log("Sending events to server");
-        console.log("Events: ", Events);
-        const stringifiedEvents = JSON.parse(JSON.stringify(Events));
-        console.log("Parsed Events:",stringifiedEvents);
-        const payload = {
-            events: stringifiedEvents,
+    
+
+    const fetchEevents =  async (query: RemoteQuery): Promise<ProcessedEvent[]> => {
+        const role = localStorage.getItem("role");
+        const token = localStorage.getItem("token");
+        const config = {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                "Content-Type": "application/json",
+            },
         }
-        console.log("Payload:", payload);
-        axios.post(`${currentConfig.apiBaseUrl}/calendar/update`, payload)
-        .then(response => {
-            console.log('Calendar updated:', response);
-        })
-        .catch(error => {
-        console.error('Error updating calendar:', error);
-        });
-        console.log("Button clicked");
-        const eventsString = JSON.stringify(EVENTS);
-        console.log(eventsString);
-        const events = JSON.parse(eventsString);
-
-        // Convert string dates to Date objects
+        const response = await axios.get(`${currentConfig.apiBaseUrl}/calendar/`, config);
+        const returnedEvents = response.data;
+        const events = JSON.parse(JSON.stringify(returnedEvents));
         for (let i = 0; i < events.length; i++) {
             events[i].start = new Date(events[i].start);
             events[i].end = new Date(events[i].end);
             if (!events[i].type) {
                 events[i].type = "personal"; // Assign a default type if none exists
             }
+
+            if(events[i].type === "global"){
+                if(role != "prof") {
+                    events[i].editable = false; // Disable editing for non-admin users
+                    events[i].deletable = false; // Disable deletion for non-admin users
+                }
+                events[i].color = "#FF0000"; // Red color for global events
+            }
+            else if(events[i].type === "team"){
+                events[i].color = "#00FF00"; // Green color for team events
+            }
+            else if(events[i].type === "personal"){
+                events[i].color = "#0000FF"; // Blue color for personal events
+            }
+
         }
-        setEvents(events);
-        // console.log(events);
-    };
+        setEvents(events);  
+        // setEvents(response.data);
+
+        return events;
+    };  
     const handleRefresh = () => {
         console.log("Button cicked");
         console.log("Events:", JSON.stringify(Events));
@@ -72,6 +82,98 @@ export default function Calendar(){
         }
         )
     };
+
+    const handleConfirm = async (
+        event: ProcessedEvent,
+        action: EventActions) : Promise<ProcessedEvent> => {
+        console.log("Event confirmed:", event);
+        console.log("Action:", action);
+        // const events = [...Events, event];
+        // setEvents(events);
+        // console.log("Events:", events);
+        event.color = event.type === "global" ? "#FF0000" : event.type === "team" ? "#00FF00" : "#0000FF";
+        
+        return new Promise((res, rej) => {
+            if (action === "edit") {
+              console.log("Edited event:", event);
+
+              /**PUT event to remote DB */
+                
+
+
+            //   axios.put(`${currentConfig.apiBaseUrl}/calendar/update`, event)
+            //     .then(response => {
+            //       console.log('Event updated:', response);
+            //       res({
+            //         ...event,
+            //         event_id: event.event_id || Math.random(),
+            //       });
+            //     })
+            //     .catch(error => {
+            //       console.error('Error updating event:', error);
+            //       rej("Failed to update event");
+            //     });
+            } else if (action === "create") {
+                console.log("Created event:", event);
+                const token = localStorage.getItem("token");
+                const config = {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json",
+                    }
+                }
+                axios.post(`${currentConfig.apiBaseUrl}/calendar/create`, event, config)
+                .then(response => {
+                    console.log('Event created:', response);
+                    res({
+                        ...event,
+                        event_id: response.data.event.id || Math.random(),
+                    });
+                })
+                .catch(error => {
+                    console.error('Error creating event:', error);
+                    rej("Failed to create event");
+                });
+              /**POST event to remote DB */
+            }
+      
+            const isFail = Math.random() > 0.6;
+            // Make it slow just for testing
+            setTimeout(() => {
+              if (isFail) {
+                rej("Ops... Faild");
+              } else {
+                res({
+                  ...event,
+                  event_id: event.event_id || Math.random(),
+                  color: "#FF0000",
+                //   color: event.type=== "global" ? "#FF0000" : event.type === "team" ? "#00FF00" : "#0000FF",
+                });
+              }
+            }, 3000);
+          });
+    }
+    const handleDelete = async (deletedId: string) => {
+        
+        console.log("Deleting event with ID:", deletedId);
+
+        const token = localStorage.getItem("token");
+        const config = {
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+            }
+        }
+        return axios.delete(`${currentConfig.apiBaseUrl}/calendar/delete/${deletedId}`, config)
+            .then(response => {
+                console.log('Event deleted:', response);
+                return deletedId;
+            })
+            .catch(error => {
+                console.error('Error deleting event:', error);
+                throw new Error("Failed to delete event");
+            });
+    }
     // const fetchRemote = async (query: ViewEvent): Promise<ProcessedEvent[]> => {
     //     console.log({ query });
     //     /**Simulate fetchin remote data */
@@ -81,30 +183,75 @@ export default function Calendar(){
     //       }, 3000);
     //     });
     //   };
-    const EVENTS: ProcessedEvent[] =[
-                {
-                    event_id: 1,
-                    title: "Event 1",
-                    start: new Date("2025/3/5 09:30"),
-                    end: new Date("2025/3/5 10:30"),
-                    type: "global",
+    // const EVENTS: ProcessedEvent[] =[
+    //             {
+    //                 event_id: 1,
+    //                 title: "Event 1",
+    //                 start: new Date("2025/3/5 09:30"),
+    //                 end: new Date("2025/3/5 10:30"),
+    //                 type: "global",
+    //             },
+    //         ];
+
+    React.useEffect(() => {
+        const role = localStorage.getItem("role");
+        const userId = localStorage.getItem("userId");
+        setRole(role || "");
+        setUserId(userId || "");
+        console.log("Role:", role);
+        console.log("User ID:", userId);
+        console.log("Updated fields:", fields);
+        if (role === "prof" || role === "admin") {
+            setFields([
+                { name: "type", type: "select", options: [
+                    { id: 1, text: "Personal", value: "personal" },
+                    { id: 3, text: "Global", value: "global" },
+                  ], 
+                  config: { label: "Type", required: true, errMsg: "Please select a type" },
                 },
-                // {
-                //     event_id: 2,
-                //     title: "Event 2",
-                //     start: new Date("2021/5/4 10:00"),
-                //     end: new Date("2021/5/4 11:00"),
-                //     type: "global"
-                // },
-            ];
+                  
+            ]);
+        }
+        else if (role === "student") {
+            setFields([
+                { name: "type", type: "select", options: [
+                    { id: 1, text: "Personal", value: "personal" },
+                    { id: 2, text: "Team", value: "team" },
+                  ], 
+                  config: { label: "Type", required: true, errMsg: "Please select a type" },
+                },
+                  
+            ]);
+        }
+        else if (role === "ta") {
+            setFields([
+                { name: "type", type: "select", options: [
+                    { id: 1, text: "Personal", value: "personal" },
+                    { id: 2, text: "Team", value: "team" },
+                  ], 
+                  config: { label: "Type", required: true, errMsg: "Please select a type" },
+                },
+                  
+            ]);
+        }
+        else{
+            // Logout the user if role is not founder or admin
+        }
+
+    }, []);
+
+
     return (
         <Stack spacing={2}>
-        <Scheduler
+
+        {fields != null && <Scheduler
             view="month"
+            getRemoteEvents={fetchEevents}
             events={Events}
-        />
-            <Button onClick={handleUpdate}>Update Calendar</Button>
-            <Button onClick={handleRefresh}>Refresh Calendar</Button>
+            onDelete={handleDelete}
+            onConfirm={handleConfirm}
+            fields={fields}
+        />}
         </Stack>
     );
 }
