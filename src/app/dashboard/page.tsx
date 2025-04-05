@@ -437,12 +437,14 @@ export default function Dashboard() {
             <Chip 
               icon={<GroupIcon />}
               label={`Team: ${userTeam}`}
+              onClick={() => router.push('/dashboard/team')}
               sx={{ 
                 bgcolor: 'rgba(255, 255, 255, 0.15)',
                 color: 'white',
                 fontSize: '0.95rem',
                 fontWeight: 500,
                 py: 2,
+                cursor: 'pointer',
                 '& .MuiChip-icon': { color: 'white' }
               }}
             />
