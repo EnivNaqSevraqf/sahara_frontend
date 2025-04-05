@@ -42,7 +42,7 @@ export default function AssignmentsList() {
       </Box>
     );
   }
-  if(role === 'prof') {
+  if(role === 'prof' || role === 'ta') {
     return <ProfessorAssignmentList />;
   } else if(role === 'student') {
     return <StudentAssignmentList />;
