@@ -323,7 +323,7 @@ const TATable = () => {
             ADD TAs
           </Button>
           <Button
-            variant="outlined"
+            variant="contained"
             onClick={() => router.push('/dashboard/people/tas/skills')}
             sx={{
               backgroundColor: '#1F2E6A',
@@ -333,20 +333,7 @@ const TATable = () => {
               },
             }}
           >
-            TA Skills Form
-          </Button>
-          <Button
-            variant="outlined"
-            onClick={() => router.push('/dashboard/people/tas/pairing')}
-            sx={{
-              backgroundColor: '#1F2E6A',
-              color: '#fff',
-              '&:hover': {
-                backgroundColor: '#1565c0', 
-              },
-            }}
-          >
-            TA-Team Pairing
+            Add Skills
           </Button>
         </Stack>
       </Box>
