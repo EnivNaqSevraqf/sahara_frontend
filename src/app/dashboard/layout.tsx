@@ -172,6 +172,11 @@ const getUserNavigation = (userRole: UserRole): Navigation => {
         title: 'Calendar',
         icon: <CalendarMonthIcon />,
       },
+      {
+        segment: 'dashboard/course-configs',
+        title: 'Course Settings',
+        icon: <SettingsRoundedIcon />,
+      },
      // ...footerItems
     ];
   } 

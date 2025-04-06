@@ -44,6 +44,7 @@ import IntegrationInstructionsIcon from '@mui/icons-material/IntegrationInstruct
 import WebIcon from '@mui/icons-material/Web';
 import JavascriptIcon from '@mui/icons-material/Javascript';
 import EditIcon from '@mui/icons-material/Edit';
+import GroupsIcon from '@mui/icons-material/Groups';
 
 axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
@@ -104,7 +105,32 @@ export default function TeamMembersPage() {
   const [order, setOrder] = useState<Order>('asc');
   const [orderBy, setOrderBy] = useState<OrderBy>('name');
 
+  // Add new state for team phase configuration
+  const [teamPhaseEnabled, setTeamPhaseEnabled] = useState(false);
+
   useEffect(() => {
+    const fetchTeamPhaseConfig = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(
+          `${currentConfig.apiBaseUrl}/config/team-phase`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'accept': 'application/json'
+            }
+          }
+        );
+        setTeamPhaseEnabled(response.data.enabled);
+      } catch (error) {
+        console.error('Failed to fetch team phase configuration:', error);
+        // Default to disabled if there's an error
+        setTeamPhaseEnabled(false);
+      }
+    };
+
+    fetchTeamPhaseConfig();
+
     const fetchTeamData = async () => {
       try {
         setLoading(true);
@@ -453,28 +479,57 @@ export default function TeamMembersPage() {
   if (!hasTeam) {
     return (
       <Box sx={{ p: 3 }}>
-        <Card elevation={3} sx={{ mb: 4 }}>
-          <CardContent sx={{ textAlign: 'center' }}>
-            <Typography variant="h5" component="div" sx={{ mb: 2 }}>
-              Not Assigned to a Team
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-              You are not currently in a team. You can join a team by accepting an invitation or create your own team.
-            </Typography>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            mb: 4,
+            background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+            color: 'white',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+                <GroupsIcon sx={{ fontSize: 48 }} />
+              </Box>
+              <Box>
+                <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                  Team Management
+                </Typography>
+                <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                  {teamPhaseEnabled 
+                    ? 'Create or join a team to collaborate with other students' 
+                    : 'Team formation is currently disabled'}
+                </Typography>
+              </Box>
+            </Box>
             
-            <Button 
-              variant="contained" 
-              color="primary"
-              onClick={() => setCreateTeamDialogOpen(true)}
-              sx={{ mb: 2 }}
-            >
-              Create New Team
-            </Button>
-          </CardContent>
-        </Card>
+            {teamPhaseEnabled && (
+              <Button
+                variant="contained"
+                onClick={() => setCreateTeamDialogOpen(true)}
+                sx={{
+                  bgcolor: 'rgba(255, 255, 255, 0.9)',
+                  color: '#3f51b5',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    bgcolor: 'rgba(255, 255, 255, 1)',
+                  },
+                  textTransform: 'none',
+                  px: 3
+                }}
+              >
+                Create Team
+              </Button>
+            )}
+          </Box>
+        </Paper>
 
         {/* Team Invites Section */}
-        {teamInvites.length > 0 ? (
+        {teamInvites.length > 0 && teamPhaseEnabled && (
           <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
             <Typography variant="h6" sx={{ mb: 2, color: '#1976d2' }}>
               Team Invitations
@@ -513,12 +568,6 @@ export default function TeamMembersPage() {
                 </TableBody>
               </Table>
             </TableContainer>
-          </Paper>
-        ) : (
-          <Paper elevation={3} sx={{ p: 3, borderRadius: 2, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              You don't have any pending team invitations.
-            </Typography>
           </Paper>
         )}
         
@@ -614,19 +663,21 @@ export default function TeamMembersPage() {
             </Box>
           </Box>
           
-          <Button
-            variant="contained"
-            onClick={() => setInviteDialogOpen(true)}
-            sx={{
-              bgcolor: 'rgba(255, 255, 255, 0.2)',
-              color: 'white',
-              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' },
-              textTransform: 'none',
-              fontWeight: 'bold'
-            }}
-          >
-            Invite User to Team
-          </Button>
+          {teamPhaseEnabled && (
+            <Button
+              variant="contained"
+              onClick={() => setInviteDialogOpen(true)}
+              sx={{
+                bgcolor: 'rgba(255, 255, 255, 0.2)',
+                color: 'white',
+                '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.3)' },
+                textTransform: 'none',
+                fontWeight: 'bold'
+              }}
+            >
+              Invite User to Team
+            </Button>
+          )}
         </Box>
       </Paper>
 

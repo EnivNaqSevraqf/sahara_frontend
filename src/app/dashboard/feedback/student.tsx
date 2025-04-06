@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   Box,
+  Container,
   Typography,
   Paper,
   Table,
@@ -18,6 +19,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
+import { RateReview as RateReviewIcon } from '@mui/icons-material';
 import { currentConfig } from '@/config';
 // Configure axios base URL
 axios.defaults.baseURL = currentConfig.apiBaseUrl;
@@ -60,10 +62,39 @@ export default function FeedbackForm() {
     message: '',
     severity: 'success'
   });
+  const [feedbackEnabled, setFeedbackEnabled] = useState(true);
+  const [configLoading, setConfigLoading] = useState(true);
 
   useEffect(() => {
-    fetchTeamData();
+    const fetchFeedbackConfig = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(
+          `${currentConfig.apiBaseUrl}/config/feedback`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'accept': 'application/json'
+            }
+          }
+        );
+        setFeedbackEnabled(response.data.enabled);
+      } catch (error) {
+        console.error('Failed to fetch feedback configuration:', error);
+        setFeedbackEnabled(false);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+
+    fetchFeedbackConfig();
   }, []);
+
+  useEffect(() => {
+    if (feedbackEnabled) {
+      fetchTeamData();
+    }
+  }, [feedbackEnabled]);
 
   const fetchTeamData = async () => {
     try {
@@ -201,11 +232,42 @@ export default function FeedbackForm() {
     }
   };
 
-  if (loading) {
+  if (loading || configLoading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
       </Box>
+    );
+  }
+
+  if (!feedbackEnabled) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: 2,
+            background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+            color: 'white',
+            boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <RateReviewIcon sx={{ fontSize: 48 }} />
+            </Box>
+            <Box>
+              <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Peer Feedback
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Peer feedback submission is currently disabled by the course administrator
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
     );
   }
 

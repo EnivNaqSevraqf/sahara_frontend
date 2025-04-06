@@ -17,7 +17,12 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { Send as SendIcon, AttachFile as AttachFileIcon, KeyboardArrowDown } from '@mui/icons-material';
+import {
+  Send as SendIcon,
+  AttachFile as AttachFileIcon,
+  KeyboardArrowDown,
+  Forum as ForumIcon
+} from '@mui/icons-material';
 import { currentConfig } from '@/config';
 // Configure axios base URL
 axios.defaults.baseURL = currentConfig.apiBaseUrl;
@@ -99,6 +104,33 @@ export default function DiscussionPage() {
     message: '',
     severity: 'success'
   });
+  const [discussionsEnabled, setDiscussionsEnabled] = useState(true);
+  const [configLoading, setConfigLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDiscussionsConfig = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(
+          `${currentConfig.apiBaseUrl}/config/discussions`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'accept': 'application/json'
+            }
+          }
+        );
+        setDiscussionsEnabled(response.data.enabled);
+      } catch (error) {
+        console.error('Failed to fetch discussions configuration:', error);
+        setDiscussionsEnabled(false);
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+
+    fetchDiscussionsConfig();
+  }, []);
 
   useEffect(() => {
     fetchUserData();
@@ -416,11 +448,42 @@ export default function DiscussionPage() {
     }
   };
 
-  if (loading) {
+  if (loading || configLoading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <CircularProgress />
       </Box>
+    );
+  }
+
+  if (!discussionsEnabled) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: 2,
+            background: 'linear-gradient(45deg, #3f51b5 30%, #5c6bc0 90%)',
+            color: 'white',
+            boxShadow: '0 4px 20px rgba(63, 81, 181, 0.15)'
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Box sx={{ p: 2, bgcolor: 'rgba(255, 255, 255, 0.1)', borderRadius: 2 }}>
+              <ForumIcon sx={{ fontSize: 48 }} />
+            </Box>
+            <Box>
+              <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Discussions
+              </Typography>
+              <Typography variant="body1" sx={{ opacity: 0.9 }}>
+                Discussions are currently disabled by the course administrator
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
     );
   }
 
