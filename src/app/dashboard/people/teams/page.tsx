@@ -39,8 +39,10 @@ import EditIcon from '@mui/icons-material/Edit';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import GroupsIcon from '@mui/icons-material/Groups';
 import axios from 'axios';
+import { currentConfig } from '@/config';
 
 // Configure axios base URL
+axios.defaults.baseURL = currentConfig.apiBaseUrl; // Ensure this is set to your API URL
 
 interface Skill {
   id: number;

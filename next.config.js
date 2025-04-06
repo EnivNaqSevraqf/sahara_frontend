@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  experimental: {
+    missingSuspenseWithCSRBailout: false,
+  },
   reactStrictMode: true,
   webpack: (config, { isServer, webpack }) => {
     // Polyfills for browser-only packages
@@ -24,6 +27,7 @@ const nextConfig = {
         })
       );
     }
+    
     
     return config;
   },
