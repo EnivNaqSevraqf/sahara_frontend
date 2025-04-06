@@ -427,7 +427,7 @@ export default function TeamMembersPage() {
       }}
       icon={iconComponents[skill.icon] ?
         React.cloneElement(iconComponents[skill.icon] as React.ReactElement, { 
-          style: { color: skill.color } as React.CSSProperties 
+          // style: { color: skill.color } as React.CSSProperties 
         }) :
         undefined
       }

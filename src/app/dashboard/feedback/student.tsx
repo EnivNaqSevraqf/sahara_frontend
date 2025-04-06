@@ -156,7 +156,7 @@ export default function FeedbackForm() {
     }
 
     // Compare with 2 decimal places precision
-    if (Math.abs(totalContribution - 100) > 0.01) {
+    if (Math.abs(totalContribution - 100) > 0.001) {
       setSnackbar({
         open: true,
         message: 'Total contribution must equal 100%',
@@ -256,7 +256,7 @@ export default function FeedbackForm() {
                         inputProps: { 
                           min: 0, 
                           max: 100,
-                          step: 0.01
+                          step: 1
                         },
                         sx: {
                           color: 'text.primary',
@@ -317,7 +317,7 @@ export default function FeedbackForm() {
                   <Typography sx={{ fontWeight: 600, color: 'text.primary' }}>
                     {totalContribution.toFixed(2)}%
                   </Typography>
-                  {!isSubmitted && Math.abs(totalContribution - 100) > 0.01 && (
+                  {!isSubmitted && Math.abs(totalContribution - 100) > 0.001 && (
                     <Typography color="error" variant="caption" display="block">
                       Total must equal 100%
                     </Typography>
@@ -334,7 +334,7 @@ export default function FeedbackForm() {
             <Button
               variant="contained"
               onClick={handleSubmit}
-              disabled={Math.abs(totalContribution - 100) > 0.01}
+              disabled={Math.abs(totalContribution - 100) > 0.001}
               sx={{ 
                 minWidth: 200,
                 bgcolor: 'primary.main',
