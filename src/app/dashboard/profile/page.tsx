@@ -78,6 +78,7 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
         const token = localStorage.getItem('token');
         if (!token) {
           throw new Error('No authentication token found');
@@ -92,24 +93,37 @@ export default function ProfilePage() {
         });
         setUserData(userResponse.data);
 
-        // Fetch all available skills from backend
-        const skillsResponse = await axios.get(`${currentConfig.apiBaseUrl}/api/skills`, {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        setAllSkills(skillsResponse.data);
-
         // Fetch user's current skills
-        const userSkillsResponse = await axios.get(`${currentConfig.apiBaseUrl}/api/users/skills`, {
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+        try {
+          const userSkillsResponse = await axios.get('/api/users/skills', {
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          setUserSkills(userSkillsResponse.data);
+          setSelectedSkillIds(userSkillsResponse.data.map((skill: Skill) => skill.id));
+          
+          // Only try to fetch all skills if user role allows it
+          const userRole = localStorage.getItem('role');
+          if (userRole === 'ta' || userRole === 'prof' || userRole === 'admin') {
+            const skillsResponse = await axios.get('/api/skills', {
+              headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            setAllSkills(skillsResponse.data);
+          } else {
+            // For students, just use their own skills
+            setAllSkills(userSkillsResponse.data);
           }
-        });
-        setUserSkills(userSkillsResponse.data);
-        setSelectedSkillIds(userSkillsResponse.data.map((skill: Skill) => skill.id));
+        } catch (skillError) {
+          console.error('Error fetching skills:', skillError);
+          // Don't fail the whole component if skills can't be fetched
+          setUserSkills([]);
+          setAllSkills([]);
+        }
 
         setError(null);
       } catch (error: any) {

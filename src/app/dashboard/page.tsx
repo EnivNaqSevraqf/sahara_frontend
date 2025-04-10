@@ -319,8 +319,7 @@ export default function Dashboard() {
         throw new Error('No authentication token found');
       }
 
-      // Fix: Change the API endpoint to match the backend
-      const response = await axios.get<UserProfile>('/users/api/users/me/', {  // Added trailing slash
+      const response = await axios.get<UserProfile>('/api/users/me', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
