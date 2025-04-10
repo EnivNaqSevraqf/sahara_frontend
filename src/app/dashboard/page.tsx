@@ -61,12 +61,6 @@ interface Announcement {
   title: string;
   content: string;
   created_at: string;
-  // created_by: {
-  //   id: number;
-  //   name: string;
-  //   email: string;
-  //   role: string;
-  // };
 }
 
 interface Assignment {
@@ -93,13 +87,18 @@ interface AssignmentResponse {
   upcoming: Assignment[];
   open: Assignment[];
   closed: Assignment[];
-
 }
 
-interface Gradeable {
+interface Document {
   id: number;
   title: string;
+  deadline: string;
+  description: string;
   submission_count: number;
+  reference_files: Array<{
+    id: number;
+    original_filename: string;
+  }>;
 }
 
 interface Submission {
@@ -129,7 +128,7 @@ export default function Dashboard() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
-  const [gradeables, setGradeables] = useState<Gradeable[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [stats, setStats] = useState<CourseStats>({
     submittedDocuments: 0,
     totalDocuments: 0,
@@ -145,7 +144,7 @@ export default function Dashboard() {
     announcements: true,
     assignments: true,
     submissions: true,
-    gradeables: true,
+    documents: true,
     profile: true
   });
 
@@ -163,13 +162,6 @@ export default function Dashboard() {
         }
       });
       console.log("Response data:", response.data);
-      // const allAnnouncements = response.data.map((item: any) => ({
-      //   id: item.id,
-      //   title: item.title,
-      //   content: item.content,
-      //   created_at: item.created_at,
-      //   // created_by: item.created_by
-      // }));
       const announcements: Announcement[] = response.data.map((item: any) => ({
         id: item.id,
         title: item.title,
@@ -214,8 +206,6 @@ export default function Dashboard() {
       );
       console.log("Assignments:", response.data);
       setAssignments(sortedAssignments.slice(0, 4)); // Get 4 upcoming assignments
-      // const totalAssignments = response.data.total;
-      // console.log("Total assignments:", totalAssignments);
     } catch (error: any) {
       console.error('Error fetching assignments:', error);
     } finally {
@@ -272,28 +262,51 @@ export default function Dashboard() {
     }
   };
 
-  // Fetch gradeables for TA/Admin
-  const fetchGradeables = async () => {
+  const fetchDocuments = async () => {
     try {
-      setSectionsLoading(prev => ({ ...prev, gradeables: true }));
+      setSectionsLoading(prev => ({ ...prev, documents: true }));
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get('/gradeables', {
+      const response = await axios.get('/submittables/all', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      const pendingGradeables = response.data
-        .filter((item: any) => item.submission_count > 0)
-        .sort((a: any, b: any) => b.submission_count - a.submission_count);
-      
-      setGradeables(pendingGradeables.slice(0, 4));
+      // Combine upcoming and open documents
+      const allDocuments = [
+        ...response.data.upcoming,
+        ...response.data.open
+      ].map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        deadline: item.deadline,
+        description: item.description,
+        submission_count: item.submission_count || 0,
+        reference_files: item.reference_files || []
+      }))
+      // Sort by deadline (closest first)
+      .sort((a: Document, b: Document) => {
+        if (!a.deadline) return 1;
+        if (!b.deadline) return -1;
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+      })
+      .slice(0, 4); // Take only first 4 documents
+
+      setDocuments(allDocuments);
+
+      // Update stats for professor dashboard
+      setStats(prev => ({
+        ...prev,
+        totalDocuments: response.data.upcoming.length + response.data.open.length + response.data.closed.length,
+        upcomingDeadlines: response.data.upcoming.length + response.data.open.length
+      }));
+
     } catch (error: any) {
-      console.error('Error fetching gradeables:', error);
+      console.error('Error fetching Documents:', error);
     } finally {
-      setSectionsLoading(prev => ({ ...prev, gradeables: false }));
+      setSectionsLoading(prev => ({ ...prev, documents: false }));
     }
   };
 
@@ -306,14 +319,21 @@ export default function Dashboard() {
         throw new Error('No authentication token found');
       }
 
-      const response = await axios.get<UserProfile>('/users/me', {
+      // Fix: Change the API endpoint to match the backend
+      const response = await axios.get<UserProfile>('/users/api/users/me/', {  // Added trailing slash
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      setUserName(response.data.name || 'User');
-      setUserTeam(response.data.team_name || null);
+      // Set the user name from the response
+      if (response.data && response.data.name) {
+        setUserName(response.data.name);
+        setUserTeam(response.data.team_name || null);
+      } else {
+        setUserName('User');
+      }
+      
     } catch (error: any) {
       console.error('Error fetching user profile:', error);
       setUserName('User');
@@ -335,7 +355,7 @@ export default function Dashboard() {
         fetchAssignments();
         fetchSubmissions();
       } else {
-        fetchGradeables();
+        fetchDocuments();
       }
 
       setLoading(false);
@@ -546,19 +566,19 @@ export default function Dashboard() {
         }}
       >
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
+          {/* <Grid item xs={12} sm={6} md={3}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'primary.50' }}>
                 <AssignmentIcon color="primary" />
               </Box>
               <Box>
-                <Typography variant="body2" color="text.secondary">Pending Grading</Typography>
+                <Typography variant="body2" color="text.secondary">Documents</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  {gradeables.reduce((total, g) => total + g.submission_count, 0)}
+                  {documents.reduce((total, g) => total + g.submission_count, 0)}
                 </Typography>
               </Box>
             </Box>
-          </Grid>
+          </Grid> */}
           
           <Grid item xs={12} sm={6} md={3}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -829,120 +849,6 @@ export default function Dashboard() {
     );
   };
 
-  const PendingGradeables = () => {
-    return (
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'divider',
-          backgroundColor: '#fbfdff',
-          mb: 4
-        }}
-      >
-        <Box sx={{ 
-          p: 2, 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          borderBottom: '1px solid',
-          borderColor: 'divider'
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <GradeIcon sx={{ color: '#3f51b5' }} />
-            <Typography variant="h6" sx={{ fontWeight: 500, color: '#3f51b5' }}>
-              Pending Gradeables
-            </Typography>
-          </Box>
-          <Button 
-            size="small"
-            onClick={() => router.push('/dashboard/gradeables')}
-            sx={{
-              color: '#3f51b5',
-              '&:hover': {
-                backgroundColor: 'rgba(63, 81, 181, 0.08)',
-              },
-              textTransform: 'none'
-            }}
-          >
-            View All
-          </Button>
-        </Box>
-
-        {sectionsLoading.gradeables ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
-            <CircularProgress size={32} sx={{ color: '#3f51b5' }} />
-          </Box>
-        ) : gradeables.length > 0 ? (
-          <List sx={{ p: 0 }}>
-            {gradeables.map((gradeable, index) => (
-              <React.Fragment key={gradeable.id}>
-                <ListItem disablePadding>
-                  <ListItemButton 
-                    onClick={() => router.push(`/dashboard/gradeables/${gradeable.id}`)}
-                    sx={{ 
-                      px: 3, 
-                      py: 2,
-                      '&:hover': {
-                        backgroundColor: 'rgba(63, 81, 181, 0.04)',
-                      }
-                    }}
-                  >
-                    <ListItemText 
-                      primary={
-                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                          {gradeable.title}
-                        </Typography>
-                      }
-                      secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                          <Typography 
-                            component="span" 
-                            variant="body2" 
-                            color="text.secondary"
-                          >
-                            {gradeable.submission_count} {gradeable.submission_count === 1 ? 'submission' : 'submissions'} pending
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                    <Button 
-                      variant="contained" 
-                      size="small"
-                      sx={{ 
-                        bgcolor: '#3f51b5',
-                        minWidth: '80px',
-                        '&:hover': {
-                          bgcolor: '#303f9f',
-                        },
-                        borderRadius: 1,
-                        textTransform: 'none'
-                      }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push(`/dashboard/gradeables/${gradeable.id}`);
-                      }}
-                    >
-                      Grade
-                    </Button>
-                  </ListItemButton>
-                </ListItem>
-                {index < gradeables.length - 1 && <Divider />}
-              </React.Fragment>
-            ))}
-          </List>
-        ) : (
-          <Box sx={{ py: 4, textAlign: 'center' }}>
-            <Typography color="text.secondary">
-              No pending gradeables
-            </Typography>
-          </Box>
-        )}
-      </Paper>
-    );
-  };
-
   const UpcomingAssignments = () => {
     return (
       <Paper 
@@ -1049,6 +955,115 @@ export default function Dashboard() {
     );
   };
 
+  const DocumentsList = () => {
+    if (sectionsLoading.documents) {
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 4 }}>
+          <CircularProgress size={32} sx={{ color: '#3f51b5' }} />
+        </Box>
+      );
+    }
+
+    return (
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          borderRadius: 2,
+          border: '1px solid',
+          borderColor: 'divider',
+          backgroundColor: '#fbfdff',
+          mb: 4
+        }}
+      >
+        <Box sx={{ 
+          p: 2, 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          borderBottom: '1px solid',
+          borderColor: 'divider'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <DescriptionIcon sx={{ color: '#3f51b5' }} />
+            <Typography variant="h6" sx={{ fontWeight: 500, color: '#3f51b5' }}>
+              Documents
+            </Typography>
+          </Box>
+          <Button 
+            size="small"
+            onClick={() => router.push('/dashboard/submission')}
+            sx={{
+              color: '#3f51b5',
+              '&:hover': {
+                backgroundColor: 'rgba(63, 81, 181, 0.08)',
+              },
+              textTransform: 'none'
+            }}
+          >
+            View All
+          </Button>
+        </Box>
+
+        {documents.length > 0 ? (
+          <List sx={{ p: 0 }}>
+            {documents.map((document, index) => (
+              <React.Fragment key={document.id}>
+                <ListItem disablePadding>
+                  <ListItemButton 
+                    onClick={() => router.push(`/dashboard/submission/view?id=${document.id}`)}
+                    sx={{ 
+                      px: 3, 
+                      py: 2,
+                      '&:hover': {
+                        backgroundColor: 'rgba(63, 81, 181, 0.04)',
+                      }
+                    }}
+                  >
+                    <ListItemText 
+                      primary={
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {document.title}
+                        </Typography>
+                      }
+                      secondary={
+                        <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
+                          <Typography 
+                            component="span" 
+                            variant="body2" 
+                            color="text.secondary"
+                            sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}
+                          >
+                            <TodayIcon fontSize="small" />
+                            Deadline: {formatDate(document.deadline)}
+                          </Typography>
+                          <Typography 
+                            component="span" 
+                            variant="body2" 
+                            sx={{ ml: 2 }}
+                          >
+                            {document.submission_count} submissions
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                    <ArrowForwardIcon color="action" fontSize="small" />
+                  </ListItemButton>
+                </ListItem>
+                {index < documents.length - 1 && <Divider />}
+              </React.Fragment>
+            ))}
+          </List>
+        ) : (
+          <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Typography color="text.secondary">
+              No active documents
+            </Typography>
+          </Box>
+        )}
+      </Paper>
+    );
+  };
+
   return (
     <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: '1500px', mx: 'auto' }}>
       <WelcomeHeader />
@@ -1059,7 +1074,7 @@ export default function Dashboard() {
         <Grid item xs={12} md={6}>
           {role === 'student' 
             ? <UpcomingSubmissions /> 
-            : <PendingGradeables />
+            : <DocumentsList />
           }
         </Grid>
         

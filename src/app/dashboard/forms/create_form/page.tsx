@@ -81,7 +81,7 @@ export default function Page() {
             padding: '20px',
         }}>
             <Typography component="h1">
-                Create Quiz
+                Create Form
             </Typography>
             <TextField 
                 id="outlined-basic" 
