@@ -270,16 +270,24 @@ export default function Dashboard() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get('/submittables/all', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const [documentsResponse, activeTeamsResponse, deadlinesResponse, discussionsResponse] = await Promise.all([
+        axios.get('/submittables/all', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        axios.get('/api/stats/active-teams', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        axios.get('/api/stats/deadlines-this-week', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        }),
+        axios.get('/api/stats/new-discussions', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ]);
 
-      // Combine upcoming and open documents
       const allDocuments = [
-        ...response.data.upcoming,
-        ...response.data.open
+        ...documentsResponse.data.upcoming,
+        ...documentsResponse.data.open
       ].map((item: any) => ({
         id: item.id,
         title: item.title,
@@ -288,7 +296,6 @@ export default function Dashboard() {
         submission_count: item.submission_count || 0,
         reference_files: item.reference_files || []
       }))
-      // Sort by deadline (closest first)
       .sort((a: Document, b: Document) => {
         if (!a.deadline) return 1;
         if (!b.deadline) return -1;
@@ -301,10 +308,12 @@ export default function Dashboard() {
       // Update stats for professor dashboard
       setStats(prev => ({
         ...prev,
-        totalDocuments: response.data.upcoming.length + response.data.open.length + response.data.closed.length,
-        upcomingDeadlines: response.data.upcoming.length + response.data.open.length
+        totalDocuments: documentsResponse.data.upcoming.length + documentsResponse.data.open.length + documentsResponse.data.closed.length,
+        upcomingDeadlines: documentsResponse.data.upcoming.length + documentsResponse.data.open.length,
+        activeTeams: activeTeamsResponse.data.activeTeams,
+        deadlinesThisWeek: deadlinesResponse.data.deadlinesThisWeek,
+        newDiscussions: discussionsResponse.data.newDiscussions
       }));
-
     } catch (error: any) {
       console.error('Error fetching Documents:', error);
     } finally {
@@ -576,20 +585,6 @@ export default function Dashboard() {
                 <Typography variant="body2" color="text.secondary">This Week</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                   {stats.deadlinesThisWeek || 'N/A'} Deadlines
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-          
-          <Grid item xs={12} sm={6} md={4}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'info.50' }}>
-                <ForumIcon color="info" />
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">New Discussions</Typography>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  {stats.newDiscussions || 'N/A'}
                 </Typography>
               </Box>
             </Box>
