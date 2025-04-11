@@ -139,7 +139,7 @@ export default function Dashboard() {
     averageScore: 0
   });
   const [loading, setLoading] = useState(true);
-  const [error, setError,] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   // State for individual section loading
@@ -164,7 +164,7 @@ export default function Dashboard() {
           'Authorization': `Bearer ${token}`
         }
       });
-      console.log("Response data:", response.data);
+      //console.log("Response data:", response.data);
       const announcements: Announcement[] = response.data.map((item: any) => ({
         id: item.id,
         title: item.title,
@@ -219,7 +219,10 @@ export default function Dashboard() {
     try {
       setSectionsLoading(prev => ({ ...prev, submissions: true }));
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        setError('Authentication token not found. Please log in again.');
+        return;
+      }
 
       const response = await axios.get('/submittables/', {
         headers: {
@@ -362,7 +365,7 @@ export default function Dashboard() {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    console.log("Formatted date:", date, " from string:", dateString);
+    //console.log("Formatted date:", date, " from string:", dateString);
     const today = new Date();
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
