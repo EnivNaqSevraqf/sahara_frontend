@@ -119,6 +119,9 @@ interface CourseStats {
   totalDocuments: number;
   upcomingDeadlines: number;
   averageScore: number;
+  activeTeams?: number;
+  deadlinesThisWeek?: number;
+  newDiscussions?: number;
 }
 
 export default function Dashboard() {
@@ -189,9 +192,7 @@ export default function Dashboard() {
     try {
       setSectionsLoading(prev => ({ ...prev, assignments: true }));
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
+      if (!token) return;
 
       const response = await axios.get<AssignmentResponse>('/assignables/', {
         headers: {
@@ -199,15 +200,15 @@ export default function Dashboard() {
         }
       });
 
-      // Sort by due date and get upcoming ones
       const upcomingAssignments = response.data.open;
-      const sortedAssignments = upcomingAssignments.sort((a: Assignment, b: Assignment) => 
+      const sortedAssignments = upcomingAssignments.sort((a: Assignment, b: Assignment) =>
         new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
       );
-      console.log("Assignments:", response.data);
-      setAssignments(sortedAssignments.slice(0, 4)); // Get 4 upcoming assignments
+
+      setAssignments(sortedAssignments.slice(0, 4)); // Show top 4 upcoming assignments
     } catch (error: any) {
       console.error('Error fetching assignments:', error);
+      setError('Failed to fetch assignments. Please try again later.');
     } finally {
       setSectionsLoading(prev => ({ ...prev, assignments: false }));
     }
@@ -220,7 +221,7 @@ export default function Dashboard() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await axios.get('/submittables/', {  // Added trailing slash
+      const response = await axios.get('/submittables/', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -236,25 +237,23 @@ export default function Dashboard() {
         has_submitted: item.submission_status?.has_submitted || false
       }));
 
-      console.log("All submissions:", allSubmissions);
-
       const sortedSubmissions = allSubmissions.sort((a: Submission, b: Submission) =>
         new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
       );
-      
-      setSubmissions(sortedSubmissions.slice(0, 4));
-      
+
+      setSubmissions(sortedSubmissions.slice(0, 4)); // Show top 4 upcoming submissions
+
+      // Update stats for student
       const totalDocs = [...response.data.upcoming, ...response.data.open, ...response.data.closed].length;
       const submittedDocs = [...response.data.upcoming, ...response.data.open, ...response.data.closed]
         .filter((doc: any) => doc.submission_status?.has_submitted).length;
-      
+
       setStats(prev => ({
         ...prev,
         submittedDocuments: submittedDocs,
         totalDocuments: totalDocs,
         upcomingDeadlines: response.data.upcoming.length + response.data.open.length
       }));
-      
     } catch (error: any) {
       console.error('Error fetching submissions:', error);
     } finally {
@@ -491,7 +490,7 @@ export default function Dashboard() {
         }}
       >
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'primary.50' }}>
                 <AssignmentIcon color="primary" />
@@ -505,7 +504,7 @@ export default function Dashboard() {
             </Box>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'info.50' }}>
                 <TimelineIcon color="info" />
@@ -519,7 +518,7 @@ export default function Dashboard() {
             </Box>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'warning.50' }}>
                 <AccessTimeIcon color="warning" />
@@ -528,20 +527,6 @@ export default function Dashboard() {
                 <Typography variant="body2" color="text.secondary">Upcoming Deadlines</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                   {stats.upcomingDeadlines}
-                </Typography>
-              </Box>
-            </Box>
-          </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'success.50' }}>
-                <GradeIcon color="success" />
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">Avg. Score</Typography>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  {stats.averageScore > 0 ? `${stats.averageScore}%` : 'N/A'}
                 </Typography>
               </Box>
             </Box>
@@ -565,21 +550,7 @@ export default function Dashboard() {
         }}
       >
         <Grid container spacing={2}>
-          {/* <Grid item xs={12} sm={6} md={3}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'primary.50' }}>
-                <AssignmentIcon color="primary" />
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">Documents</Typography>
-                <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  {documents.reduce((total, g) => total + g.submission_count, 0)}
-                </Typography>
-              </Box>
-            </Box>
-          </Grid> */}
-          
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'success.50' }}>
                 <GroupIcon color="success" />
@@ -587,13 +558,13 @@ export default function Dashboard() {
               <Box>
                 <Typography variant="body2" color="text.secondary">Active Teams</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  12
+                  {stats.activeTeams || 'N/A'}
                 </Typography>
               </Box>
             </Box>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'warning.50' }}>
                 <CalendarMonthIcon color="warning" />
@@ -601,13 +572,13 @@ export default function Dashboard() {
               <Box>
                 <Typography variant="body2" color="text.secondary">This Week</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  3 Deadlines
+                  {stats.deadlinesThisWeek || 'N/A'} Deadlines
                 </Typography>
               </Box>
             </Box>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={4}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1, borderRadius: 1, bgcolor: 'info.50' }}>
                 <ForumIcon color="info" />
@@ -615,7 +586,7 @@ export default function Dashboard() {
               <Box>
                 <Typography variant="body2" color="text.secondary">New Discussions</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  5
+                  {stats.newDiscussions || 'N/A'}
                 </Typography>
               </Box>
             </Box>
