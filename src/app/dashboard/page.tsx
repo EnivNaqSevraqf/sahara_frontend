@@ -120,8 +120,7 @@ interface CourseStats {
   upcomingDeadlines: number;
   averageScore: number;
   activeTeams?: number;
-  deadlinesThisWeek?: number;
-  newDiscussions?: number;
+  numberofstudents?: number;
 }
 
 export default function Dashboard() {
@@ -136,7 +135,8 @@ export default function Dashboard() {
     submittedDocuments: 0,
     totalDocuments: 0,
     upcomingDeadlines: 0,
-    averageScore: 0
+    averageScore: 0,
+    numberofstudents:0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -264,27 +264,40 @@ export default function Dashboard() {
     }
   };
 
+  const fetchNumberOfStudents = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+  
+      const response = await axios.get('/api/stats/number-of-students', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+  
+      setStats(prev => ({
+        ...prev,
+        numberofstudents: response.data.numberOfStudents
+      }));
+    } catch (error) {
+      console.error('Error fetching number of students:', error);
+    }
+  };
+  
   const fetchDocuments = async () => {
     try {
       setSectionsLoading(prev => ({ ...prev, documents: true }));
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const [documentsResponse, activeTeamsResponse, deadlinesResponse, discussionsResponse] = await Promise.all([
+      const [documentsResponse, activeTeamsResponse] = await Promise.all([
         axios.get('/submittables/all', {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
         axios.get('/api/stats/active-teams', {
           headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        axios.get('/api/stats/deadlines-this-week', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }),
-        axios.get('/api/stats/new-discussions', {
-          headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
 
+      console.log('Active Teams Response:', activeTeamsResponse.data);
       const allDocuments = [
         ...documentsResponse.data.upcoming,
         ...documentsResponse.data.open
@@ -310,9 +323,7 @@ export default function Dashboard() {
         ...prev,
         totalDocuments: documentsResponse.data.upcoming.length + documentsResponse.data.open.length + documentsResponse.data.closed.length,
         upcomingDeadlines: documentsResponse.data.upcoming.length + documentsResponse.data.open.length,
-        activeTeams: activeTeamsResponse.data.activeTeams,
-        deadlinesThisWeek: deadlinesResponse.data.deadlinesThisWeek,
-        newDiscussions: discussionsResponse.data.newDiscussions
+        activeTeams: activeTeamsResponse.data.activeTeams || 0
       }));
     } catch (error: any) {
       console.error('Error fetching Documents:', error);
@@ -366,6 +377,7 @@ export default function Dashboard() {
         fetchSubmissions();
       } else {
         fetchDocuments();
+        fetchNumberOfStudents();
       }
 
       setLoading(false);
@@ -536,7 +548,7 @@ export default function Dashboard() {
                 <AccessTimeIcon color="warning" />
               </Box>
               <Box>
-                <Typography variant="body2" color="text.secondary">Upcoming Deadlines</Typography>
+                <Typography variant="body2" color="text.secondary">Documents to be submitted</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                   {stats.upcomingDeadlines}
                 </Typography>
@@ -582,9 +594,9 @@ export default function Dashboard() {
                 <CalendarMonthIcon color="warning" />
               </Box>
               <Box>
-                <Typography variant="body2" color="text.secondary">This Week</Typography>
+                <Typography variant="body2" color="text.secondary">Number of Students</Typography>
                 <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                  {stats.deadlinesThisWeek || 'N/A'} Deadlines
+                  {stats.numberofstudents || 'N/A'} 
                 </Typography>
               </Box>
             </Box>
