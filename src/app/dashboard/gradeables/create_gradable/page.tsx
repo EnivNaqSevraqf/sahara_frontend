@@ -98,7 +98,7 @@ const CreateGradeable: React.FC = () => {
 
         // Check header row
         const header = lines[0].trim().toLowerCase().split(',');
-        const requiredColumns = ['roll_no', 'score'];
+        const requiredColumns = ['RollNo', 'score'];
         const missingColumns = requiredColumns.filter(col => 
           !header.includes(col.toLowerCase())
         );

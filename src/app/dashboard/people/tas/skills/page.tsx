@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, JSX } from 'react';
+import React, { useState, useEffect, JSX } from 'react';
 import {
   Box,
   Typography,
@@ -18,8 +18,15 @@ import {
   FormControl,
   InputLabel,
   Grid,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
+import axios from 'axios';
+import { currentConfig } from '@/config';
+
+// Configure axios base URL
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 // Import icons from Material UI
 import {
@@ -52,52 +59,6 @@ type Skill = {
   icon: IconType;
 };
 
-// Pre-defined skills data
-const initialSkills: Skill[] = [
-  {
-    id: 1,
-    name: 'React',
-    bgColor: '#61dafb',
-    color: '#000000',
-    icon: 'WebIcon',
-  },
-  {
-    id: 2,
-    name: 'Node.js',
-    bgColor: '#43853d',
-    color: '#ffffff',
-    icon: 'JavascriptIcon',
-  },
-  {
-    id: 3,
-    name: 'Python',
-    bgColor: '#3776ab',
-    color: '#ffffff',
-    icon: 'CodeIcon',
-  },
-  {
-    id: 4,
-    name: 'Java',
-    bgColor: '#f89820',
-    color: '#ffffff',
-    icon: 'IntegrationInstructionsIcon',
-  },
-  {
-    id: 5,
-    name: 'Spring Boot',
-    bgColor: '#6AAD3D',
-    color: '#ffffff',
-    icon: 'DataObjectIcon',
-  },
-  {
-    id: 6,
-    name: 'MongoDB',
-    bgColor: '#13aa52',
-    color: '#ffffff',
-    icon: 'StorageIcon',
-  },
-];
-
 // Map icon types to actual icon components
 const iconComponents: Record<IconType, JSX.Element> = {
   WebIcon: <WebIcon />,
@@ -119,8 +80,10 @@ const availableIcons = [
 ];
 
 const SkillsPage = () => {
-  const [skills, setSkills] = useState<Skill[]>(initialSkills);
+  const [skills, setSkills] = useState<Skill[]>([]);
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Default new skill state
   const [newSkill, setNewSkill] = useState<Skill>({
@@ -131,10 +94,55 @@ const SkillsPage = () => {
     icon: 'WebIcon',
   });
 
+  // Fetch skills on component mount
+  useEffect(() => {
+    const fetchSkills = async () => {
+      try {
+        setLoading(true);
+        // No authentication required for GET /api/skills/
+        const response = await axios.get('/api/skills/');
+        
+        console.log('Skills response:', response.data);
+        if (response.status === 200) {
+          setSkills(response.data);
+          setError(null);
+        } else {
+          setError('Failed to fetch skills');
+        }
+      } catch (err) {
+        console.error('Error details:', err);
+        if (axios.isAxiosError(err)) {
+          if (err.response) {
+            console.error('Error response:', err.response.data);
+            console.error('Error status:', err.response.status);
+            console.error('Error headers:', err.response.headers);
+            
+            if (err.response.status === 500) {
+              setError(err.response.data.detail || 'Server error while fetching skills');
+            } else {
+              setError(err.response.data.detail || 'Failed to fetch skills');
+            }
+          } else if (err.request) {
+            console.error('Error request:', err.request);
+            setError('No response from server. Please check your connection.');
+          } else {
+            console.error('Error message:', err.message);
+            setError('Failed to fetch skills: ' + err.message);
+          }
+        } else {
+          setError('An unexpected error occurred');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSkills();
+  }, []);
+
   const handleOpen = () => setOpen(true);
 
   const handleClose = () => {
-    // Reset form when closing
     setNewSkill({
       id: 0,
       name: '',
@@ -145,23 +153,75 @@ const SkillsPage = () => {
     setOpen(false);
   };
 
-  const handleAddSkill = () => {
-    // Validate input fields
-    if (!newSkill.name.trim()) {
-      alert('Please enter a skill name');
-      return;
+  const handleAddSkill = async () => {
+    try {
+      // Validate input fields
+      if (!newSkill.name.trim()) {
+        setError('Please enter a skill name');
+        return;
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Please login to create skills');
+        return;
+      }
+
+      // Create skill data object
+      const skillData = {
+        name: newSkill.name,
+        bgColor: newSkill.bgColor,
+        color: newSkill.color,
+        icon: newSkill.icon
+      };
+
+      console.log('Creating skill with data:', skillData);
+
+      // Make API call to create skill
+      const response = await axios.post('/api/skills/create', skillData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      console.log('Create skill response:', response.data);
+      // Add the new skill to the list
+      setSkills([...skills, response.data]);
+      setError(null);
+      handleClose();
+    } catch (err) {
+      console.error('Error creating skill:', err);
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          console.error('Error response:', err.response.data);
+          if (err.response.status === 401) {
+            setError('Please login to create skills');
+          } else if (err.response.status === 403) {
+            setError('Only professors and TAs can create skills');
+          } else if (err.response.status === 400) {
+            setError(err.response.data.detail || 'Invalid skill data');
+          } else {
+            setError(err.response.data.detail || 'Failed to create skill');
+          }
+        } else if (err.request) {
+          setError('No response from server. Please check your connection.');
+        } else {
+          setError('Failed to create skill: ' + err.message);
+        }
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
-
-    // Add the new skill
-    const skillToAdd: Skill = {
-      ...newSkill,
-      id: skills.length + 1,
-    };
-    setSkills([...skills, skillToAdd]);
-
-    // Reset form and close dialog
-    handleClose();
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <Box 
@@ -172,32 +232,38 @@ const SkillsPage = () => {
         color: '#1F2E6A' 
       }}
     >
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
       {/* Header */}
-          <Box 
-      sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        mb: 4,
-        borderBottom: `2px solid #1F2E6A`,
-        pb: 2,
-        width: '100%'  // Ensures the border extends across the screen
-      }}
-    >
-      <Typography 
-        variant="h4"  // Increased size for a more prominent title
-        component="h1" 
+      <Box 
         sx={{ 
-          fontWeight: 'bold', 
-          color: '#1F2E6A', 
-          textAlign: 'center'  // Ensures the text itself is centered
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          mb: 4,
+          borderBottom: `2px solid #1F2E6A`,
+          pb: 2,
+          width: '100%'
         }}
       >
-        Available Skills
-      </Typography>
-    </Box>
+        <Typography 
+          variant="h4"
+          component="h1" 
+          sx={{ 
+            fontWeight: 'bold', 
+            color: '#1F2E6A', 
+            textAlign: 'center'
+          }}
+        >
+          Available Skills
+        </Typography>
+      </Box>
 
-      {/* Add Skill Button - More Prominent */}
+      {/* Add Skill Button */}
       <Box 
         sx={{ 
           display: 'flex', 
@@ -225,7 +291,7 @@ const SkillsPage = () => {
         </Button>
       </Box>
 
-      {/* Skills Grid - More Compact */}
+      {/* Skills Grid */}
       <Grid 
         container 
         spacing={2} 

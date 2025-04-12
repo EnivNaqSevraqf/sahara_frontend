@@ -177,6 +177,9 @@ const EventCreationApp: React.FC = () => {
       if (referenceFile) {
         formData.append('file', referenceFile);
       }
+      else{
+        formData.append('file', new Blob(), ''); // Append an empty blob if no file is selected
+      }
 
       // Debug logging for request
       console.log('Request Debug:');
