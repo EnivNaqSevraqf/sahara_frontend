@@ -1,6 +1,6 @@
 'use client';
 import * as React from "react";
-import {Stack, Button, Grid, Card, CardContent, Typography} from "@mui/material";
+import {Stack, Button, Grid, Card, CardContent, Typography, Snackbar, Alert} from "@mui/material";
 import { Scheduler } from "@aldabil/react-scheduler";
 // import {
 //     EventActions,
@@ -23,8 +23,22 @@ export default function Calendar(){
     const [role, setRole] = React.useState<string>("");
     const [userId, setUserId] = React.useState<string>("");
     const [fields, setFields] = React.useState<any[] | null>(null);
-
     
+    // Snackbar states
+    const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+    const [snackbarMessage, setSnackbarMessage] = React.useState("");
+    const [snackbarSeverity, setSnackbarSeverity] = React.useState<"success" | "error" | "info" | "warning">("success");
+
+    // Snackbar handlers
+    const handleSnackbarClose = () => {
+        setSnackbarOpen(false);
+    };
+
+    const showSnackbar = (message: string, severity: "success" | "error" | "info" | "warning") => {
+        setSnackbarMessage(message);
+        setSnackbarSeverity(severity);
+        setSnackbarOpen(true);
+    };
 
     const fetchEevents =  async (query: RemoteQuery): Promise<ProcessedEvent[]> => {
         const role = localStorage.getItem("role");
@@ -58,7 +72,6 @@ export default function Calendar(){
             else if(events[i].type === "personal"){
                 events[i].color = personalColor; // Blue color for personal events
             }
-
         }
         setEvents(events);  
         // setEvents(response.data);
@@ -93,31 +106,51 @@ export default function Calendar(){
         action: EventActions) : Promise<ProcessedEvent> => {
         console.log("Event confirmed:", event);
         console.log("Action:", action);
-        // const events = [...Events, event];
-        // setEvents(events);
-        // console.log("Events:", events);
+        console.log("Event ID:", event.event_id);
         event.color = event.type === "global" ? profColor : event.type === "team" ? teamColor : personalColor;
         
         return new Promise((res, rej) => {
             if (action === "edit") {
               console.log("Edited event:", event);
+              console.log("Event id:", event.event_id.toString().charAt(0));
+              // Disallow changing the event type
+              if(event.event_id.toString().charAt(0) === "g" && event.type !== "global"){
+                showSnackbar("You cannot change the type of events", "error");
+                rej("You cannot change the type events");
+                return;
+              }
+              if(event.event_id.toString().charAt(0) === "t" && event.type !== "team"){
+                showSnackbar("You cannot change the type of events", "error");
+                rej("You cannot change the type of events");
+                return;
+              }
+              if(event.event_id.toString().charAt(0) === "p" && event.type !== "personal"){
+                showSnackbar("You cannot change the type of events", "error");
+                rej("You cannot change the type of events");
+                return;
+              }
 
+              const config = {
+                headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`,
+                    "Content-Type": "application/json",
+                }
+              }
               /**PUT event to remote DB */
-                
-
-
-            //   axios.put(`${currentConfig.apiBaseUrl}/calendar/update`, event)
-            //     .then(response => {
-            //       console.log('Event updated:', response);
-            //       res({
-            //         ...event,
-            //         event_id: event.event_id || Math.random(),
-            //       });
-            //     })
-            //     .catch(error => {
-            //       console.error('Error updating event:', error);
-            //       rej("Failed to update event");
-            //     });
+              
+              axios.put(`${currentConfig.apiBaseUrl}/calendar/update`, event, config)
+                .then(response => {
+                  console.log('Event updated:', response);
+                  showSnackbar("Event updated successfully", "success");
+                  res({
+                    ...event,
+                  });
+                })
+                .catch(error => {
+                  console.error('Error updating event:', error);
+                  showSnackbar("Failed to update event: " + (error.response?.data?.message || error.message), "error");
+                  rej("Failed to update event");
+                });
             } else if (action === "create") {
                 console.log("Created event:", event);
                 const token = localStorage.getItem("token");
@@ -130,6 +163,7 @@ export default function Calendar(){
                 axios.post(`${currentConfig.apiBaseUrl}/calendar/create`, event, config)
                 .then(response => {
                     console.log('Event created:', response);
+                    showSnackbar("Event created successfully", "success");
                     res({
                         ...event,
                         event_id: response.data.event.id || Math.random(),
@@ -137,25 +171,11 @@ export default function Calendar(){
                 })
                 .catch(error => {
                     console.error('Error creating event:', error);
+                    showSnackbar("Failed to create event: " + (error.response?.data?.message || error.message), "error");
                     rej("Failed to create event");
                 });
               /**POST event to remote DB */
             }
-      
-            const isFail = Math.random() > 0.6;
-            // Make it slow just for testing
-            setTimeout(() => {
-              if (isFail) {
-                rej("Ops... Faild");
-              } else {
-                res({
-                  ...event,
-                  event_id: event.event_id || Math.random(),
-                  color: "#FF0000",
-                //   color: event.type=== "global" ? "#FF0000" : event.type === "team" ? "#00FF00" : "#0000FF",
-                });
-              }
-            }, 3000);
           });
     }
     const handleDelete = async (deletedId: string) => {
@@ -307,6 +327,16 @@ export default function Calendar(){
                 onConfirm={handleConfirm}
                 fields={fields}
             />}
+            <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={6000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                    {snackbarMessage}
+                </Alert>
+            </Snackbar>
         </Stack>
     );
 }
