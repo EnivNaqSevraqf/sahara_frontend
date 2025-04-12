@@ -16,7 +16,8 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { buttonStyles } from './constants/theme';
 import axios from 'axios';
-
+import { currentConfig } from '@/config';
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 const TeamsCreationForm2 = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -185,7 +186,7 @@ const TeamsCreationForm2 = () => {
             </Paper>
 
             <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-              The CSV file should be in the format: <strong>team name - member1 - member2 - ... - member10</strong>
+              The CSV file should be in the format: <strong>RollNo, TeamID</strong>
             </Typography>
 
             {selectedFile && (

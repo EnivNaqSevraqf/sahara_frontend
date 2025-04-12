@@ -17,6 +17,7 @@ import {
   ToggleButtonGroup,
   ToggleButton,
   Tooltip,
+  CircularProgress
 } from '@mui/material';
 import JavascriptIcon from '@mui/icons-material/Javascript';
 import CodeIcon from '@mui/icons-material/Code';
@@ -31,77 +32,104 @@ import { useRouter } from 'next/navigation';
 
 // Define the type for skillsMap
 interface Skill {
+  id: number;
+  name: string;
   bgColor: string;
   color: string;
-  icon: JSX.Element;
+  icon?: string;
 }
-
-// Skill to color and icon mapping
-const skillsMap: { [key: string]: Skill } = {
-  'React': {
-    bgColor: '#e3f2fd',  // Light blue - React's brand color
-    color: '#1565c0',
-    icon: <WebIcon fontSize="small" sx={{ color: '#1565c0' }} />
-  },
-  'Node.js': {
-    bgColor: '#e8f5e9',  // Light green - Node.js brand color
-    color: '#2e7d32',
-    icon: <JavascriptIcon fontSize="small" sx={{ color: '#2e7d32' }} />
-  },
-  'Python': {
-    bgColor: '#e1f5fe',  // Light blue - Python's brand color
-    color: '#0277bd',
-    icon: <CodeIcon fontSize="small" sx={{ color: '#0277bd' }} />
-  },
-  'Java': {
-    bgColor: '#fff3e0',  // Light orange - Java's brand color
-    color: '#ef6c00',
-    icon: <IntegrationInstructionsIcon fontSize="small" sx={{ color: '#ef6c00' }} />
-  },
-  'Spring Boot': {
-    bgColor: '#f1f8e9',  // Light green - Spring's brand color
-    color: '#558b2f',
-    icon: <DataObjectIcon fontSize="small" sx={{ color: '#558b2f' }} />
-  },
-  'MongoDB': {
-    bgColor: '#e8f5e9',  // Light green - MongoDB's brand color
-    color: '#2e7d32',
-    icon: <StorageIcon fontSize="small" sx={{ color: '#2e7d32' }} />
-  }
-};
-
-// Sample TA data with skills
-const tas = [
-  { 
-    id: 1, 
-    name: 'Hemang Mohanlal Khatri', 
-    email: 'hemangmkhatri@cse.iitk.ac.in',
-    skills: ['React', 'Node.js', 'Python']
-  },
-  { 
-    id: 2, 
-    name: 'Jeswaanth Gogula', 
-    email: 'jeswaanth@cse.iitk.ac.in',
-    skills: ['Java', 'Spring Boot', 'MongoDB']
-  },
-  // Add more sample data as needed
-];
 
 interface TA {
   id: number;
   name: string;
   email: string;
-  skills: string[];
+  skills: Skill[];
 }
+
+// Skill to icon mapping
+const getSkillIcon = (iconName: string): JSX.Element => {
+  const iconMap: { [key: string]: JSX.Element } = {
+    'javascript': <JavascriptIcon fontSize="small" />,
+    'code': <CodeIcon fontSize="small" />,
+    'storage': <StorageIcon fontSize="small" />,
+    'web': <WebIcon fontSize="small" />,
+    'dataObject': <DataObjectIcon fontSize="small" />,
+    'integrationInstructions': <IntegrationInstructionsIcon fontSize="small" />
+  };
+  
+  return iconMap[iconName.toLowerCase()] || <CodeIcon fontSize="small" />;
+};
 
 const TATable = () => {
   const router = useRouter();
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
-  const [filteredTAs, setFilteredTAs] = useState<TA[]>(tas);
+  const [filteredTAs, setFilteredTAs] = useState<TA[]>([]);
   const [filterMode, setFilterMode] = useState<'union' | 'intersection'>('union');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [tas, setTAs] = useState<TA[]>([]);
+  const [allSkills, setAllSkills] = useState<Skill[]>([]);
+  const [error, setError] = useState<string | null>(null);
   
-  // Get all unique skills for filter options
-  const allSkills = Array.from(new Set(tas.flatMap(ta => ta.skills))).sort();
+  // Fetch TAs and skills from the backend
+  useEffect(() => {
+    const fetchTAs = async () => {
+      try {
+        console.log('Starting TA data fetch...');
+        setLoading(true);
+        
+        // Log the token (only display that it exists for security)
+        const token = localStorage.getItem('token');
+        console.log('Token exists:', !!token);
+        
+        console.log('Making fetch request to /tas');
+        const response = await fetch('http://localhost:8000/tas', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries([...response.headers.entries()]));
+        
+        if (!response.ok) {
+          // Try to get the error text
+          const errorText = await response.text();
+          console.error('Error response text:', errorText);
+          throw new Error(`Failed to fetch TAs: ${response.status} ${response.statusText} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('Received data:', data);
+        console.log('Data type:', typeof data);
+        console.log('Is array:', Array.isArray(data));
+        console.log('Data length:', Array.isArray(data) ? data.length : 'Not an array');
+        
+        setTAs(data);
+        
+        // Extract unique skills from all TAs
+        const uniqueSkills = new Map<number, Skill>();
+        data.forEach((ta: TA) => {
+          console.log('Processing TA:', ta.name);
+          ta.skills.forEach(skill => {
+            console.log('Processing skill:', skill.name);
+            if (!uniqueSkills.has(skill.id)) {
+              uniqueSkills.set(skill.id, skill);
+            }
+          });
+        });
+        
+        setAllSkills(Array.from(uniqueSkills.values()));
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching TAs:', err);
+        setError('Failed to load TA data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTAs();
+  }, []);
   
   // Filter TAs based on selected skills and filter mode
   useEffect(() => {
@@ -110,24 +138,25 @@ const TATable = () => {
     } else {
       setFilteredTAs(
         tas.filter(ta => {
+          const taSkillNames = ta.skills.map(skill => skill.name);
           if (filterMode === 'union') {
             // Union (OR) - TA has at least one of the selected skills
-            return selectedSkills.some(skill => ta.skills.includes(skill));
+            return selectedSkills.some(skill => taSkillNames.includes(skill));
           } else {
             // Intersection (AND) - TA has all of the selected skills
-            return selectedSkills.every(skill => ta.skills.includes(skill));
+            return selectedSkills.every(skill => taSkillNames.includes(skill));
           }
         })
       );
     }
-  }, [selectedSkills, filterMode]);
+  }, [selectedSkills, filterMode, tas]);
   
   // Toggle skill selection
-  const toggleSkillFilter = (skill: string) => {
+  const toggleSkillFilter = (skillName: string) => {
     setSelectedSkills(prev => 
-      prev.includes(skill)
-        ? prev.filter(s => s !== skill)
-        : [...prev, skill]
+      prev.includes(skillName)
+        ? prev.filter(s => s !== skillName)
+        : [...prev, skillName]
     );
   };
 
@@ -140,6 +169,25 @@ const TATable = () => {
       setFilterMode(newMode);
     }
   };
+  
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <CircularProgress />
+      </Box>
+    );
+  }
+  
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography color="error" variant="h6">{error}</Typography>
+      </Box>
+    );
+  }
+  
+  // Get all unique skill names for filter options
+  const allSkillNames = allSkills.map(skill => skill.name).sort();
   
   return (
     <Box sx={{ p: 3 }}>
@@ -190,34 +238,31 @@ const TATable = () => {
         </Box>
         
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-          {allSkills.map((skill) => (
-            <Chip
-              key={skill}
-              label={skill}
-              icon={React.cloneElement(skillsMap[skill]?.icon, {
-                sx: { 
-                  color: selectedSkills.includes(skill) 
-                    ? 'white' 
-                    : skillsMap[skill]?.color || '#757575' 
-                }
-              })}
-              onClick={() => toggleSkillFilter(skill)}
-              sx={{
-                backgroundColor: selectedSkills.includes(skill) 
-                  ? skillsMap[skill]?.color 
-                  : skillsMap[skill]?.bgColor,
-                color: selectedSkills.includes(skill) ? 'white' : skillsMap[skill]?.color,
-                borderRadius: '16px',
-                '&:hover': {
-                  backgroundColor: selectedSkills.includes(skill) 
-                    ? skillsMap[skill]?.color 
-                    : skillsMap[skill]?.bgColor,
-                  opacity: 0.9,
-                },
-                fontWeight: 'bold',
-              }}
-            />
-          ))}
+          {allSkillNames.map((skillName) => {
+            const skill = allSkills.find(s => s.name === skillName);
+            return (
+              <Chip
+                key={skillName}
+                label={skillName}
+                icon={skill?.icon ? getSkillIcon(skill.icon) : <CodeIcon fontSize="small" />}
+                onClick={() => toggleSkillFilter(skillName)}
+                sx={{
+                  backgroundColor: selectedSkills.includes(skillName) 
+                    ? skill?.color || '#1976d2' 
+                    : skill?.bgColor || '#e3f2fd',
+                  color: selectedSkills.includes(skillName) ? 'white' : skill?.color || '#1976d2',
+                  borderRadius: '16px',
+                  '&:hover': {
+                    backgroundColor: selectedSkills.includes(skillName) 
+                      ? skill?.color || '#1976d2' 
+                      : skill?.bgColor || '#e3f2fd',
+                    opacity: 0.9,
+                  },
+                  fontWeight: 'bold',
+                }}
+              />
+            );
+          })}
           {selectedSkills.length > 0 && (
             <Chip
               label="Clear All"
@@ -254,41 +299,43 @@ const TATable = () => {
               </TableHead>
               <TableBody>
                 {filteredTAs.length > 0 ? (
-                  filteredTAs.map((ta) => (
+                  filteredTAs.map((ta, index) => (
                     <TableRow 
                       key={ta.id}
                       hover
                       sx={{ '&:hover': { backgroundColor: '#f0f7ff !important' } }}
                     >
-                      <TableCell>{ta.id}</TableCell>
+                      <TableCell>{index + 1}</TableCell>
                       <TableCell>{ta.name}</TableCell>
                       <TableCell>{ta.email}</TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
-                          {ta.skills.map((skill, index) => (
-                            <Box
-                              key={index}
-                              sx={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '4px',
-                                padding: '4px 8px',
-                                borderRadius: '12px',
-                                backgroundColor: selectedSkills.includes(skill) 
-                                  ? `${skillsMap[skill]?.color}22` // Lighter version with opacity
-                                  : skillsMap[skill]?.bgColor || '#f5f5f5',
-                                color: skillsMap[skill]?.color || '#757575',
-                                fontSize: '0.75rem',
-                                fontWeight: 'bold',
-                                border: selectedSkills.includes(skill) 
-                                  ? `1px solid ${skillsMap[skill]?.color}` 
-                                  : 'none',
-                              }}
-                            >
-                              {skillsMap[skill]?.icon}
-                              {skill}
-                            </Box>
-                          ))}
+                          {ta.skills.map((skill) => {
+                            return (
+                              <Box
+                                key={skill.id}
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '4px 8px',
+                                  borderRadius: '12px',
+                                  backgroundColor: selectedSkills.includes(skill.name) 
+                                    ? `${skill.color}22` // Lighter version with opacity
+                                    : skill.bgColor || '#f5f5f5',
+                                  color: skill.color || '#757575',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 'bold',
+                                  border: selectedSkills.includes(skill.name) 
+                                    ? `1px solid ${skill.color}` 
+                                    : 'none',
+                                }}
+                              >
+                                {skill.icon ? getSkillIcon(skill.icon) : <CodeIcon fontSize="small" sx={{ color: skill.color }} />}
+                                {skill.name}
+                              </Box>
+                            );
+                          })}
                         </Box>
                       </TableCell>
                     </TableRow>
