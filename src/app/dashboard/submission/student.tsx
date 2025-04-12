@@ -750,7 +750,7 @@ export default function StudentSubmissionList() {
           <Typography variant="h6" sx={{ fontWeight: 500 }}>
             {completionPercentage === 100 
               ? 'All documents submitted!' 
-              : `${submittables.length - submittables.filter(doc => doc.submission_status?.has_submitted).length} documents remaining`}
+              : `${ongoingSubmittables.length - ongoingSubmittables.filter(doc => doc.submission_status?.has_submitted).length} documents remaining`}
           </Typography>
         </Box>
       </Paper>

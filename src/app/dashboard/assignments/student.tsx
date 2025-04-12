@@ -750,7 +750,7 @@ export default function StudentAssignmentList() {
           <Typography variant="h6" sx={{ fontWeight: 500 }}>
             {completionPercentage === 100 
               ? 'All assignments submitted!' 
-              : `${assignables.length - assignables.filter(doc => doc.submission_status?.has_submitted).length} assignments remaining`}
+              : `${ongoingAssignables.length - ongoingAssignables.filter(doc => doc.submission_status?.has_submitted).length} assignments remaining`}
           </Typography>
         </Box>
       </Paper>
