@@ -370,10 +370,10 @@ export default function ProfessorAssignmentList() {
     });
   };
 
-  // Split submittables into categories
-  const ongoingAssignables = assignables.filter(doc => isSubmissionAllowed(doc));
-  const upcomingAssignables = assignables.filter(doc => isUpcoming(doc));
-  const previousAssignables = assignables.filter(doc => isPast(doc));
+  // Sort assignments in each category by decreasing order of deadline
+  const ongoingAssignables = assignables.filter(doc => isSubmissionAllowed(doc)).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+  const upcomingAssignables = assignables.filter(doc => isUpcoming(doc)).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+  const previousAssignables = assignables.filter(doc => isPast(doc)).sort((a, b) => new Date(b.deadline).getTime() - new Date(a.deadline).getTime());
 
   const handleExpandClick = (id: number) => {
     setExpandedId(expandedId === id ? null : id);
