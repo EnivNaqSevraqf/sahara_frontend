@@ -120,14 +120,14 @@ const EventCreationApp: React.FC = () => {
     }
 
     // Validate that opensAt is before due date if opensAt is set
-    if (opensAt && opensAt.isAfter(dueDate)) {
+    if (opensAt && !dueDate.isAfter(opensAt)) {
       setSnackbar({
         open: true,
-        message: 'Opens at date must be before or equal to the due date',
+        message: 'Opens at date must be before the due date',
         severity: 'error'
       });
       return;
-    }
+    } 
 
     // Validate that dueDate is not in the past
     if (dueDate.isBefore(dayjs())) {
