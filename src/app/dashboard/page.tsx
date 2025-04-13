@@ -32,7 +32,11 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import AnnouncementIcon from '@mui/icons-material/Announcement';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ForumIcon from '@mui/icons-material/Forum';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import DownloadIcon from '@mui/icons-material/Download';
+import IconButton from '@mui/material/IconButton';
 import { currentConfig } from '@/config';
+import { Snackbar } from '@mui/material';
 
 axios.defaults.baseURL = currentConfig.apiBaseUrl;
 // Add request interceptor to handle errors
@@ -72,6 +76,7 @@ interface Assignment {
   due_date: string; // This appears to be used in the Dashboard for assignments
   max_score: number;
   reference_files: Array<{
+    id: number;
     original_filename: string;
   }>;
   submission_status?: {
@@ -137,6 +142,11 @@ export default function Dashboard() {
     upcomingDeadlines: 0,
     averageScore: 0,
     numberofstudents:0,
+  });
+  const [snackbar, setSnackbar] = useState<{open: boolean; message: string; severity: 'success' | 'error'}>({
+    open: false,
+    message: '',
+    severity: 'success'
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -422,13 +432,62 @@ export default function Dashboard() {
     }
   };
 
-  if (error) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
-    );
-  }
+  const handleReferenceFileDownload = async (assignableId: number, fileName: string) => {
+    try {
+      console.log('Downloading reference file:', { assignableId, fileName });
+      
+      const response = await axios.get(
+        `/assignables/${assignableId}/reference-files/download`,
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          responseType: 'blob'
+        }
+      );
+
+      // Create a blob with the correct type from headers
+      const contentType = response.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([response.data], { type: contentType });
+      
+      // Create and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 100);
+
+      setSnackbar({
+        open: true,
+        message: 'File downloaded successfully!',
+        severity: 'success'
+      });
+    } catch (err: any) {
+      console.error('Error downloading reference file:', err);
+      
+      let errorMessage = 'Failed to download reference file.';
+      if (err.response?.status === 404) {
+        errorMessage = 'File not found on the server.';
+      } else if (err.response?.status === 403) {
+        errorMessage = 'You do not have permission to download this file.';
+      } else if (err.response?.data?.detail) {
+        errorMessage = err.response.data.detail;
+      }
+      
+      setSnackbar({
+        open: true,
+        message: `${errorMessage} Please try again.`,
+        severity: 'error'
+      });
+    }
+  };
 
   const WelcomeHeader = () => {
     const getGreeting = () => {
@@ -830,6 +889,13 @@ export default function Dashboard() {
   };
 
   const UpcomingAssignments = () => {
+    const [expandedId, setExpandedId] = useState<number | null>(null);
+
+    const handleAssignmentClick = (assignmentId: number) => {
+      // Toggle expansion instead of navigating
+      setExpandedId(expandedId === assignmentId ? null : assignmentId);
+    };
+
     return (
       <Paper 
         elevation={0} 
@@ -880,7 +946,7 @@ export default function Dashboard() {
               <React.Fragment key={assignment.id}>
                 <ListItem disablePadding>
                   <ListItemButton 
-                    onClick={() => router.push(`/dashboard/assignments/${assignment.id}`)}
+                    onClick={() => handleAssignmentClick(assignment.id)}
                     sx={{ 
                       px: 3, 
                       py: 2,
@@ -917,9 +983,126 @@ export default function Dashboard() {
                         </Box>
                       }
                     />
-                    <ArrowForwardIcon color="action" fontSize="small" />
+                    {expandedId === assignment.id ? (
+                      <ArrowForwardIcon 
+                        sx={{ transform: 'rotate(90deg)', transition: 'transform 0.3s' }} 
+                        color="action" 
+                        fontSize="small" 
+                      />
+                    ) : (
+                      <ArrowForwardIcon 
+                        sx={{ transition: 'transform 0.3s' }} 
+                        color="action" 
+                        fontSize="small"
+                      />
+                    )}
                   </ListItemButton>
                 </ListItem>
+                
+                {/* Expanded details section */}
+                {expandedId === assignment.id && (
+                  <Box 
+                    sx={{
+                      px: 3,
+                      py: 2,
+                      backgroundColor: 'rgba(63, 81, 181, 0.04)',
+                      borderTop: '1px dashed',
+                      borderColor: 'divider'
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ mb: 2 }}>
+                      {assignment.description || 'No description available.'}
+                    </Typography>
+                    
+                    {assignment.max_score && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <GradeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Maximum Score: {assignment.max_score}
+                        </Typography>
+                      </Box>
+                    )}
+                    
+                    {assignment.opens_at && (
+                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                        <AccessTimeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                        <Typography variant="body2" color="text.secondary">
+                          Opens: {formatDate(assignment.opens_at)}
+                        </Typography>
+                      </Box>
+                    )}
+                    
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                      <TodayIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                      <Typography variant="body2" color="text.secondary" fontWeight={500}>
+                        Due Date: {formatDate(assignment.deadline)}
+                      </Typography>
+                    </Box>
+                    
+                    {assignment.reference_files && assignment.reference_files.length > 0 && (
+                      <>
+                        <Typography variant="body2" sx={{ mt: 2, mb: 1, fontWeight: 500 }}>
+                          Reference Files:
+                        </Typography>
+                        <List dense disablePadding>
+                          {assignment.reference_files.map((file, fileIndex) => (
+                            <ListItem 
+                              key={fileIndex} 
+                              disablePadding 
+                              sx={{ py: 0.5 }}
+                              secondaryAction={
+                                <IconButton 
+                                  edge="end" 
+                                  aria-label="download"
+                                  onClick={(e) => {
+                                    handleReferenceFileDownload(assignment.id, file.original_filename);
+                                  }}
+                                  size="small"
+                                >
+                                  <DownloadIcon fontSize="small" />
+                                </IconButton>
+                              }
+                            >
+                              <ListItemButton 
+                                sx={{ py: 0 }}
+                                onClick={(e) => {
+                                  handleReferenceFileDownload(assignment.id, file.original_filename);
+                                }}
+                              >
+                                <ListItemText 
+                                  primary={
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                      <InsertDriveFileIcon fontSize="small" sx={{ mr: 1, color: 'primary.main' }} />
+                                      <Typography variant="body2" color="primary">
+                                        {file.original_filename}
+                                      </Typography>
+                                    </Box>
+                                  }
+                                />
+                              </ListItemButton>
+                            </ListItem>
+                          ))}
+                        </List>
+                      </>
+                    )}
+                    
+                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+                      <Button 
+                        variant="contained"
+                        color="primary"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          router.push(`/dashboard/assignments/`);
+                        }}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        View Full Details
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+                
                 {index < assignments.length - 1 && <Divider />}
               </React.Fragment>
             ))}
@@ -1068,6 +1251,24 @@ export default function Dashboard() {
           </Grid>
         )}
       </Grid>
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          severity={snackbar.severity} 
+          sx={{ 
+            width: '100%',
+            borderRadius: 2,
+            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
