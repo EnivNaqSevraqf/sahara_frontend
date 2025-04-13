@@ -349,10 +349,10 @@ export default function StudentAssignmentList() {
     });
   };
 
-  // Split submittables into categories
-  const ongoingAssignables = assignables.filter(doc => isSubmissionAllowed(doc));
-  const upcomingAssignables = assignables.filter(doc => isUpcoming(doc));
-  const previousAssignables = assignables.filter(doc => isPast(doc));
+  // Sort assignments in each category by decreasing order of deadline
+  const ongoingAssignables = assignables.filter(doc => isSubmissionAllowed(doc)).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+  const upcomingAssignables = assignables.filter(doc => isUpcoming(doc)).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+  const previousAssignables = assignables.filter(doc => isPast(doc)).sort((a, b) => new Date(b.deadline).getTime() - new Date(a.deadline).getTime());
 
   const handleExpandClick = (id: number) => {
     setExpandedId(expandedId === id ? null : id);
@@ -750,7 +750,7 @@ export default function StudentAssignmentList() {
           <Typography variant="h6" sx={{ fontWeight: 500 }}>
             {completionPercentage === 100 
               ? 'All assignments submitted!' 
-              : `${assignables.length - assignables.filter(doc => doc.submission_status?.has_submitted).length} assignments remaining`}
+              : `${ongoingAssignables.length - ongoingAssignables.filter(doc => doc.submission_status?.has_submitted).length} assignments remaining`}
           </Typography>
         </Box>
       </Paper>

@@ -83,12 +83,22 @@ const UpdateAssignable: React.FC = () => {
     const { name, value } = e.target;
     
     // For date fields, ensure the value includes seconds and milliseconds
-    if (name === 'deadline' || name === 'opens_at') {
-      const date = new Date(value);
-      setAssignable(prev => prev ? { ...prev, [name]: date.toISOString().slice(0, 16) } : null);
-    } else {
-      setAssignable(prev => prev ? { ...prev, [name]: value } : null);
-    }
+    try {
+      if (name === 'deadline' || name === 'opens_at') {
+        const date = new Date(value);
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+          throw new Error('Invalid date');
+        }
+        else{
+          setAssignable(prev => prev ? { ...prev, [name]: date.toISOString().slice(0, 16) } : null);
+        }
+      } else {
+        setAssignable(prev => prev ? { ...prev, [name]: value } : null);
+      }
+    } catch (error) {
+      console.error("Error updating assignable field:", error);
+    } 
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

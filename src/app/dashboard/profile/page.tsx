@@ -106,7 +106,8 @@ export default function ProfilePage() {
           
           // Only try to fetch all skills if user role allows it
           const userRole = localStorage.getItem('role');
-          if (userRole === 'ta' || userRole === 'prof' || userRole === 'admin') {
+          if (1){
+          // if (userRole === 'ta' || userRole === 'prof' || userRole === 'admin') {
             const skillsResponse = await axios.get('/api/skills', {
               headers: { 
                 'Authorization': `Bearer ${token}`,

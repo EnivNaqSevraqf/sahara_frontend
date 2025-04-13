@@ -23,7 +23,6 @@ import { currentConfig } from '@/config';
 
 axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
-
 interface SubmitStatus {
   severity: 'success' | 'error';
   message: string;
@@ -39,6 +38,8 @@ const CreateGradeable: React.FC = () => {
   // Form state
   const [title, setTitle] = useState('');
   const [maxPoints, setMaxPoints] = useState<number>(100);
+  const [unaddedUsers, setUnaddedUsers] = useState<Array<[string, string]>>([]);
+  const [zeroScoreUsers, setZeroScoreUsers] = useState<Array<string>>([]);
 
   // Validation states
   const [titleError, setTitleError] = useState(false);
@@ -258,14 +259,26 @@ const CreateGradeable: React.FC = () => {
 
       const gradeableId = gradeableResponse.data.id;
 
+      // Extract any unadded or zero score users from the response
+      if (gradeableResponse.data.unadded_users) {
+        setUnaddedUsers(gradeableResponse.data.unadded_users);
+      }
+
+      if (gradeableResponse.data.zero_added) {
+        setZeroScoreUsers(gradeableResponse.data.zero_added);
+      }
+
       setSubmitStatus({
         severity: 'success',
         message: 'Gradeable created and scores uploaded successfully!'
       });
 
-      setTimeout(() => {
-        router.push('/dashboard/gradeables');
-      }, 1500);
+      // Don't redirect immediately if there are errors to show
+      if (!gradeableResponse.data.unadded_users?.length && !gradeableResponse.data.zero_score_users?.length) {
+        setTimeout(() => {
+          router.push('/dashboard/gradeables');
+        }, 1500);
+      }
 
     } catch (error: any) {
       console.error('Submission error:', error);
@@ -513,6 +526,95 @@ const CreateGradeable: React.FC = () => {
         >
           {isSubmitting ? 'Creating Gradeable...' : 'Create Gradeable'}
         </Button>
+
+        {/* Display unadded and zero score users */}
+        {(unaddedUsers.length > 0 || zeroScoreUsers.length > 0) && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              gap: 2,
+              width: '100%',
+              maxWidth: '700px',
+              mt: 2,
+              mb: 4,
+            }}
+          >
+            <Paper
+              sx={{
+                flex: 1,
+                maxHeight: '200px',
+                overflowY: 'auto',
+                p: 2,
+                border: '1px solid #f5c6cb',
+                backgroundColor: '#f8d7da',
+                color: '#721c24',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  mb: 1.5,
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                }}
+              >
+                Unadded Users
+              </Typography>
+              {unaddedUsers.length > 0 ? (
+                <Typography
+                  variant="body2"
+                  component="pre"
+                  sx={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+                >
+                  {unaddedUsers.map(([rollNo, reason], index) => (
+                    `- ${rollNo}: ${reason}${index < unaddedUsers.length - 1 ? '\n' : ''}`
+                  )).join('')}
+                </Typography>
+              ) : (
+                <Typography variant="body2">No unadded users.</Typography>
+              )}
+            </Paper>
+
+            <Paper
+              sx={{
+                flex: 1,
+                maxHeight: '200px',
+                overflowY: 'auto',
+                p: 2,
+                border: '1px solid #fff3cd',
+                backgroundColor: '#fff3cd',
+                color: '#856404',
+              }}
+            >
+              <Typography
+                variant="h6"
+                sx={{
+                  fontSize: '1.1rem',
+                  fontWeight: 600,
+                  mb: 1.5,
+                  fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+                }}
+              >
+                Zero Score Users
+              </Typography>
+              {zeroScoreUsers.length > 0 ? (
+                <Typography
+                  variant="body2"
+                  component="pre"
+                  sx={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
+                >
+                  {zeroScoreUsers.map((rollNo, index) => (
+                    `- ${rollNo}${index < zeroScoreUsers.length - 1 ? '\n' : ''}`
+                  )).join('')}
+                </Typography>
+              ) : (
+                <Typography variant="body2">No users with zero score.</Typography>
+              )}
+            </Paper>
+          </Box>
+        )}
 
         {submitStatus && (
           <Snackbar 

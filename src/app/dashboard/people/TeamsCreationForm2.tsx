@@ -313,8 +313,7 @@ const TeamsCreationForm2 = () => {
             </Paper>
 
             <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-              The CSV file must include the columns: <strong>RollNo, TeamID</strong>
-              <br />Each row should represent a student assignment to a team by their roll number.
+              The CSV file should be in the format: <strong>RollNo, TeamID</strong>
             </Typography>
 
             {selectedFile && (
