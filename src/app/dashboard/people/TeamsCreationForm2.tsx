@@ -16,6 +16,10 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import { buttonStyles } from './constants/theme';
 import axios from 'axios';
+import { currentConfig } from '@/config'; // Import your config
+
+// Set the base URL for all axios requests
+axios.defaults.baseURL = currentConfig.apiBaseUrl;
 
 const TeamsCreationForm2 = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -60,25 +64,149 @@ const TeamsCreationForm2 = () => {
         },
       });
 
+      console.log("API Response:", response.data); // Debug the response
+      
+      // Get data from the appropriate location
+      const responseData = response.data.detail || response.data;
+      
+      // Format success message with fallbacks for missing data
+      const totalTeams = responseData.total_teams || 0;
+      const totalStudents = responseData.total_students_assigned || 0;
+
+      // Change the message based on whether teams were uploaded
+      const successMessage = totalTeams === 0
+        ? "No teams uploaded"
+        : `Teams uploaded successfully!\n\nTotal Teams: ${totalTeams}\nTotal Students Assigned: ${totalStudents}`;
+
+      // Format detailed team assignments with user info
+      let teamDetails = '';
+      
+      // Add detailed user assignments by team
+      const teamAssignments = responseData.team_assignments || {};
+      if (Object.keys(teamAssignments).length > 0) {
+        teamDetails += "User Assignments By Team:\n";
+        Object.entries(teamAssignments).forEach(([teamId, users]) => {
+          teamDetails += `\nTeam ${teamId}:\n`;
+          // Cast users to array of objects with id, name, username
+          const userArray = users as { id: number, name: string, username: string }[];
+          userArray.forEach(user => {
+            teamDetails += `  • ${user.name || user.username} (Roll No: ${user.id})\n`;
+          });
+        });
+      }
+      
+      // Process errors information
+      let errorDetails = '';
+      const userErrors = responseData.user_errors || [];
+
+      // Define interface for user error objects with more detailed error information
+      interface UserError {
+        roll_no: string | number;
+        error: string;
+      }
+
+      if (userErrors.length > 0) {
+        errorDetails = "The following users could not be assigned:\n\n";
+        userErrors.forEach((error: UserError) => {
+          // Format error message based on whether roll_no is "Unknown" or a row indicator
+          if (error.roll_no === "Unknown" || error.roll_no.toString().startsWith("Row")) {
+            // For missing roll numbers or row-based errors
+            errorDetails += `• ${error.error}\n`;
+          } else {
+            // For errors with identified roll numbers
+            errorDetails += `• Roll No ${error.roll_no}: ${error.error}\n`;
+          }
+        });
+      }
+      
       setSubmitStatus({
         severity: 'success',
-        message: 'File uploaded successfully and data saved to the database!',
+        message: successMessage,
       });
-      setCreatedUsers(response.data.createdUsers || null);
-      setErrorList(response.data.errors || null);
+      
+      // Explicitly force a non-empty value for display
+      setCreatedUsers(teamDetails || (totalTeams === 0 ? "No teams uploaded" : "Teams processed successfully"));
+      setErrorList(errorDetails || "No errors found.");
+      
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    } catch (error: unknown) {
-      let errorMessage = 'Failed to upload file. Please try again.';
+    } catch (error) {
+      let errorMessage = '';
+      let errorDetails = '';
+      
       if (axios.isAxiosError(error) && error.response) {
-        errorMessage = error.response.data?.detail || errorMessage;
+        const responseData = error.response.data;
+        
+        if (error.response.status === 400) {
+          // Enhanced error handling for 400 errors
+          const errorType = responseData?.error_type;
+          const customMessage = responseData?.message;
+          
+          switch (errorType) {
+            case 'file_format':
+              errorMessage = 'Invalid File Format';
+              errorDetails = customMessage || 'Please upload a CSV file with .csv extension.';
+              break;
+              
+            case 'empty_file':
+              errorMessage = 'Empty CSV File';
+              errorDetails = customMessage || 'The uploaded CSV file is empty. Please ensure your file contains valid data.';
+              break;
+              
+            case 'csv_parse_error':
+              errorMessage = 'CSV Parsing Failed';
+              errorDetails = customMessage || 'The CSV file could not be parsed. Please check its format.';
+              break;
+              
+            case 'missing_columns':
+              errorMessage = 'Missing Required Columns';
+              const missingColumns = responseData?.missing_columns?.join(', ') || 'unknown columns';
+              errorDetails = `The CSV file must include the columns: ${missingColumns}`;
+              break;
+              
+            default:
+              // Handle legacy or other error formats
+              const responseDetail = responseData?.detail;
+              
+              if (typeof responseDetail === 'string') {
+                errorMessage = responseDetail;
+                
+                if (responseDetail.includes('Missing required column')) {
+                  errorDetails = 'The CSV file must include the columns: RollNo, TeamID';
+                } else if (responseDetail.includes('User with Roll No')) {
+                  const match = responseDetail.match(/Roll No (\d+)/);
+                  const rollNo = match ? match[1] : '';
+                  errorDetails = `Student with Roll No ${rollNo} does not exist in the system`;
+                } else if (responseDetail.includes('Invalid file format')) {
+                  errorDetails = 'Please upload a CSV file with .csv extension.';
+                } else {
+                  // Generic error message
+                  errorDetails = customMessage || responseDetail;
+                }
+              } else if (Array.isArray(responseDetail)) {
+                errorMessage = 'CSV format errors:';
+                errorDetails = responseDetail.join('\n');
+              }
+          }
+        } else if (error.response.status === 500) {
+          errorMessage = 'Server Error: Please try again later.';
+          errorDetails = responseData?.message || 'An internal server error occurred.';
+        } else {
+          errorMessage = `Unexpected Error: ${error.response.statusText || 'Please try again.'}`;
+          errorDetails = responseData?.message || 'An unknown error occurred.';
+        }
+      } else {
+        errorMessage = 'Network Error: Please check your connection and try again.';
       }
+      
       setSubmitStatus({
         severity: 'error',
         message: errorMessage,
       });
+      setErrorList(errorDetails || 'Unknown error occurred.');
+      setCreatedUsers('');
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +313,8 @@ const TeamsCreationForm2 = () => {
             </Paper>
 
             <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
-              The CSV file should be in the format: <strong>team name - member1 - member2 - ... - member10</strong>
+              The CSV file must include the columns: <strong>RollNo, TeamID</strong>
+              <br />Each row should represent a student assignment to a team by their roll number.
             </Typography>
 
             {selectedFile && (
@@ -232,74 +361,88 @@ const TeamsCreationForm2 = () => {
                 Upload Results
               </Typography>
 
-              <Alert
-                severity={submitStatus.severity}
-                sx={{
-                  width: '100%',
+              <Alert 
+                severity={submitStatus.severity} 
+                sx={{ 
+                  width: '100%', 
                   maxWidth: '600px',
-                  mb: 3,
+                  mt: 3,
+                  backgroundColor: submitStatus.severity === 'success' ? '#d4edda' : '#f8d7da',
+                  color: submitStatus.severity === 'success' ? '#155724' : '#721c24',
+                  border: `1px solid ${submitStatus.severity === 'success' ? '#c3e6cb' : '#f5c6cb'}`
                 }}
               >
                 {submitStatus.message.split('\n').map((line, index) => (
-                  <Typography key={index} variant="body2">
+                  <Typography key={index} variant="body2" sx={{ whiteSpace: 'pre-line' }}>
                     {line}
                   </Typography>
                 ))}
               </Alert>
 
-              {/* Details Cards */}
-              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                {/* Created Teams Card */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: 2,
+                  width: '100%',
+                  mt: 3,
+                }}
+              >
                 <Paper
                   sx={{
                     flex: 1,
-                    minWidth: '300px',
-                    p: 3,
-                    backgroundColor: '#e8f5e9',
-                    border: '1px solid #c8e6c9',
-                    borderRadius: 2,
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    p: 2,
+                    border: '1px solid #c3e6cb',
+                    backgroundColor: '#d4edda',
+                    color: '#155724',
                   }}
                 >
-                  <Typography variant="h6" sx={{ color: '#2e7d32', mb: 2, fontWeight: 500 }}>
-                    Created Teams
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      mb: 1.5,
+                    }}
+                  >
+                    Team Assignments
                   </Typography>
                   <Typography
                     variant="body2"
                     component="pre"
-                    sx={{
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      color: '#1b5e20',
-                      fontFamily: 'inherit',
-                    }}
+                    sx={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
                   >
                     {createdUsers || 'No teams created yet.'}
                   </Typography>
                 </Paper>
 
-                {/* Errors Card */}
                 <Paper
                   sx={{
                     flex: 1,
-                    minWidth: '300px',
-                    p: 3,
-                    backgroundColor: '#ffebee',
-                    border: '1px solid #ffcdd2',
-                    borderRadius: 2,
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    p: 2,
+                    border: '1px solid #f5c6cb',
+                    backgroundColor: '#f8d7da',
+                    color: '#721c24',
                   }}
                 >
-                  <Typography variant="h6" sx={{ color: '#c62828', mb: 2, fontWeight: 500 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      mb: 1.5,
+                    }}
+                  >
                     Errors
                   </Typography>
                   <Typography
                     variant="body2"
                     component="pre"
-                    sx={{
-                      whiteSpace: 'pre-wrap',
-                      wordBreak: 'break-word',
-                      color: '#b71c1c',
-                      fontFamily: 'inherit',
-                    }}
+                    sx={{ whiteSpace: 'pre-wrap', wordWrap: 'break-word' }}
                   >
                     {errorList || 'No errors.'}
                   </Typography>
