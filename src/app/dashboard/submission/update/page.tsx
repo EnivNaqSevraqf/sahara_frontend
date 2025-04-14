@@ -135,17 +135,11 @@ const UpdateSubmittable: React.FC = () => {
     if (!submittable) return;
     const { name, value } = e.target;
     
-    // For date fields, ensure the value includes seconds and milliseconds
-    try{
+    try {
       if (name === 'deadline' || name === 'opens_at') {
-        const date = new Date(value);
-        // Check if the date is valid
-        if (isNaN(date.getTime())) {
-          throw new Error('Invalid date');
-        }
-        else{
-          setSubmittable(prev => prev ? { ...prev, [name]: date.toISOString().slice(0, 16) } : null);
-        }
+        // For date fields, just store the raw input value
+        // This preserves exactly what the user selected without timezone conversion
+        setSubmittable(prev => prev ? { ...prev, [name]: value } : null);
       } else {
         setSubmittable(prev => prev ? { ...prev, [name]: value } : null);
       }
