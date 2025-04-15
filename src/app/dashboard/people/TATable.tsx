@@ -29,6 +29,7 @@ import UnionIcon from '@mui/icons-material/CallSplit';
 import IntersectionIcon from '@mui/icons-material/CallMerge';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useRouter } from 'next/navigation';  
+import { currentConfig } from '@/config';
 
 // Define the type for skillsMap
 interface Skill {
@@ -82,7 +83,7 @@ const TATable = () => {
         console.log('Token exists:', !!token);
         
         console.log('Making fetch request to /tas');
-        const response = await fetch('http://localhost:8000/tas', {
+        const response = await fetch(`${currentConfig.apiBaseUrl}/tas`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
