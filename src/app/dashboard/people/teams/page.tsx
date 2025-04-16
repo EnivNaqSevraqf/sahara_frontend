@@ -44,6 +44,16 @@ import { currentConfig } from '@/config';
 // Configure axios base URL
 axios.defaults.baseURL = currentConfig.apiBaseUrl; // Ensure this is set to your API URL
 
+const chipStyle = {
+  fontSize: '0.75rem',
+  fontWeight: 'bold',
+  borderRadius: '4px',
+  height: '24px',
+  textTransform: 'none',
+  marginRight: 0.5,
+  marginBottom: 0.5,
+};
+
 interface Skill {
   id: number;
   name: string;
@@ -62,6 +72,8 @@ interface Team {
   team_name: string;
   skills: Skill[];
   tas: TA[];
+  combined_ta_skills: string[];
+  skill_match: number;
 }
 
 type Order = 'asc' | 'desc';
@@ -418,13 +430,12 @@ const TeamsPage = () => {
             </Toolbar>
             <Table>
               <TableHead>
-                <TableRow sx={{
-                  backgroundColor: '#f8faff',
-                  '& th': {
-                    fontWeight: 'bold',
-                    borderBottom: 'none',
-                  }
-                }}>
+                <TableRow
+                  sx={{
+                    backgroundColor: '#f8faff',
+                    '& th': { fontWeight: 'bold', borderBottom: 'none' }
+                  }}
+                >
                   <TableCell sx={{ fontWeight: 'bold' }}>
                     <TableSortLabel
                       active={orderBy === 'team_id'}
@@ -445,6 +456,8 @@ const TeamsPage = () => {
                   </TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Skills</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Assigned TAs</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>TA Skills</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>Skill Match (%)</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -456,14 +469,8 @@ const TeamsPage = () => {
                       hover
                       sx={{
                         '&:last-child td, &:last-child th': { border: 0 },
-                        '& td': {
-                          borderBottom: '1px solid #f0f0f0',
-                          padding: '16px',
-                          transition: 'background-color 0.2s ease',
-                        },
-                        '&:hover': {
-                          backgroundColor: '#e8f0fe !important',
-                        },
+                        '& td': { borderBottom: '1px solid #f0f0f0', padding: '16px', transition: 'background-color 0.2s ease' },
+                        '&:hover': { backgroundColor: '#e8f0fe !important' },
                       }}
                     >
                       <TableCell>{team.team_id}</TableCell>
@@ -476,10 +483,9 @@ const TeamsPage = () => {
                               label={skill.name}
                               size="small"
                               sx={{
-                                backgroundColor: skill.bgColor,
-                                color: skill.color,
-                                fontSize: '0.75rem',
-                                fontWeight: 'bold',
+                                ...chipStyle,
+                                backgroundColor: skill.bgColor || '#3f51b5',
+                                color: skill.color || '#fff',
                               }}
                             />
                           ))}
@@ -494,9 +500,9 @@ const TeamsPage = () => {
                               variant="outlined"
                               size="small"
                               sx={{
+                                ...chipStyle,
                                 borderColor: '#3f51b5',
                                 color: '#3f51b5',
-                                fontSize: '0.75rem',
                               }}
                             />
                           ))}
@@ -508,14 +514,33 @@ const TeamsPage = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
+                          {team.combined_ta_skills.map((skillName: string, index: number) => {
+                            // Find the corresponding skill object by name
+                            const skillObj = team.skills.find((s: any) => s.name === skillName);
+                            return (
+                              <Chip
+                                key={index}
+                                label={skillName}
+                                size="small"
+                                sx={{
+                                  ...chipStyle,
+                                  backgroundColor: skillObj?.bgColor || '#3f51b5',
+                                  color: skillObj?.color || '#fff',
+                                }}
+                              />
+                            );
+                          })}
+                        </Box>
+                      </TableCell>
+                      <TableCell>{team.skill_match}%</TableCell>
+                      <TableCell>
                         <Tooltip title="Edit TA Assignments">
-                          <IconButton 
+                          <IconButton
                             onClick={() => handleEditClick(team)}
                             sx={{
                               color: '#3f51b5',
-                              '&:hover': {
-                                backgroundColor: 'rgba(63, 81, 181, 0.08)',
-                              }
+                              '&:hover': { backgroundColor: 'rgba(63, 81, 181, 0.08)' },
                             }}
                           >
                             <EditIcon />
@@ -526,7 +551,7 @@ const TeamsPage = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} align="center" sx={{ py: 3, borderBottom: 'none' }}>
+                    <TableCell colSpan={7} align="center" sx={{ py: 3, borderBottom: 'none' }}>
                       <Typography variant="body1" color="text.secondary">
                         No teams found.
                       </Typography>
