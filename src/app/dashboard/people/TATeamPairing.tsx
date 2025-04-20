@@ -17,6 +17,18 @@ import {
   Chip
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import axios from 'axios';
+
+// Define a common chip style
+const chipStyle = {
+  fontSize: '0.75rem',
+  fontWeight: 'bold',
+  borderRadius: '4px',
+  height: '24px',
+  textTransform: 'none',
+  marginRight: 0.5,
+  marginBottom: 0.5,
+};
 
 const TATeamPairing = () => {
   const router = useRouter();
@@ -29,13 +41,15 @@ const TATeamPairing = () => {
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        // Fetch from the updated /match endpoint which returns extra fields
-        const res = await fetch('/match');
-        const data = await res.json();
+        const response = await axios.get('/match', {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
         // Expected structure: { teams: [ { team_id, team_name, skills, tas, combined_ta_skills, skill_match } ] }
-        setTeams(data.teams);
-      } catch (err) {
-        console.error(err);
+        setTeams(response.data.teams);
+      } catch (err: any) {
+        console.error('Error fetching teams:', err);
       }
     };
     fetchTeams();
@@ -44,9 +58,9 @@ const TATeamPairing = () => {
   const handlePairing = async () => {
     setIsPairing(true);
     try {
-      const response = await fetch(`/api/match/${tasPerTeam}`);
-      const data = await response.json();
-      if (!response.ok) {
+      const response = await axios.get(`/api/match/${tasPerTeam}`);
+      const data = response.data;
+      if (response.status !== 200) {
         throw new Error(data.detail || 'Failed to allocate TAs');
       }
       alert('TA-team pairing completed successfully!');
@@ -122,18 +136,22 @@ const TATeamPairing = () => {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8 }}>
-                      {team.combined_ta_skills.map((skill: string, index: number) => (
-                        <Chip
-                          key={index}
-                          label={skill}
-                          size="small"
-                          sx={{
-                            ...chipStyle,
-                            backgroundColor: '#3f51b5',
-                            color: '#fff',
-                          }}
-                        />
-                      ))}
+                      {team.combined_ta_skills.map((skill: string, index: number) => {
+                        // Look up the corresponding skill object to get correct colours
+                        const skillObj = team.skills.find((s: any) => s.name === skill);
+                        return (
+                          <Chip
+                            key={index}
+                            label={skill}
+                            size="small"
+                            sx={{
+                              ...chipStyle,
+                              backgroundColor: skillObj?.bgColor || '#3f51b5',
+                              color: skillObj?.color || '#fff',
+                            }}
+                          />
+                        );
+                      })}
                     </Box>
                   </TableCell>
                   <TableCell>{team.skill_match}%</TableCell>
